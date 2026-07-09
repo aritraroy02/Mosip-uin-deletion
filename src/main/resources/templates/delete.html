@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete My Data - MOSIP Registry</title>
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Local CSS Style Sheet -->
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+    <!-- Header Bar -->
+    <header class="app-header-bar">
+        <div class="header-logo-container">
+            <a href="/" class="header-logo-link">
+                <div class="header-logo">M</div>
+                <div class="header-title-group">
+                    <span class="header-title">MOSIP Registry</span>
+                    <span class="header-subtitle">Government of India</span>
+                </div>
+            </a>
+        </div>
+        <a href="/" class="profile-icon" title="Return to Homepage" style="color: white; text-decoration: none;">
+            <i class="fa-solid fa-house"></i>
+        </a>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="main-container">
+        <div class="form-container">
+            <div class="form-header">
+                <div class="form-icon-circle" style="background-color: #fee2e2; color: #dc2626;">
+                    <i class="fa-solid fa-trash-can"></i>
+                </div>
+                <h2 class="form-title">Voluntary Data Purging Portal</h2>
+                <p class="form-subtitle">Enter your details to permanently delete all personal data from the national registry database networks.</p>
+            </div>
+
+            <!-- Thymeleaf Success and Error Messages -->
+            <div th:if="${successMessage}" class="consent-alert-box" style="background-color: #ecfdf5; border-color: #10b981; color: #065f46; margin-bottom: 1.5rem; border-left-width: 4px; padding: 1rem; border-radius: 6px;">
+                <h4 style="margin: 0 0 0.25rem 0; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Data Purged Successfully
+                </h4>
+                <p th:text="${successMessage}" style="margin: 0; font-size: 0.875rem; color: #047857;"></p>
+                <div style="margin-top: 1rem;">
+                    <a href="/" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Return to Homepage</a>
+                </div>
+            </div>
+
+            <div th:if="${errorMessage}" class="consent-alert-box" style="background-color: #fef2f2; border-color: #ef4444; color: #991b1b; margin-bottom: 1.5rem; border-left-width: 4px; padding: 1rem; border-radius: 6px;">
+                <h4 style="margin: 0 0 0.25rem 0; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> Deletion Failed
+                </h4>
+                <p th:text="${errorMessage}" style="margin: 0; font-size: 0.875rem; color: #b91c1c;"></p>
+            </div>
+
+            <!-- Delete Form (Only shown if not already successfully deleted) -->
+            <form th:if="${successMessage == null}" action="/delete" method="POST" class="registration-form">
+                
+                <!-- User ID Field -->
+                <div class="form-group">
+                    <label class="form-label" for="userId">Your Unique User ID <span style="color: var(--danger);">*</span></label>
+                    <div style="position: relative;">
+                        <input type="text" id="userId" name="userId" class="form-input" placeholder="e.g. USR-A1B2C3D4" required style="padding-left: 2.5rem;">
+                        <i class="fa-solid fa-id-card-clip" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                    </div>
+                    <p class="form-help-text">Please input your 12-character User ID assigned during registration (formatted as USR-XXXXXXXX).</p>
+                </div>
+
+                <!-- Consent to delete checkbox -->
+                <div class="consent-container" style="border-color: #fca5a5; background-color: #fff5f5; margin-top: 1.5rem;">
+                    <label class="consent-checkbox-label" style="align-items: flex-start;">
+                        <input type="checkbox" name="confirmPurge" required style="margin-top: 4px; scale: 1.1;">
+                        <span class="consent-text" style="color: #7f1d1d;">
+                            I hereby confirm and request that the professionals at MOSIP permanently delete my identity records, demographical details (Name & Phone Number), and cryptographic UIN hashes from all connected database architectures. I understand that this action is <strong>irreversible</strong> and my identity registration cannot be recovered.
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Form Footer Actions -->
+                <div class="form-actions" style="margin-top: 2rem;">
+                    <a href="/" class="cta-button-secondary" style="margin-left: 0;">Cancel</a>
+                    <button type="submit" class="cta-button" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 4px 10px rgba(220, 38, 38, 0.25);">
+                        <i class="fa-solid fa-trash-can" style="margin-right: 8px;"></i> Permanently Delete My Data
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>&copy; 2024 All Rights Reserved MOSIP</p>
+        <div class="footer-links">
+            <a href="/delete" class="footer-link" style="text-decoration: underline;">Delete my data</a>
+        </div>
+    </footer>
+
+</body>
+</html>

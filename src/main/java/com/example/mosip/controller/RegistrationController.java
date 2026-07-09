@@ -93,4 +93,46 @@ public class RegistrationController {
         model.addAttribute("user", registration);
         return "success";
     }
+
+    @GetMapping("/delete")
+    public String showDeleteForm() {
+        return "delete";
+    }
+
+    @PostMapping("/delete")
+    public String deleteUserData(@org.springframework.web.bind.annotation.RequestParam("userId") String userId,
+                                 @org.springframework.web.bind.annotation.RequestParam(value = "confirmPurge", required = false) Boolean confirmPurge,
+                                 Model model) {
+        if (userId == null || userId.trim().isEmpty()) {
+            model.addAttribute("errorMessage", "User ID is required.");
+            return "delete";
+        }
+        if (confirmPurge == null || !confirmPurge) {
+            model.addAttribute("errorMessage", "You must check the confirmation checkbox to proceed.");
+            return "delete";
+        }
+
+        userId = userId.trim();
+        boolean basicExists = userBasicDetailsRepository.existsById(userId);
+        boolean hashExists = userUinHashRepository.existsById(userId);
+
+        if (!basicExists && !hashExists) {
+            model.addAttribute("errorMessage", "The User ID '" + userId + "' was not found in our registries.");
+            return "delete";
+        }
+
+        try {
+            if (basicExists) {
+                userBasicDetailsRepository.deleteById(userId);
+            }
+            if (hashExists) {
+                userUinHashRepository.deleteById(userId);
+            }
+            model.addAttribute("successMessage", "All demographic details and security hash archives for User ID '" + userId + "' have been successfully purged from all registries.");
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "An error occurred during database purging: " + e.getMessage());
+        }
+
+        return "delete";
+    }
 }

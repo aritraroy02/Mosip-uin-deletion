@@ -35,3 +35,4 @@ build/
 ### Local JDKs and Temp Files ###
 .jdks/
 *.zip
+src/main/resources/application.properties

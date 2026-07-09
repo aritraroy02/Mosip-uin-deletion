@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOSIP - Register User Profile</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header class="app-header">
+        <div class="header-container">
+            <a href="/" class="brand-section">
+                <div class="brand-logo">M</div>
+                <div>
+                    <span class="brand-name">MOSIP</span>
+                    <span class="brand-tagline">UIN Management</span>
+                </div>
+            </a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="/" class="nav-link">Home</a></li>
+                    <li><a href="/register" class="nav-link active">Register</a></li>
+                </ul>
+            </nav>
+            <div class="profile-container">
+                <div class="profile-avatar" title="User Profile">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="form-container">
+            <div class="form-header">
+                <h2 class="form-header-title">Identity Registration</h2>
+                <p class="form-header-subtitle">Provide your demographic details and user image below</p>
+            </div>
+            
+            <form th:action="@{/register}" th:object="${registration}" method="POST" enctype="multipart/form-data">
+                <div class="form-body">
+                    
+                    <!-- Demographic Inputs -->
+                    <div class="form-group">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" id="name" th:field="*{name}" class="form-input" placeholder="e.g. John Doe" required>
+                    </div>
+
+                    <div class="form-group-grid">
+                        <div class="form-group">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" id="phone" th:field="*{phone}" class="form-input" placeholder="e.g. +91 9876543210" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email ID</label>
+                            <input type="email" id="email" th:field="*{email}" class="form-input" placeholder="e.g. john.doe@example.com" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group-grid">
+                        <div class="form-group">
+                            <label for="dob" class="form-label">Date of Birth</label>
+                            <input type="date" id="dob" th:field="*{dob}" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="nationality" class="form-label">Nationality</label>
+                            <input type="text" id="nationality" th:field="*{nationality}" class="form-input" placeholder="e.g. Indian" required>
+                        </div>
+                    </div>
+
+                    <!-- User Photo Upload -->
+                    <div class="form-group">
+                        <label class="form-label">User Image / Profile Photo</label>
+                        <div class="upload-container">
+                            <div class="upload-icon">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                            </div>
+                            <div class="upload-text">
+                                <span class="upload-text-bold">Click to upload</span> or drag and drop
+                            </div>
+                            <div class="upload-text" style="font-size: 0.75rem; margin-top: 4px; color: var(--text-muted);">
+                                PNG, JPG, JPEG up to 5MB
+                            </div>
+                            <input type="file" id="profileImage" th:field="*{profileImage}" class="upload-input" accept="image/*" required>
+                        </div>
+                        
+                        <!-- Image Preview Area -->
+                        <div class="preview-container" id="previewWrapper">
+                            <img src="#" alt="User Image Preview" id="imagePreviewElement" class="image-preview">
+                        </div>
+                    </div>
+
+                    <!-- Consent Box -->
+                    <div class="consent-box">
+                        <input type="checkbox" id="consent" th:field="*{consent}" class="consent-checkbox" required>
+                        <label for="consent" class="consent-text">
+                            I hereby confirm and state that I am willingly and voluntarily providing my personal data, demographic details, and profile photo to the professionals at MOSIP for secure identity processing and data lifecycle management purposes.
+                        </label>
+                    </div>
+
+                </div>
+
+                <!-- Form Footer Actions -->
+                <div class="form-actions">
+                    <a href="/" class="cta-button-secondary" style="margin-left: 0;">Cancel</a>
+                    <button type="submit" class="cta-button">
+                        <i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Submit Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>&copy; 2026 MOSIP. All Rights Reserved. Modular Open Source Identity Platform.</p>
+    </footer>
+
+    <!-- Script for Live Image Preview -->
+    <script>
+        const imageInput = document.getElementById('profileImage');
+        const previewWrapper = document.getElementById('previewWrapper');
+        const imagePreviewElement = document.getElementById('imagePreviewElement');
+
+        imageInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.addEventListener('load', function() {
+                    imagePreviewElement.setAttribute('src', this.result);
+                    previewWrapper.style.display = 'flex';
+                });
+                reader.readAsDataURL(file);
+            } else {
+                previewWrapper.style.display = 'none';
+                imagePreviewElement.setAttribute('src', '#');
+            }
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOSIP - UIN Management Portal</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header class="app-header">
+        <div class="header-container">
+            <a href="/" class="brand-section">
+                <div class="brand-logo">M</div>
+                <div>
+                    <span class="brand-name">MOSIP</span>
+                    <span class="brand-tagline">UIN Management</span>
+                </div>
+            </a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="/" class="nav-link active">Home</a></li>
+                    <li><a href="/register" class="nav-link">Register</a></li>
+                </ul>
+            </nav>
+            <div class="profile-container" onclick="location.href='/register'">
+                <div class="profile-avatar" title="User Profile">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <section class="hero-card">
+            <h1 class="hero-title">Secure Identity Management</h1>
+            <p class="hero-subtitle">
+                Welcome to the official MOSIP UIN management portal. Easily register your identity profile, review security consent, and prepare your credentials for local registry verification.
+            </p>
+            <div class="hero-actions">
+                <a href="/register" class="cta-button">
+                    <i class="fa-solid fa-user-plus" style="margin-right: 8px;"></i> Start Registration
+                </a>
+                <a href="#" class="cta-button-secondary">Learn More</a>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features-grid">
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h3 class="feature-title">Data Privacy & Security</h3>
+                <p class="feature-description">Your data security is our top priority. We use industry-standard encryption protocols and explicit user consent forms to process information.</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-id-card"></i>
+                </div>
+                <h3 class="feature-title">UIN Deletion & Management</h3>
+                <p class="feature-description">Easily request identity updates, verify attributes, and process deletion logs across multiple synchronized data networks.</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <h3 class="feature-title">Instant Verification</h3>
+                <p class="feature-description">Experience lightning-fast profile mapping with a modern web interface that ensures all compliance checks are resolved in real-time.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>&copy; 2026 MOSIP. All Rights Reserved. Modular Open Source Identity Platform.</p>
+        <div class="footer-links">
+            <a href="#" class="footer-link">Privacy Policy</a>
+            <a href="#" class="footer-link">Terms of Service</a>
+            <a href="#" class="footer-link">Support Helpdesk</a>
+        </div>
+    </footer>
+
+</body>
+</html>

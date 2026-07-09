@@ -38,6 +38,7 @@ public class RegistrationApiController {
         String nationality = (String) request.get("nationality");
         Boolean consent = (Boolean) request.get("consent");
         String uin = (String) request.get("uin");
+        String profileImage = (String) request.get("profileImage");
 
         if (name == null || phone == null) {
             Map<String, Object> errorResponse = new HashMap<>();
@@ -77,6 +78,7 @@ public class RegistrationApiController {
             response.put("consent", consent != null ? consent : false);
             response.put("uin", uin);
             response.put("hashedUin", hashedUin);
+            response.put("profileImage", profileImage != null ? profileImage : "");
             response.put("status", "SUCCESS");
 
             return ResponseEntity.ok(response);
@@ -113,6 +115,7 @@ public class RegistrationApiController {
             String nationality = (String) request.get("nationality");
             Boolean consent = (Boolean) request.get("consent");
             String uin = (String) request.get("uin");
+            String profileImage = (String) request.get("profileImage");
 
             if (name != null && phone != null) {
                 String userId = "USR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -135,6 +138,7 @@ public class RegistrationApiController {
                 record.put("consent", consent != null ? consent : false);
                 record.put("uin", uin);
                 record.put("hashedUin", hashedUin);
+                record.put("profileImage", profileImage != null ? profileImage : "");
                 successRecords.add(record);
             }
         }

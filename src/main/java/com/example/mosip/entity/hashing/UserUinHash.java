@@ -13,17 +13,23 @@ public class UserUinHash {
     @Column(name = "user_id")
     private String userId;
 
-    @Column(name = "hashed_uin", nullable = false)
-    private String hashedUin;
+    /** Salt-modulo hash of the individual ID (Credential / IDA token). */
+    @Column(name = "individual_id_hash", nullable = false)
+    private String individualIdHash;
+
+    /** Salt-modulo hash of the UIN. */
+    @Column(name = "uin_salted_hash", nullable = false)
+    private String uinSaltedHash;
 
     // Default constructor
     public UserUinHash() {
     }
 
     // Argument constructor
-    public UserUinHash(String userId, String hashedUin) {
+    public UserUinHash(String userId, String individualIdHash, String uinSaltedHash) {
         this.userId = userId;
-        this.hashedUin = hashedUin;
+        this.individualIdHash = individualIdHash;
+        this.uinSaltedHash = uinSaltedHash;
     }
 
     // Getters and Setters
@@ -35,19 +41,28 @@ public class UserUinHash {
         this.userId = userId;
     }
 
-    public String getHashedUin() {
-        return hashedUin;
+    public String getIndividualIdHash() {
+        return individualIdHash;
     }
 
-    public void setHashedUin(String hashedUin) {
-        this.hashedUin = hashedUin;
+    public void setIndividualIdHash(String individualIdHash) {
+        this.individualIdHash = individualIdHash;
+    }
+
+    public String getUinSaltedHash() {
+        return uinSaltedHash;
+    }
+
+    public void setUinSaltedHash(String uinSaltedHash) {
+        this.uinSaltedHash = uinSaltedHash;
     }
 
     @Override
     public String toString() {
         return "UserUinHash{" +
                 "userId='" + userId + '\'' +
-                ", hashedUin='" + hashedUin + '\'' +
+                ", individualIdHash='" + individualIdHash + '\'' +
+                ", uinSaltedHash='" + uinSaltedHash + '\'' +
                 '}';
     }
 }

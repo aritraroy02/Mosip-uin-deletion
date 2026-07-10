@@ -12,8 +12,9 @@ import com.example.mosip.entity.basic.UserBasicDetails;
 import com.example.mosip.repository.basic.UserBasicDetailsRepository;
 import com.example.mosip.entity.hashing.UserUinHash;
 import com.example.mosip.repository.hashing.UserUinHashRepository;
+import com.example.mosip.controller.api.RegistrationApiController;
 import com.example.mosip.service.MinioStorageService;
-import com.example.mosip.util.HashUtils;
+import com.example.mosip.service.SaltModuloHashService;
 
 @Controller
 public class RegistrationController {
@@ -21,13 +22,19 @@ public class RegistrationController {
     private final UserBasicDetailsRepository userBasicDetailsRepository;
     private final UserUinHashRepository userUinHashRepository;
     private final MinioStorageService minioStorageService;
+    private final RegistrationApiController registrationApiController;
+    private final SaltModuloHashService saltModuloHashService;
 
     public RegistrationController(UserBasicDetailsRepository userBasicDetailsRepository,
                                   UserUinHashRepository userUinHashRepository,
-                                  MinioStorageService minioStorageService) {
+                                  MinioStorageService minioStorageService,
+                                  RegistrationApiController registrationApiController,
+                                  SaltModuloHashService saltModuloHashService) {
         this.userBasicDetailsRepository = userBasicDetailsRepository;
         this.userUinHashRepository = userUinHashRepository;
         this.minioStorageService = minioStorageService;
+        this.registrationApiController = registrationApiController;
+        this.saltModuloHashService = saltModuloHashService;
     }
 
     @GetMapping("/")
@@ -67,15 +74,29 @@ public class RegistrationController {
             model.addAttribute("databaseError", "Profile saved in-memory, but database write failed.");
         }
 
-        // Save Hashed UIN to PostgreSQL hashing database (uin-hashing)
-        String hashedUin = HashUtils.sha256(registration.getUin());
-        UserUinHash uinHash = new UserUinHash(registration.getUserId(), hashedUin);
+        // Save salt-modulo UIN hashes to PostgreSQL hashing database (uin-hashing)
+        String uinSaltedHash = saltModuloHashService.hash(registration.getUin());
+        String individualIdHash = saltModuloHashService.hash(registration.getUserId());
+        UserUinHash uinHash = new UserUinHash(registration.getUserId(), individualIdHash, uinSaltedHash);
         try {
             userUinHashRepository.save(uinHash);
             System.out.println("Successfully saved UIN hash to database: " + uinHash);
         } catch (Exception e) {
             System.err.println("Failed to save UIN hash to database: " + e.getMessage());
             model.addAttribute("hashingDatabaseError", "Profile saved, but UIN hashing write failed.");
+        }
+
+        // Save father/mother names via the REST API controller (single owner of
+        // the parent-details database write) so all parent data flows through the API.
+        try {
+            registrationApiController.saveParentDetails(
+                    registration.getUserId(),
+                    registration.getFatherName(),
+                    registration.getMotherName());
+            System.out.println("Successfully saved parent details to database for user: " + registration.getUserId());
+        } catch (Exception e) {
+            System.err.println("Failed to save parent details to database: " + e.getMessage());
+            model.addAttribute("parentDatabaseError", "Profile saved, but parent details write failed.");
         }
 
         // Upload profile image to MinIO (bucket: userprofilepic) and show it on the success page

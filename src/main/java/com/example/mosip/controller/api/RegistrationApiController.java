@@ -4,7 +4,9 @@ import com.example.mosip.entity.basic.UserBasicDetails;
 import com.example.mosip.repository.basic.UserBasicDetailsRepository;
 import com.example.mosip.entity.hashing.UserUinHash;
 import com.example.mosip.repository.hashing.UserUinHashRepository;
-import com.example.mosip.util.HashUtils;
+import com.example.mosip.entity.parent.UserParentDetails;
+import com.example.mosip.repository.parent.UserParentDetailsRepository;
+import com.example.mosip.service.SaltModuloHashService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,11 +20,17 @@ public class RegistrationApiController {
 
     private final UserBasicDetailsRepository userBasicDetailsRepository;
     private final UserUinHashRepository userUinHashRepository;
+    private final UserParentDetailsRepository userParentDetailsRepository;
+    private final SaltModuloHashService saltModuloHashService;
 
     public RegistrationApiController(UserBasicDetailsRepository userBasicDetailsRepository,
-                                     UserUinHashRepository userUinHashRepository) {
+                                     UserUinHashRepository userUinHashRepository,
+                                     UserParentDetailsRepository userParentDetailsRepository,
+                                     SaltModuloHashService saltModuloHashService) {
         this.userBasicDetailsRepository = userBasicDetailsRepository;
         this.userUinHashRepository = userUinHashRepository;
+        this.userParentDetailsRepository = userParentDetailsRepository;
+        this.saltModuloHashService = saltModuloHashService;
     }
 
     /**
@@ -39,6 +47,8 @@ public class RegistrationApiController {
         Boolean consent = (Boolean) request.get("consent");
         String uin = (String) request.get("uin");
         String profileImage = (String) request.get("profileImage");
+        String fatherName = (String) request.get("fatherName");
+        String motherName = (String) request.get("motherName");
 
         if (name == null || phone == null) {
             Map<String, Object> errorResponse = new HashMap<>();
@@ -56,17 +66,23 @@ public class RegistrationApiController {
             uin = String.valueOf(randomUin);
         }
 
-        String hashedUin = HashUtils.sha256(uin);
+        String hashedUin = saltModuloHashService.hash(uin);
+        String individualIdHash = saltModuloHashService.hash(userId);
 
         // 1. Persist demographic details to primary database
         UserBasicDetails basicDetails = new UserBasicDetails(userId, name, phone);
 
-        // 2. Persist hashed UIN to hashing database
-        UserUinHash uinHash = new UserUinHash(userId, hashedUin);
+        // 2. Persist salt-modulo hashes to hashing database
+        //    individual_id_hash = salt-modulo hash of the individual ID (userId)
+        //    uin_salted_hash     = salt-modulo hash of the UIN
+        UserUinHash uinHash = new UserUinHash(userId, individualIdHash, hashedUin);
 
         try {
             userBasicDetailsRepository.save(basicDetails);
             userUinHashRepository.save(uinHash);
+
+            // 3. Persist father/mother names to the parent details database
+            saveParentDetails(userId, fatherName, motherName);
 
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("userId", userId);
@@ -76,8 +92,11 @@ public class RegistrationApiController {
             response.put("dob", dob != null ? dob : "");
             response.put("nationality", nationality != null ? nationality : "");
             response.put("consent", consent != null ? consent : false);
+            response.put("fatherName", fatherName != null ? fatherName : "");
+            response.put("motherName", motherName != null ? motherName : "");
             response.put("uin", uin);
-            response.put("hashedUin", hashedUin);
+            response.put("individualIdHash", individualIdHash);
+            response.put("uinSaltedHash", hashedUin);
             response.put("profileImage", profileImage != null ? profileImage : "");
             response.put("status", "SUCCESS");
 
@@ -88,6 +107,21 @@ public class RegistrationApiController {
             errorResponse.put("status", "ERROR");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
+    }
+
+    /**
+     * Persists a user's father/mother names to the parent details database.
+     * This is the single owner of writes to that database — both the REST API
+     * and the web form flow route parent data through here.
+     *
+     * @return the persisted entity
+     */
+    public UserParentDetails saveParentDetails(String userId, String fatherName, String motherName) {
+        UserParentDetails parentDetails = new UserParentDetails(
+                userId,
+                fatherName != null ? fatherName : "",
+                motherName != null ? motherName : "");
+        return userParentDetailsRepository.save(parentDetails);
     }
 
     /**
@@ -105,6 +139,7 @@ public class RegistrationApiController {
 
         List<UserBasicDetails> basicDetailsList = new ArrayList<>();
         List<UserUinHash> uinHashList = new ArrayList<>();
+        List<UserParentDetails> parentDetailsList = new ArrayList<>();
         List<Map<String, Object>> successRecords = new ArrayList<>();
 
         for (Map<String, Object> request : requestList) {
@@ -116,6 +151,8 @@ public class RegistrationApiController {
             Boolean consent = (Boolean) request.get("consent");
             String uin = (String) request.get("uin");
             String profileImage = (String) request.get("profileImage");
+            String fatherName = (String) request.get("fatherName");
+            String motherName = (String) request.get("motherName");
 
             if (name != null && phone != null) {
                 String userId = "USR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -123,10 +160,14 @@ public class RegistrationApiController {
                     long randomUin = ThreadLocalRandom.current().nextLong(1000000000L, 10000000000L);
                     uin = String.valueOf(randomUin);
                 }
-                String hashedUin = HashUtils.sha256(uin);
+                String hashedUin = saltModuloHashService.hash(uin);
+                String individualIdHash = saltModuloHashService.hash(userId);
 
                 basicDetailsList.add(new UserBasicDetails(userId, name, phone));
-                uinHashList.add(new UserUinHash(userId, hashedUin));
+                uinHashList.add(new UserUinHash(userId, individualIdHash, hashedUin));
+                parentDetailsList.add(new UserParentDetails(userId,
+                        fatherName != null ? fatherName : "",
+                        motherName != null ? motherName : ""));
 
                 Map<String, Object> record = new LinkedHashMap<>();
                 record.put("userId", userId);
@@ -136,8 +177,11 @@ public class RegistrationApiController {
                 record.put("dob", dob != null ? dob : "");
                 record.put("nationality", nationality != null ? nationality : "");
                 record.put("consent", consent != null ? consent : false);
+                record.put("fatherName", fatherName != null ? fatherName : "");
+                record.put("motherName", motherName != null ? motherName : "");
                 record.put("uin", uin);
-                record.put("hashedUin", hashedUin);
+                record.put("individualIdHash", individualIdHash);
+                record.put("uinSaltedHash", hashedUin);
                 record.put("profileImage", profileImage != null ? profileImage : "");
                 successRecords.add(record);
             }
@@ -146,6 +190,7 @@ public class RegistrationApiController {
         try {
             userBasicDetailsRepository.saveAll(basicDetailsList);
             userUinHashRepository.saveAll(uinHashList);
+            userParentDetailsRepository.saveAll(parentDetailsList);
 
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("savedCount", successRecords.size());

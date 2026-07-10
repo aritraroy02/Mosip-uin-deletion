@@ -9,6 +9,8 @@ public class UserRegistrationDto {
     private String dob;
     private String nationality;
     private boolean consent;
+    private String fatherName;
+    private String motherName;
     private MultipartFile profileImage;
     private String userId;
     private String uin;
@@ -66,6 +68,22 @@ public class UserRegistrationDto {
         this.consent = consent;
     }
 
+    public String getFatherName() {
+        return fatherName;
+    }
+
+    public void setFatherName(String fatherName) {
+        this.fatherName = fatherName;
+    }
+
+    public String getMotherName() {
+        return motherName;
+    }
+
+    public void setMotherName(String motherName) {
+        this.motherName = motherName;
+    }
+
     public MultipartFile getProfileImage() {
         return profileImage;
     }
@@ -99,6 +117,8 @@ public class UserRegistrationDto {
                 ", dob='" + dob + '\'' +
                 ", nationality='" + nationality + '\'' +
                 ", consent=" + consent +
+                ", fatherName='" + fatherName + '\'' +
+                ", motherName='" + motherName + '\'' +
                 ", hasProfileImage=" + (profileImage != null && !profileImage.isEmpty()) +
                 ", userId='" + userId + '\'' +
                 ", uin='" + uin + '\'' +

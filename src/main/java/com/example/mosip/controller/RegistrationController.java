@@ -6,26 +6,28 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import java.io.IOException;
-import java.util.Base64;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import com.example.mosip.entity.basic.UserBasicDetails;
 import com.example.mosip.repository.basic.UserBasicDetailsRepository;
 import com.example.mosip.entity.hashing.UserUinHash;
 import com.example.mosip.repository.hashing.UserUinHashRepository;
+import com.example.mosip.service.MinioStorageService;
 import com.example.mosip.util.HashUtils;
 
 @Controller
 public class RegistrationController {
-    
+
     private final UserBasicDetailsRepository userBasicDetailsRepository;
     private final UserUinHashRepository userUinHashRepository;
+    private final MinioStorageService minioStorageService;
 
     public RegistrationController(UserBasicDetailsRepository userBasicDetailsRepository,
-                                  UserUinHashRepository userUinHashRepository) {
+                                  UserUinHashRepository userUinHashRepository,
+                                  MinioStorageService minioStorageService) {
         this.userBasicDetailsRepository = userBasicDetailsRepository;
         this.userUinHashRepository = userUinHashRepository;
+        this.minioStorageService = minioStorageService;
     }
 
     @GetMapping("/")
@@ -76,16 +78,17 @@ public class RegistrationController {
             model.addAttribute("hashingDatabaseError", "Profile saved, but UIN hashing write failed.");
         }
 
-        // Process profile image for display on success page (Base64 encoding)
+        // Upload profile image to MinIO (bucket: userprofilepic) and show it on the success page
         if (registration.getProfileImage() != null && !registration.getProfileImage().isEmpty()) {
             try {
-                byte[] imageBytes = registration.getProfileImage().getBytes();
-                String base64Image = Base64.getEncoder().encodeToString(imageBytes);
-                String mimeType = registration.getProfileImage().getContentType();
-                model.addAttribute("profileImageBase64", "data:" + mimeType + ";base64," + base64Image);
-            } catch (IOException e) {
-                System.err.println("Error reading uploaded profile image: " + e.getMessage());
-                model.addAttribute("imageError", "Could not process uploaded image");
+                String objectName = minioStorageService.uploadProfileImage(
+                        registration.getProfileImage(), registration.getUserId());
+                System.out.println("Uploaded profile image to MinIO: " + objectName);
+                model.addAttribute("profileImageObject", objectName);
+                model.addAttribute("profileImageBase64", minioStorageService.getPresignedUrl(objectName));
+            } catch (Exception e) {
+                System.err.println("Error uploading profile image to MinIO: " + e.getMessage());
+                model.addAttribute("imageError", "Could not store uploaded image in object storage");
             }
         }
 

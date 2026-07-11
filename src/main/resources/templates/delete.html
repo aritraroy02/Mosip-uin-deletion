@@ -1,103 +1,119 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delete My Data - MOSIP Registry</title>
-    <!-- Google Fonts & FontAwesome -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Local CSS Style Sheet -->
+    <title>Delete My Data - MOSIP</title>
     <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .delete-page { max-width: 620px; }
+        .delete-page .form-header { text-align: center; }
+        .delete-icon { width: 52px; height: 52px; margin: 0 auto 1rem; border-radius: 50%; display: grid; place-items: center; background: #fee2e2; color: #dc2626; font-size: 1.4rem; }
+        .delete-page .form-body { padding-bottom: 1rem; }
+        .input-with-icon { position: relative; }
+        .input-with-icon .form-input { padding-left: 2.75rem; }
+        .input-with-icon i { position: absolute; top: 50%; left: 1rem; transform: translateY(-50%); color: var(--text-muted); }
+        .otp-note { display: flex; gap: .65rem; align-items: flex-start; margin: 1.25rem 0; padding: 1rem; border: 1px solid #bfdbfe; border-radius: var(--radius-md); background: #eff6ff; color: #1e3a8a; font-size: .875rem; }
+        .otp-note code { padding: .1rem .35rem; border-radius: 4px; background: #dbeafe; font-weight: 700; }
+        .verification-message { display: none; margin-bottom: 1.25rem; padding: 1rem; border-radius: var(--radius-md); font-size: .9rem; }
+        .verification-message.error { display: block; border: 1px solid #fecaca; background: #fef2f2; color: #991b1b; }
+        .verification-message.success { display: block; border: 1px solid #a7f3d0; background: #ecfdf5; color: #065f46; }
+        @media (max-width: 580px) { .form-actions { flex-direction: column-reverse; padding: 1.25rem; } .form-actions a, .form-actions button { width: 100%; margin: 0 !important; } }
+    </style>
 </head>
 <body>
-
-    <!-- Header Bar -->
-    <header class="app-header-bar">
-        <div class="header-logo-container">
-            <a href="/" class="header-logo-link">
-                <div class="header-logo">M</div>
-                <div class="header-title-group">
-                    <span class="header-title">MOSIP Registry</span>
-                    <span class="header-subtitle">Government of India</span>
+    <header class="app-header">
+        <div class="header-container">
+            <a href="/" class="brand-section">
+                <div class="brand-logo">M</div>
+                <div>
+                    <span class="brand-name">MOSIP</span>
+                    <span class="brand-tagline">UIN Management</span>
                 </div>
             </a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="/" class="nav-link">Home</a></li>
+                    <li><a href="/register" class="nav-link">Register</a></li>
+                </ul>
+            </nav>
         </div>
-        <a href="/" class="profile-icon" title="Return to Homepage" style="color: white; text-decoration: none;">
-            <i class="fa-solid fa-house"></i>
-        </a>
     </header>
 
-    <!-- Main Content Grid -->
-    <main class="main-container">
-        <div class="form-container">
+    <main class="main-content">
+        <section class="form-container delete-page" aria-labelledby="delete-title">
             <div class="form-header">
-                <div class="form-icon-circle" style="background-color: #fee2e2; color: #dc2626;">
-                    <i class="fa-solid fa-trash-can"></i>
-                </div>
-                <h2 class="form-title">Voluntary Data Purging Portal</h2>
-                <p class="form-subtitle">Enter your details to permanently delete all personal data from the national registry database networks.</p>
+                <div class="delete-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <h1 id="delete-title" class="form-header-title">Delete your identity data</h1>
+                <p class="form-header-subtitle">Verify your UIN with a one-time password before continuing.</p>
             </div>
 
-            <!-- Thymeleaf Success and Error Messages -->
-            <div th:if="${successMessage}" class="consent-alert-box" style="background-color: #ecfdf5; border-color: #10b981; color: #065f46; margin-bottom: 1.5rem; border-left-width: 4px; padding: 1rem; border-radius: 6px;">
-                <h4 style="margin: 0 0 0.25rem 0; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Data Purged Successfully
-                </h4>
-                <p th:text="${successMessage}" style="margin: 0; font-size: 0.875rem; color: #047857;"></p>
-                <div style="margin-top: 1rem;">
-                    <a href="/" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Return to Homepage</a>
-                </div>
-            </div>
+            <!-- UI only: this form does not submit data or call a backend endpoint. -->
+            <form id="delete-verification-form" novalidate>
+                <div class="form-body">
+                    <div id="verification-message" class="verification-message" role="status" aria-live="polite"></div>
 
-            <div th:if="${errorMessage}" class="consent-alert-box" style="background-color: #fef2f2; border-color: #ef4444; color: #991b1b; margin-bottom: 1.5rem; border-left-width: 4px; padding: 1rem; border-radius: 6px;">
-                <h4 style="margin: 0 0 0.25rem 0; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> Deletion Failed
-                </h4>
-                <p th:text="${errorMessage}" style="margin: 0; font-size: 0.875rem; color: #b91c1c;"></p>
-            </div>
-
-            <!-- Delete Form (Only shown if not already successfully deleted) -->
-            <form th:if="${successMessage == null}" action="/delete" method="POST" class="registration-form">
-                
-                <!-- User ID Field -->
-                <div class="form-group">
-                    <label class="form-label" for="userId">Your Unique User ID <span style="color: var(--danger);">*</span></label>
-                    <div style="position: relative;">
-                        <input type="text" id="userId" name="userId" class="form-input" placeholder="e.g. USR-A1B2C3D4" required style="padding-left: 2.5rem;">
-                        <i class="fa-solid fa-id-card-clip" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary);"></i>
+                    <div class="form-group">
+                        <label class="form-label" for="uin">UIN <span aria-hidden="true" style="color: var(--error);">*</span></label>
+                        <div class="input-with-icon">
+                            <i class="fa-solid fa-id-card" aria-hidden="true"></i>
+                            <input class="form-input" id="uin" name="uin" type="text" inputmode="numeric" autocomplete="off" pattern="[0-9]{10,16}" maxlength="16" placeholder="Enter your UIN" required>
+                        </div>
+                        <p class="form-header-subtitle">Enter the UIN issued during registration.</p>
                     </div>
-                    <p class="form-help-text">Please input your 12-character User ID assigned during registration (formatted as USR-XXXXXXXX).</p>
+
+                    <div class="form-group">
+                        <label class="form-label" for="otp">One-time password (OTP) <span aria-hidden="true" style="color: var(--error);">*</span></label>
+                        <div class="input-with-icon">
+                            <i class="fa-solid fa-key" aria-hidden="true"></i>
+                            <input class="form-input" id="otp" name="otp" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{5}" maxlength="5" placeholder="Enter 5-digit OTP" required>
+                        </div>
+                    </div>
+
+                    <div class="otp-note">
+                        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                        <span>Demo-only UI: use OTP <code>00000</code>. OTP delivery and deletion are not connected to a backend yet.</span>
+                    </div>
                 </div>
 
-                <!-- Consent to delete checkbox -->
-                <div class="consent-container" style="border-color: #fca5a5; background-color: #fff5f5; margin-top: 1.5rem;">
-                    <label class="consent-checkbox-label" style="align-items: flex-start;">
-                        <input type="checkbox" name="confirmPurge" required style="margin-top: 4px; scale: 1.1;">
-                        <span class="consent-text" style="color: #7f1d1d;">
-                            I hereby confirm and request that the professionals at MOSIP permanently delete my identity records, demographical details (Name & Phone Number), and cryptographic UIN hashes from all connected database architectures. I understand that this action is <strong>irreversible</strong> and my identity registration cannot be recovered.
-                        </span>
-                    </label>
-                </div>
-
-                <!-- Form Footer Actions -->
-                <div class="form-actions" style="margin-top: 2rem;">
-                    <a href="/" class="cta-button-secondary" style="margin-left: 0;">Cancel</a>
-                    <button type="submit" class="cta-button" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 4px 10px rgba(220, 38, 38, 0.25);">
-                        <i class="fa-solid fa-trash-can" style="margin-right: 8px;"></i> Permanently Delete My Data
+                <div class="form-actions">
+                    <a href="/" class="cta-button-secondary">Cancel</a>
+                    <button type="submit" class="cta-button" style="background: #dc2626;">
+                        Verify OTP <i class="fa-solid fa-arrow-right" style="margin-left: .5rem;"></i>
                     </button>
                 </div>
             </form>
-        </div>
+        </section>
     </main>
 
-    <!-- Footer -->
     <footer class="app-footer">
-        <p>&copy; 2024 All Rights Reserved MOSIP</p>
-        <div class="footer-links">
-            <a href="/delete" class="footer-link" style="text-decoration: underline;">Delete my data</a>
-        </div>
+        <p>&copy; 2024 MOSIP. All rights reserved.</p>
     </footer>
 
+    <script>
+        const form = document.getElementById('delete-verification-form');
+        const message = document.getElementById('verification-message');
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const uin = document.getElementById('uin').value.trim();
+            const otp = document.getElementById('otp').value.trim();
+
+            if (!/^\d{10,16}$/.test(uin)) {
+                message.className = 'verification-message error';
+                message.textContent = 'Enter a valid 10 to 16 digit UIN.';
+                return;
+            }
+            if (otp !== '00000') {
+                message.className = 'verification-message error';
+                message.textContent = 'The OTP is incorrect. For this UI demo, use 00000.';
+                return;
+            }
+
+            message.className = 'verification-message success';
+            message.textContent = 'OTP verified. This is a UI-only step; no deletion request has been sent.';
+        });
+    </script>
 </body>
 </html>

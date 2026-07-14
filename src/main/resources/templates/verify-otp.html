@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify UIN - MOSIP</title>
+    <title>Verify OTP - MOSIP</title>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -42,37 +42,39 @@
     </header>
 
     <main class="main-content">
-        <section class="form-container delete-page" aria-labelledby="delete-title">
+        <section class="form-container delete-page" aria-labelledby="verify-title">
             <div class="form-header">
-                <div class="delete-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                <h1 id="delete-title" class="form-header-title">Verify your UIN</h1>
-                <p class="form-header-subtitle">Enter your UIN and we'll send a one-time password to continue.</p>
+                <div class="delete-icon"><i class="fa-solid fa-key"></i></div>
+                <h1 id="verify-title" class="form-header-title">Verify OTP</h1>
+                <p class="form-header-subtitle">Enter the one-time password to check your UIN in the registry.</p>
             </div>
 
-            <form id="uin-form" method="post" action="/delete/send-otp" novalidate>
+            <form th:action="@{/delete/verify-otp}" method="post">
                 <div class="form-body">
                     <div th:if="${errorMessage}" class="verification-message error" role="status" aria-live="polite" th:text="${errorMessage}"></div>
-                    <div id="verification-message" class="verification-message error" role="status" aria-live="polite" style="display:none;"></div>
+                    <div th:if="${successMessage}" class="verification-message success" role="status" aria-live="polite" th:text="${successMessage}"></div>
+
+                    <input type="hidden" name="uin" th:value="${uin}">
 
                     <div class="form-group">
-                        <label class="form-label" for="uin">UIN <span aria-hidden="true" style="color: var(--error);">*</span></label>
+                        <label class="form-label" for="otp">One-time password (OTP) <span aria-hidden="true" style="color: var(--error);">*</span></label>
                         <div class="input-with-icon">
-                            <i class="fa-solid fa-id-card" aria-hidden="true"></i>
-                            <input class="form-input" id="uin" name="uin" type="text" inputmode="numeric" autocomplete="off" pattern="[0-9]{10,16}" maxlength="16" placeholder="Enter your UIN" th:value="${uin}" required>
+                            <i class="fa-solid fa-key" aria-hidden="true"></i>
+                            <input class="form-input" id="otp" name="otp" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{5}" maxlength="5" placeholder="Enter 5-digit OTP" required>
                         </div>
-                        <p class="form-header-subtitle">Enter the UIN issued during registration.</p>
+                        <p class="form-header-subtitle">Sent to the contact registered against UIN <strong th:text="${uin}"></strong>.</p>
                     </div>
 
                     <div class="otp-note">
                         <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-                        <span>Demo-only: a one-time password will be requested on the next step. Use OTP <code>00000</code>.</span>
+                        <span>Demo-only: use OTP <code>00000</code>. OTP delivery is not connected to an SMS/email provider yet.</span>
                     </div>
                 </div>
 
                 <div class="form-actions">
-                    <a href="/" class="cta-button-secondary">Cancel</a>
+                    <a href="/delete" class="cta-button-secondary">Back</a>
                     <button type="submit" class="cta-button" style="background: #dc2626;">
-                        Send OTP <i class="fa-solid fa-paper-plane" style="margin-left: .5rem;"></i>
+                        Verify OTP <i class="fa-solid fa-arrow-right" style="margin-left: .5rem;"></i>
                     </button>
                 </div>
             </form>
@@ -82,20 +84,5 @@
     <footer class="app-footer">
         <p>&copy; 2024 MOSIP. All rights reserved.</p>
     </footer>
-
-    <script>
-        const form = document.getElementById('uin-form');
-        const message = document.getElementById('verification-message');
-
-        form.addEventListener('submit', (event) => {
-            const uin = document.getElementById('uin').value.trim();
-            if (!/^\d{10,16}$/.test(uin)) {
-                event.preventDefault();
-                message.style.display = 'block';
-                message.className = 'verification-message error';
-                message.textContent = 'Enter a valid 10 to 16 digit UIN.';
-            }
-        });
-    </script>
 </body>
 </html>

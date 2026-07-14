@@ -123,40 +123,57 @@ public class RegistrationController {
         return "delete";
     }
 
-    @PostMapping("/delete")
-    public String deleteUserData(@org.springframework.web.bind.annotation.RequestParam("userId") String userId,
-                                 @org.springframework.web.bind.annotation.RequestParam(value = "confirmPurge", required = false) Boolean confirmPurge,
-                                 Model model) {
-        if (userId == null || userId.trim().isEmpty()) {
-            model.addAttribute("errorMessage", "User ID is required.");
-            return "delete";
-        }
-        if (confirmPurge == null || !confirmPurge) {
-            model.addAttribute("errorMessage", "You must check the confirmation checkbox to proceed.");
-            return "delete";
-        }
-
-        userId = userId.trim();
-        boolean basicExists = userBasicDetailsRepository.existsById(userId);
-        boolean hashExists = userUinHashRepository.existsById(userId);
-
-        if (!basicExists && !hashExists) {
-            model.addAttribute("errorMessage", "The User ID '" + userId + "' was not found in our registries.");
+    /**
+     * Step 1: accept a UIN and "send" an OTP. Validates the UIN format, then routes to the
+     * OTP verification page carrying the UIN forward. (Demo-only: OTP delivery is not wired
+     * to an SMS/email provider — the fixed demo OTP {@code 00000} is used on the next page.)
+     */
+    @PostMapping("/delete/send-otp")
+    public String sendOtp(@org.springframework.web.bind.annotation.RequestParam("uin") String uin,
+                          Model model) {
+        if (uin == null || !uin.trim().matches("\\d{10,16}")) {
+            model.addAttribute("errorMessage", "Enter a valid 10 to 16 digit UIN.");
             return "delete";
         }
 
+        uin = uin.trim();
+        // Carry the UIN forward to the verification page.
+        model.addAttribute("uin", uin);
+        return "verify-otp";
+    }
+
+    /**
+     * Step 2: verify the OTP, then check whether the UIN exists in the hashing database
+     * (Database 2) by re-hashing it with the salt-modulo scheme and looking up the salted hash.
+     */
+    @PostMapping("/delete/verify-otp")
+    public String verifyOtp(@org.springframework.web.bind.annotation.RequestParam("uin") String uin,
+                            @org.springframework.web.bind.annotation.RequestParam("otp") String otp,
+                            Model model) {
+        model.addAttribute("uin", uin);
+
+        if (uin == null || !uin.trim().matches("\\d{10,16}")) {
+            model.addAttribute("errorMessage", "Enter a valid 10 to 16 digit UIN.");
+            return "delete";
+        }
+        if (otp == null || !otp.trim().equals("00000")) {
+            model.addAttribute("errorMessage", "The OTP is incorrect. For this demo, use 00000.");
+            return "verify-otp";
+        }
+
+        uin = uin.trim();
         try {
-            if (basicExists) {
-                userBasicDetailsRepository.deleteById(userId);
+            String uinSaltedHash = saltModuloHashService.hash(uin);
+            boolean exists = userUinHashRepository.existsByUinSaltedHash(uinSaltedHash);
+            if (exists) {
+                model.addAttribute("successMessage", "OTP verified. This UIN exists in the identity registry.");
+            } else {
+                model.addAttribute("errorMessage", "OTP verified, but this UIN was not found in the identity registry.");
             }
-            if (hashExists) {
-                userUinHashRepository.deleteById(userId);
-            }
-            model.addAttribute("successMessage", "All demographic details and security hash archives for User ID '" + userId + "' have been successfully purged from all registries.");
         } catch (Exception e) {
-            model.addAttribute("errorMessage", "An error occurred during database purging: " + e.getMessage());
+            model.addAttribute("errorMessage", "An error occurred while checking the UIN: " + e.getMessage());
         }
 
-        return "delete";
+        return "verify-otp";
     }
 }

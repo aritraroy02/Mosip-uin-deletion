@@ -124,9 +124,11 @@ public class RegistrationController {
     }
 
     /**
-     * Step 1: accept a UIN and "send" an OTP. Validates the UIN format, then routes to the
-     * OTP verification page carrying the UIN forward. (Demo-only: OTP delivery is not wired
-     * to an SMS/email provider — the fixed demo OTP {@code 00000} is used on the next page.)
+     * Step 1: accept a UIN and "send" an OTP. Validates the UIN format, then confirms the UIN
+     * exists in the hashing database (Database 2) before routing to the OTP verification page.
+     * If the UIN is not found, the user is kept on the delete page with a "user does not exist"
+     * message. (Demo-only: OTP delivery is not wired to an SMS/email provider — the fixed demo
+     * OTP {@code 00000} is used on the next page.)
      */
     @PostMapping("/delete/send-otp")
     public String sendOtp(@org.springframework.web.bind.annotation.RequestParam("uin") String uin,
@@ -137,8 +139,22 @@ public class RegistrationController {
         }
 
         uin = uin.trim();
-        // Carry the UIN forward to the verification page.
         model.addAttribute("uin", uin);
+
+        // Only send an OTP if the UIN actually exists in the identity registry.
+        try {
+            String uinSaltedHash = saltModuloHashService.hash(uin);
+            boolean exists = userUinHashRepository.existsByUinSaltedHash(uinSaltedHash);
+            if (!exists) {
+                model.addAttribute("errorMessage", "This UIN does not exist in the identity registry.");
+                return "delete";
+            }
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "An error occurred while checking the UIN: " + e.getMessage());
+            return "delete";
+        }
+
+        // UIN exists — carry it forward to the OTP verification page.
         return "verify-otp";
     }
 

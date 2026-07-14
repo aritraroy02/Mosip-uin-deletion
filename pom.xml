@@ -48,6 +48,14 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Automatic application restart on classpath changes during development -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+
 		<!-- MinIO / S3-compatible object storage for profile images -->
 		<dependency>
 			<groupId>io.minio</groupId>

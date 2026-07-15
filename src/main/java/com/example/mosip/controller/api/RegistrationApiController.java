@@ -6,6 +6,8 @@ import com.example.mosip.entity.hashing.UserUinHash;
 import com.example.mosip.repository.hashing.UserUinHashRepository;
 import com.example.mosip.entity.parent.UserParentDetails;
 import com.example.mosip.repository.parent.UserParentDetailsRepository;
+import com.example.mosip.entity.basic.UserDataLocation;
+import com.example.mosip.repository.basic.UserDataLocationRepository;
 import com.example.mosip.service.SaltModuloHashService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,15 +23,18 @@ public class RegistrationApiController {
     private final UserBasicDetailsRepository userBasicDetailsRepository;
     private final UserUinHashRepository userUinHashRepository;
     private final UserParentDetailsRepository userParentDetailsRepository;
+    private final UserDataLocationRepository userDataLocationRepository;
     private final SaltModuloHashService saltModuloHashService;
 
     public RegistrationApiController(UserBasicDetailsRepository userBasicDetailsRepository,
                                      UserUinHashRepository userUinHashRepository,
                                      UserParentDetailsRepository userParentDetailsRepository,
+                                     UserDataLocationRepository userDataLocationRepository,
                                      SaltModuloHashService saltModuloHashService) {
         this.userBasicDetailsRepository = userBasicDetailsRepository;
         this.userUinHashRepository = userUinHashRepository;
         this.userParentDetailsRepository = userParentDetailsRepository;
+        this.userDataLocationRepository = userDataLocationRepository;
         this.saltModuloHashService = saltModuloHashService;
     }
 
@@ -99,6 +104,15 @@ public class RegistrationApiController {
             response.put("uinSaltedHash", hashedUin);
             response.put("profileImage", profileImage != null ? profileImage : "");
             response.put("status", "SUCCESS");
+
+            // Record data location registry for this user (API flow)
+            try {
+                UserDataLocation location = new UserDataLocation(
+                        userId, hashedUin, true, true, true, false);
+                userDataLocationRepository.save(location);
+            } catch (Exception locEx) {
+                System.err.println("Failed to save data-location for API user: " + locEx.getMessage());
+            }
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {

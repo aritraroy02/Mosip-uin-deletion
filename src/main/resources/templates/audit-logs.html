@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Logs - MOSIP UIN Management</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ── Audit Logs Page Styles ── */
+        .audit-page { max-width: 1100px; margin: 0 auto; }
+
+        /* Search Bar */
+        .audit-search-bar {
+            display: flex; gap: 0.75rem; margin-bottom: 2rem;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 1.25rem 1.5rem;
+            box-shadow: var(--shadow-sm); align-items: center;
+        }
+        .audit-search-bar i { color: var(--text-muted); font-size: 1.1rem; }
+        .audit-search-input {
+            flex: 1; border: none; outline: none; font-family: inherit;
+            font-size: 0.95rem; color: var(--text-primary); background: transparent;
+        }
+        .audit-search-input::placeholder { color: var(--text-muted); }
+        .audit-search-btn {
+            padding: 0.6rem 1.5rem; border-radius: var(--radius-md);
+            background: var(--primary); color: #fff; border: none;
+            font-weight: 600; font-size: 0.875rem; cursor: pointer;
+            transition: var(--transition); font-family: inherit;
+        }
+        .audit-search-btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .audit-clear-btn {
+            padding: 0.6rem 1rem; border-radius: var(--radius-md);
+            background: transparent; color: var(--text-secondary); border: 1px solid var(--border);
+            font-weight: 500; font-size: 0.875rem; cursor: pointer;
+            transition: var(--transition); text-decoration: none; font-family: inherit;
+            display: inline-flex; align-items: center;
+        }
+        .audit-clear-btn:hover { background: var(--background); border-color: var(--text-muted); }
+
+        /* Stats Cards */
+        .stats-row {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 1rem; margin-bottom: 2rem;
+        }
+        @media (max-width: 768px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 420px) { .stats-row { grid-template-columns: 1fr; } }
+        .stat-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-md); padding: 1.25rem 1.5rem;
+            box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
+            transition: var(--transition);
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        }
+        .stat-card.total::before { background: linear-gradient(90deg, var(--primary), #6366f1); }
+        .stat-card.success::before { background: linear-gradient(90deg, #059669, #34d399); }
+        .stat-card.partial::before { background: linear-gradient(90deg, #d97706, #fbbf24); }
+        .stat-card.failed::before { background: linear-gradient(90deg, #dc2626, #f87171); }
+        .stat-icon {
+            width: 40px; height: 40px; border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; margin-bottom: 0.75rem;
+        }
+        .stat-card.total .stat-icon { background: #eff6ff; color: var(--primary); }
+        .stat-card.success .stat-icon { background: #ecfdf5; color: #059669; }
+        .stat-card.partial .stat-icon { background: #fffbeb; color: #d97706; }
+        .stat-card.failed .stat-icon { background: #fef2f2; color: #dc2626; }
+        .stat-value { font-size: 1.75rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; }
+        .stat-label { font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); margin-top: 0.15rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Audit Table Container */
+        .audit-table-container {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+        .audit-table-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border);
+            background: var(--primary-light);
+        }
+        .audit-table-title {
+            font-size: 1.1rem; font-weight: 700; color: var(--primary);
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .audit-table-count { font-size: 0.8rem; color: var(--text-secondary); font-weight: 400; }
+
+        /* Table */
+        .audit-table {
+            width: 100%; border-collapse: collapse; font-size: 0.875rem;
+        }
+        .audit-table thead th {
+            padding: 0.875rem 1rem; text-align: left; font-weight: 600;
+            color: var(--text-secondary); font-size: 0.75rem; text-transform: uppercase;
+            letter-spacing: 0.5px; border-bottom: 1px solid var(--border);
+            background: #f8fafc; white-space: nowrap;
+        }
+        .audit-table tbody tr {
+            border-bottom: 1px solid var(--border); transition: var(--transition);
+        }
+        .audit-table tbody tr:last-child { border-bottom: none; }
+        .audit-table tbody tr:hover { background: #f8fafc; }
+        .audit-table tbody td {
+            padding: 0.875rem 1rem; color: var(--text-primary); vertical-align: middle;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.2rem 0.6rem; border-radius: 9999px;
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.3px; white-space: nowrap;
+        }
+        .status-badge.purged, .status-badge.success { background: #d1fae5; color: #065f46; }
+        .status-badge.not-found { background: #fef3c7; color: #92400e; }
+        .status-badge.not-expected { background: #f1f5f9; color: #64748b; }
+        .status-badge.failed { background: #fee2e2; color: #991b1b; }
+        .status-badge.partial { background: #fef3c7; color: #92400e; }
+        .status-badge i { font-size: 0.6rem; }
+
+        /* Store Status Dots */
+        .store-dots {
+            display: flex; gap: 0.4rem; align-items: center;
+        }
+        .store-dot {
+            width: 26px; height: 26px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.6rem; font-weight: 700; cursor: default;
+            transition: var(--transition); position: relative;
+        }
+        .store-dot:hover { transform: scale(1.2); z-index: 2; }
+        .store-dot.purged { background: #d1fae5; color: #065f46; border: 1.5px solid #34d399; }
+        .store-dot.not-found { background: #fef3c7; color: #92400e; border: 1.5px solid #fbbf24; }
+        .store-dot.not-expected { background: #f1f5f9; color: #94a3b8; border: 1.5px solid #e2e8f0; }
+        .store-dot.failed { background: #fee2e2; color: #991b1b; border: 1.5px solid #f87171; }
+
+        /* Tooltip on dot hover */
+        .store-dot[title]:hover::after {
+            content: attr(title); position: absolute; bottom: 120%; left: 50%;
+            transform: translateX(-50%); background: #1e293b; color: #fff;
+            padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.65rem;
+            white-space: nowrap; z-index: 10; pointer-events: none;
+        }
+
+        /* Detail Row */
+        .detail-cell { font-size: 0.8rem; color: var(--text-secondary); max-width: 250px; }
+        .detail-cell .detail-text { word-break: break-word; }
+
+        /* User ID styling */
+        .user-id-cell { font-family: 'Menlo', 'Consolas', monospace; font-size: 0.825rem; font-weight: 600; color: var(--primary); }
+
+        /* Timestamp */
+        .timestamp-cell { font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; }
+
+        /* Empty State */
+        .empty-state {
+            padding: 4rem 2rem; text-align: center; color: var(--text-muted);
+        }
+        .empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+        .empty-state p { font-size: 1rem; font-weight: 500; }
+        .empty-state .empty-hint { font-size: 0.85rem; margin-top: 0.5rem; }
+
+        /* Legend */
+        .status-legend {
+            display: flex; flex-wrap: wrap; gap: 1rem; padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border); background: #f8fafc;
+            font-size: 0.75rem; color: var(--text-secondary);
+        }
+        .legend-item { display: flex; align-items: center; gap: 0.35rem; }
+        .legend-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+        }
+        .legend-dot.purged { background: #34d399; }
+        .legend-dot.not-found { background: #fbbf24; }
+        .legend-dot.not-expected { background: #cbd5e1; }
+        .legend-dot.failed { background: #f87171; }
+
+        /* Responsive Table Scroll */
+        .table-scroll { overflow-x: auto; }
+
+        /* Page Title */
+        .page-title-section {
+            margin-bottom: 1.5rem;
+        }
+        .page-title {
+            font-size: 1.75rem; font-weight: 800; color: var(--text-primary);
+            letter-spacing: -0.5px; display: flex; align-items: center; gap: 0.75rem;
+        }
+        .page-title i {
+            color: var(--primary); font-size: 1.5rem;
+            background: var(--primary-light); width: 48px; height: 48px;
+            border-radius: var(--radius-sm); display: flex; align-items: center;
+            justify-content: center;
+        }
+        .page-subtitle { font-size: 0.95rem; color: var(--text-secondary); margin-top: 0.25rem; margin-left: 3.75rem; }
+
+        /* Audit ID tag */
+        .audit-id-tag { font-size: 0.7rem; color: var(--text-muted); font-family: monospace; }
+    </style>
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header class="app-header">
+        <div class="header-container">
+            <a href="/" class="brand-section">
+                <div class="brand-logo">M</div>
+                <div>
+                    <span class="brand-name">MOSIP</span>
+                    <span class="brand-tagline">UIN Management</span>
+                </div>
+            </a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="/" class="nav-link">Home</a></li>
+                    <li><a href="/register" class="nav-link">Register</a></li>
+                    <li><a href="/audit-logs" class="nav-link active">Audit Logs</a></li>
+                </ul>
+            </nav>
+            <div class="profile-container" onclick="location.href='/register'">
+                <div class="profile-avatar" title="User Profile">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content audit-page">
+
+        <!-- Page Title -->
+        <div class="page-title-section">
+            <h1 class="page-title">
+                <i class="fa-solid fa-clipboard-list"></i>
+                Deletion Audit Logs
+            </h1>
+            <p class="page-subtitle">Complete traceability of all UIN deletion operations across every data store.</p>
+        </div>
+
+        <!-- Search Bar -->
+        <form th:action="@{/audit-logs}" method="get" class="audit-search-bar">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" name="search" class="audit-search-input"
+                   placeholder="Search by User ID (e.g. USR-A1B2C3D4)..."
+                   th:value="${search}" autocomplete="off">
+            <button type="submit" class="audit-search-btn">
+                <i class="fa-solid fa-search" style="margin-right: 0.4rem;"></i>Search
+            </button>
+            <a th:if="${search != null}" href="/audit-logs" class="audit-clear-btn">
+                <i class="fa-solid fa-xmark" style="margin-right: 0.3rem;"></i>Clear
+            </a>
+        </form>
+
+        <!-- Stats Cards -->
+        <div class="stats-row">
+            <div class="stat-card total">
+                <div class="stat-icon"><i class="fa-solid fa-layer-group"></i></div>
+                <div class="stat-value" th:text="${totalCount}">0</div>
+                <div class="stat-label">Total Deletions</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="stat-value" th:text="${successCount}">0</div>
+                <div class="stat-label">Fully Purged</div>
+            </div>
+            <div class="stat-card partial">
+                <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="stat-value" th:text="${partialCount}">0</div>
+                <div class="stat-label">Partial</div>
+            </div>
+            <div class="stat-card failed">
+                <div class="stat-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+                <div class="stat-value" th:text="${failedCount}">0</div>
+                <div class="stat-label">Failed</div>
+            </div>
+        </div>
+
+        <!-- Audit Table -->
+        <div class="audit-table-container">
+            <div class="audit-table-header">
+                <h2 class="audit-table-title">
+                    <i class="fa-solid fa-table-list"></i>
+                    Deletion Records
+                    <span class="audit-table-count" th:text="'(' + ${totalCount} + ' records)'"></span>
+                </h2>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${#lists.isEmpty(audits)}" class="empty-state">
+                <i class="fa-solid fa-inbox"></i>
+                <p>No deletion records found</p>
+                <p class="empty-hint" th:if="${search != null}">Try adjusting your search query or <a href="/audit-logs">view all records</a>.</p>
+                <p class="empty-hint" th:if="${search == null}">Deletion audit logs will appear here after a UIN is deleted.</p>
+            </div>
+
+            <!-- Table -->
+            <div th:if="${!#lists.isEmpty(audits)}" class="table-scroll">
+                <table class="audit-table">
+                    <thead>
+                        <tr>
+                            <th>Audit #</th>
+                            <th>Timestamp</th>
+                            <th>User ID</th>
+                            <th>Overall</th>
+                            <th title="Basic DB | Parent DB | MinIO | Hash DB">Store Status</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="audit : ${audits}">
+                            <!-- Audit ID -->
+                            <td class="audit-id-tag" th:text="'#' + ${audit.id}"></td>
+
+                            <!-- Timestamp -->
+                            <td class="timestamp-cell">
+                                <span th:text="${#temporals.format(audit.attemptedAt, 'dd MMM yyyy, HH:mm:ss')}">15 Jul 2026, 22:00:00</span>
+                            </td>
+
+                            <!-- User ID -->
+                            <td class="user-id-cell" th:text="${audit.userId != null ? audit.userId : '—'}">USR-XXXXXXXX</td>
+
+                            <!-- Overall Status Badge -->
+                            <td>
+                                <span th:if="${audit.overallStatus == 'SUCCESS'}" class="status-badge success">
+                                    <i class="fa-solid fa-check"></i> Success
+                                </span>
+                                <span th:if="${audit.overallStatus == 'PARTIAL'}" class="status-badge partial">
+                                    <i class="fa-solid fa-exclamation"></i> Partial
+                                </span>
+                                <span th:if="${audit.overallStatus == 'FAILED'}" class="status-badge failed">
+                                    <i class="fa-solid fa-xmark"></i> Failed
+                                </span>
+                            </td>
+
+                            <!-- Per-Store Status Dots -->
+                            <td>
+                                <div class="store-dots">
+                                    <!-- Basic DB -->
+                                    <div th:if="${audit.basicStatus == 'PURGED'}" class="store-dot purged" title="Basic DB: Purged"><i class="fa-solid fa-check"></i></div>
+                                    <div th:if="${audit.basicStatus == 'NOT_FOUND'}" class="store-dot not-found" title="Basic DB: Not Found"><i class="fa-solid fa-question"></i></div>
+                                    <div th:if="${audit.basicStatus == 'NOT_EXPECTED'}" class="store-dot not-expected" title="Basic DB: Not Expected"><i class="fa-solid fa-minus"></i></div>
+                                    <div th:if="${audit.basicStatus == 'FAILED'}" class="store-dot failed" title="Basic DB: Failed"><i class="fa-solid fa-xmark"></i></div>
+                                    <div th:if="${audit.basicStatus == null}" class="store-dot not-expected" title="Basic DB: N/A"><i class="fa-solid fa-minus"></i></div>
+
+                                    <!-- Parent DB -->
+                                    <div th:if="${audit.parentStatus == 'PURGED'}" class="store-dot purged" title="Parent DB: Purged"><i class="fa-solid fa-check"></i></div>
+                                    <div th:if="${audit.parentStatus == 'NOT_FOUND'}" class="store-dot not-found" title="Parent DB: Not Found"><i class="fa-solid fa-question"></i></div>
+                                    <div th:if="${audit.parentStatus == 'NOT_EXPECTED'}" class="store-dot not-expected" title="Parent DB: Not Expected"><i class="fa-solid fa-minus"></i></div>
+                                    <div th:if="${audit.parentStatus == 'FAILED'}" class="store-dot failed" title="Parent DB: Failed"><i class="fa-solid fa-xmark"></i></div>
+                                    <div th:if="${audit.parentStatus == null}" class="store-dot not-expected" title="Parent DB: N/A"><i class="fa-solid fa-minus"></i></div>
+
+                                    <!-- MinIO -->
+                                    <div th:if="${audit.minioStatus == 'PURGED'}" class="store-dot purged" title="MinIO: Purged"><i class="fa-solid fa-check"></i></div>
+                                    <div th:if="${audit.minioStatus == 'NOT_FOUND'}" class="store-dot not-found" title="MinIO: Not Found"><i class="fa-solid fa-question"></i></div>
+                                    <div th:if="${audit.minioStatus == 'NOT_EXPECTED'}" class="store-dot not-expected" title="MinIO: Not Expected"><i class="fa-solid fa-minus"></i></div>
+                                    <div th:if="${audit.minioStatus == 'FAILED'}" class="store-dot failed" title="MinIO: Failed"><i class="fa-solid fa-xmark"></i></div>
+                                    <div th:if="${audit.minioStatus == null}" class="store-dot not-expected" title="MinIO: N/A"><i class="fa-solid fa-minus"></i></div>
+
+                                    <!-- Hash DB -->
+                                    <div th:if="${audit.hashStatus == 'PURGED'}" class="store-dot purged" title="Hash DB: Purged"><i class="fa-solid fa-check"></i></div>
+                                    <div th:if="${audit.hashStatus == 'NOT_FOUND'}" class="store-dot not-found" title="Hash DB: Not Found"><i class="fa-solid fa-question"></i></div>
+                                    <div th:if="${audit.hashStatus == 'NOT_EXPECTED'}" class="store-dot not-expected" title="Hash DB: Not Expected"><i class="fa-solid fa-minus"></i></div>
+                                    <div th:if="${audit.hashStatus == 'FAILED'}" class="store-dot failed" title="Hash DB: Failed"><i class="fa-solid fa-xmark"></i></div>
+                                    <div th:if="${audit.hashStatus == null}" class="store-dot not-expected" title="Hash DB: N/A"><i class="fa-solid fa-minus"></i></div>
+                                </div>
+                            </td>
+
+                            <!-- Detail -->
+                            <td class="detail-cell">
+                                <span th:if="${audit.detail != null}" class="detail-text" th:text="${audit.detail}"></span>
+                                <span th:if="${audit.detail == null}" style="color: var(--text-muted);">—</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Legend -->
+            <div th:if="${!#lists.isEmpty(audits)}" class="status-legend">
+                <span style="font-weight: 600; margin-right: 0.25rem;">Legend:</span>
+                <div class="legend-item"><div class="legend-dot purged"></div> Purged</div>
+                <div class="legend-item"><div class="legend-dot not-found"></div> Not Found</div>
+                <div class="legend-item"><div class="legend-dot not-expected"></div> Not Expected</div>
+                <div class="legend-item"><div class="legend-dot failed"></div> Failed</div>
+                <span style="margin-left: auto; color: var(--text-muted);">
+                    Dots order: Basic DB → Parent DB → MinIO → Hash DB
+                </span>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <p>&copy; 2024 MOSIP. All rights reserved.</p>
+        <div class="footer-links">
+            <a href="/delete" class="footer-link" style="text-decoration: underline;">Delete my data</a>
+            <a href="/audit-logs" class="footer-link" style="text-decoration: underline;">Audit Logs</a>
+        </div>
+    </footer>
+
+</body>
+</html>

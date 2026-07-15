@@ -9,7 +9,10 @@
     <style>
         .success-page { max-width: 650px; }
         .success-page .form-header { text-align: center; }
-        .success-badge-large { width: 64px; height: 64px; margin: 0 auto 1rem; border-radius: 50%; display: grid; place-items: center; background: #ecfdf5; color: #059669; font-size: 1.8rem; border: 2px solid #a7f3d0; }
+        .success-badge-large { width: 64px; height: 64px; margin: 0 auto 1rem; border-radius: 50%; display: grid; place-items: center; font-size: 1.8rem; border: 2px solid; }
+        .success-badge-large.status-success { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
+        .success-badge-large.status-partial { background: #fffbeb; color: #d97706; border-color: #fde68a; }
+        .success-badge-large.status-failed { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
         .audit-trail { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); padding: 1.75rem; margin-bottom: 2rem; box-shadow: var(--shadow-sm); }
         .audit-title { font-size: 1.05rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; }
         .timeline { display: flex; flex-direction: column; gap: 1.5rem; position: relative; padding-left: 1rem; }
@@ -19,6 +22,7 @@
         .timeline-marker.completed { background: #d1fae5; color: #065f46; box-shadow: 0 0 0 1px #34d399; }
         .timeline-marker.skipped { background: #fef3c7; color: #92400e; box-shadow: 0 0 0 1px #fbbf24; }
         .timeline-marker.failed { background: #fee2e2; color: #991b1b; box-shadow: 0 0 0 1px #f87171; }
+        .timeline-marker.not-expected { background: #f1f5f9; color: #94a3b8; box-shadow: 0 0 0 1px #e2e8f0; }
         .timeline-content { flex: 1; }
         .timeline-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.15rem; }
         .timeline-title { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); }
@@ -26,10 +30,17 @@
         .timeline-status.completed { background: #d1fae5; color: #065f46; }
         .timeline-status.skipped { background: #fef3c7; color: #92400e; }
         .timeline-status.failed { background: #fee2e2; color: #991b1b; }
+        .timeline-status.not-expected { background: #f1f5f9; color: #94a3b8; }
         .timeline-desc { font-size: 0.825rem; color: var(--text-secondary); }
         .summary-banner { border-radius: var(--radius-md); background: #f8fafc; padding: 1.25rem; border: 1px solid var(--border); margin-bottom: 1.5rem; text-align: center; }
         .summary-banner p { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
         .summary-banner strong { font-size: 1.1rem; color: var(--text-primary); }
+        .audit-ref { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted); }
+        .audit-ref-id { font-family: 'Menlo', 'Consolas', monospace; color: var(--primary); font-weight: 600; }
+        .overall-badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.5rem; }
+        .overall-badge.success { background: #d1fae5; color: #065f46; }
+        .overall-badge.partial { background: #fef3c7; color: #92400e; }
+        .overall-badge.failed { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
@@ -46,6 +57,7 @@
                 <ul class="nav-links">
                     <li><a href="/" class="nav-link">Home</a></li>
                     <li><a href="/register" class="nav-link">Register</a></li>
+                    <li><a href="/audit-logs" class="nav-link">Audit Logs</a></li>
                 </ul>
             </nav>
         </div>
@@ -54,9 +66,31 @@
     <main class="main-content">
         <section class="form-container success-page" aria-labelledby="success-title">
             <div class="form-header">
-                <div class="success-badge-large"><i class="fa-solid fa-circle-check"></i></div>
-                <h1 id="success-title" class="form-header-title">Identity Record Purged</h1>
-                <p class="form-header-subtitle">Your voluntary data deletion request has been completed successfully.</p>
+                <!-- Dynamic badge color based on overall audit status -->
+                <div th:if="${audit != null && audit.overallStatus == 'SUCCESS'}" class="success-badge-large status-success"><i class="fa-solid fa-circle-check"></i></div>
+                <div th:if="${audit != null && audit.overallStatus == 'PARTIAL'}" class="success-badge-large status-partial"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div th:if="${audit != null && audit.overallStatus == 'FAILED'}" class="success-badge-large status-failed"><i class="fa-solid fa-circle-xmark"></i></div>
+                <div th:if="${audit == null}" class="success-badge-large status-success"><i class="fa-solid fa-circle-check"></i></div>
+
+                <h1 id="success-title" class="form-header-title"
+                    th:text="${audit != null && audit.overallStatus == 'PARTIAL'} ? 'Partial Deletion Completed'
+                           : (${audit != null && audit.overallStatus == 'FAILED'} ? 'Deletion Failed'
+                           : 'Identity Record Purged')">
+                    Identity Record Purged
+                </h1>
+                <p class="form-header-subtitle"
+                   th:text="${audit != null && audit.overallStatus == 'PARTIAL'} ? 'Some data stores could not be reached. See details below.'
+                          : (${audit != null && audit.overallStatus == 'FAILED'} ? 'None of the data stores could be purged. Please try again later.'
+                          : 'Your voluntary data deletion request has been completed successfully.')">
+                    Your voluntary data deletion request has been completed successfully.
+                </p>
+
+                <!-- Overall status badge -->
+                <div th:if="${audit != null}">
+                    <span th:if="${audit.overallStatus == 'SUCCESS'}" class="overall-badge success"><i class="fa-solid fa-check"></i> All Stores Purged</span>
+                    <span th:if="${audit.overallStatus == 'PARTIAL'}" class="overall-badge partial"><i class="fa-solid fa-exclamation"></i> Partial — Some Stores Failed</span>
+                    <span th:if="${audit.overallStatus == 'FAILED'}" class="overall-badge failed"><i class="fa-solid fa-xmark"></i> All Stores Failed</span>
+                </div>
             </div>
 
             <!-- Profile summary detail -->
@@ -64,8 +98,13 @@
                 <p>Purged User ID</p>
                 <strong th:text="${userId}">USR-XXXXXXXX</strong>
                 <p style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">
-                    All associated data was deleted in the exact sequence shown below.
+                    All associated data was processed in the exact sequence shown below.
                 </p>
+                <!-- Audit reference ID -->
+                <div th:if="${audit != null && audit.id != null}" class="audit-ref">
+                    <i class="fa-solid fa-fingerprint"></i>
+                    Audit Reference: <span class="audit-ref-id" th:text="'#' + ${audit.id}">#1</span>
+                </div>
             </div>
 
             <!-- Auditable Deletion Sequence Timeline -->
@@ -78,57 +117,120 @@
                 <div class="timeline">
                     <!-- Step 1: Basic details -->
                     <div class="timeline-item">
-                        <div class="timeline-marker completed"><i class="fa-solid fa-user-xmark"></i></div>
+                        <div th:classappend="${steps['Demographic Details (user_basic_details)'] == 'SUCCESSFULLY_PURGED'} ? 'completed'
+                                           : (${steps['Demographic Details (user_basic_details)'] != null && steps['Demographic Details (user_basic_details)'].startsWith('FAILED')} ? 'failed'
+                                           : (${steps['Demographic Details (user_basic_details)'] == 'NOT_EXPECTED'} ? 'not-expected' : 'skipped'))"
+                             class="timeline-marker">
+                            <i th:classappend="${steps['Demographic Details (user_basic_details)'] != null && steps['Demographic Details (user_basic_details)'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
+                                             : (${steps['Demographic Details (user_basic_details)'] == 'NOT_EXPECTED'} ? 'fa-solid fa-minus' : 'fa-solid fa-user-xmark')"
+                               class=""></i>
+                        </div>
                         <div class="timeline-content">
                             <div class="timeline-header">
                                 <span class="timeline-title">1. Demographic Records</span>
-                                <span class="timeline-status completed" th:text="${steps['Demographic Details (user_basic_details)']} == 'SUCCESSFULLY_PURGED' ? 'Completed' : 'Skipped'">Completed</span>
+                                <span th:classappend="${steps['Demographic Details (user_basic_details)'] == 'SUCCESSFULLY_PURGED'} ? 'completed'
+                                                    : (${steps['Demographic Details (user_basic_details)'] != null && steps['Demographic Details (user_basic_details)'].startsWith('FAILED')} ? 'failed'
+                                                    : (${steps['Demographic Details (user_basic_details)'] == 'NOT_EXPECTED'} ? 'not-expected' : 'skipped'))"
+                                      class="timeline-status"
+                                      th:text="${steps['Demographic Details (user_basic_details)'] == 'SUCCESSFULLY_PURGED'} ? 'Purged'
+                                            : (${steps['Demographic Details (user_basic_details)'] != null && steps['Demographic Details (user_basic_details)'].startsWith('FAILED')} ? 'Failed'
+                                            : (${steps['Demographic Details (user_basic_details)'] == 'NOT_EXPECTED'} ? 'Not Expected' : 'Skipped'))">
+                                    Purged
+                                </span>
                             </div>
-                            <p class="timeline-desc">Demographic fields (Name, Phone) deleted from primary Database 1.</p>
+                            <p class="timeline-desc">Demographic fields (Name, Phone) — primary Database 1.</p>
                         </div>
                     </div>
 
                     <!-- Step 2: Parent details -->
                     <div class="timeline-item">
-                        <div class="timeline-marker completed"><i class="fa-solid fa-users-slash"></i></div>
+                        <div th:classappend="${steps['Parent Details (user_parent_details)'] == 'SUCCESSFULLY_PURGED'} ? 'completed'
+                                           : (${steps['Parent Details (user_parent_details)'] != null && steps['Parent Details (user_parent_details)'].startsWith('FAILED')} ? 'failed'
+                                           : (${steps['Parent Details (user_parent_details)'] == 'NOT_EXPECTED'} ? 'not-expected' : 'skipped'))"
+                             class="timeline-marker">
+                            <i th:classappend="${steps['Parent Details (user_parent_details)'] != null && steps['Parent Details (user_parent_details)'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
+                                             : (${steps['Parent Details (user_parent_details)'] == 'NOT_EXPECTED'} ? 'fa-solid fa-minus' : 'fa-solid fa-users-slash')"
+                               class=""></i>
+                        </div>
                         <div class="timeline-content">
                             <div class="timeline-header">
                                 <span class="timeline-title">2. Parent Relationships</span>
-                                <span class="timeline-status completed" th:text="${steps['Parent Details (user_parent_details)']} == 'SUCCESSFULLY_PURGED' ? 'Completed' : 'Skipped'">Completed</span>
+                                <span th:classappend="${steps['Parent Details (user_parent_details)'] == 'SUCCESSFULLY_PURGED'} ? 'completed'
+                                                    : (${steps['Parent Details (user_parent_details)'] != null && steps['Parent Details (user_parent_details)'].startsWith('FAILED')} ? 'failed'
+                                                    : (${steps['Parent Details (user_parent_details)'] == 'NOT_EXPECTED'} ? 'not-expected' : 'skipped'))"
+                                      class="timeline-status"
+                                      th:text="${steps['Parent Details (user_parent_details)'] == 'SUCCESSFULLY_PURGED'} ? 'Purged'
+                                            : (${steps['Parent Details (user_parent_details)'] != null && steps['Parent Details (user_parent_details)'].startsWith('FAILED')} ? 'Failed'
+                                            : (${steps['Parent Details (user_parent_details)'] == 'NOT_EXPECTED'} ? 'Not Expected' : 'Skipped'))">
+                                    Purged
+                                </span>
                             </div>
-                            <p class="timeline-desc">Father's and Mother's name associations deleted from Database 3.</p>
+                            <p class="timeline-desc">Father's and Mother's name associations — Database 3.</p>
                         </div>
                     </div>
 
                     <!-- Step 3: Profile picture -->
                     <div class="timeline-item">
-                        <div class="timeline-marker completed"><i class="fa-solid fa-file-image"></i></div>
+                        <div th:classappend="${steps['Profile Picture (MinIO object store)'] == 'SUCCESSFULLY_PURGED'} ? 'completed'
+                                           : (${steps['Profile Picture (MinIO object store)'] != null && steps['Profile Picture (MinIO object store)'].startsWith('FAILED')} ? 'failed'
+                                           : (${steps['Profile Picture (MinIO object store)'] == 'NOT_EXPECTED'} ? 'not-expected' : 'skipped'))"
+                             class="timeline-marker">
+                            <i th:classappend="${steps['Profile Picture (MinIO object store)'] != null && steps['Profile Picture (MinIO object store)'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
+                                             : (${steps['Profile Picture (MinIO object store)'] == 'NOT_EXPECTED'} ? 'fa-solid fa-minus' : 'fa-solid fa-file-image')"
+                               class=""></i>
+                        </div>
                         <div class="timeline-content">
                             <div class="timeline-header">
                                 <span class="timeline-title">3. Profile Picture Store</span>
-                                <span class="timeline-status completed" th:text="${steps['Profile Picture (MinIO object store)']} == 'SUCCESSFULLY_PURGED' ? 'Completed' : 'Skipped/Empty'">Completed</span>
+                                <span th:classappend="${steps['Profile Picture (MinIO object store)'] == 'SUCCESSFULLY_PURGED'} ? 'completed'
+                                                    : (${steps['Profile Picture (MinIO object store)'] != null && steps['Profile Picture (MinIO object store)'].startsWith('FAILED')} ? 'failed'
+                                                    : (${steps['Profile Picture (MinIO object store)'] == 'NOT_EXPECTED'} ? 'not-expected' : 'skipped'))"
+                                      class="timeline-status"
+                                      th:text="${steps['Profile Picture (MinIO object store)'] == 'SUCCESSFULLY_PURGED'} ? 'Purged'
+                                            : (${steps['Profile Picture (MinIO object store)'] != null && steps['Profile Picture (MinIO object store)'].startsWith('FAILED')} ? 'Failed'
+                                            : (${steps['Profile Picture (MinIO object store)'] == 'NOT_EXPECTED'} ? 'Not Expected' : 'Skipped/Empty'))">
+                                    Purged
+                                </span>
                             </div>
-                            <p class="timeline-desc">Original profile photo permanently erased from MinIO Object Storage bucket.</p>
+                            <p class="timeline-desc">Original profile photo — MinIO Object Storage bucket.</p>
                         </div>
                     </div>
 
                     <!-- Step 4: Cryptographic key hash -->
                     <div class="timeline-item">
-                        <div class="timeline-marker completed"><i class="fa-solid fa-key"></i></div>
+                        <div th:classappend="${steps['Cryptographic Identity Hash (user_uin_hash)'] == 'SUCCESSFULLY_PURGED'} ? 'completed'
+                                           : (${steps['Cryptographic Identity Hash (user_uin_hash)'] != null && steps['Cryptographic Identity Hash (user_uin_hash)'].startsWith('FAILED')} ? 'failed'
+                                           : (${steps['Cryptographic Identity Hash (user_uin_hash)'] == 'NOT_EXPECTED'} ? 'not-expected' : 'skipped'))"
+                             class="timeline-marker">
+                            <i th:classappend="${steps['Cryptographic Identity Hash (user_uin_hash)'] != null && steps['Cryptographic Identity Hash (user_uin_hash)'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
+                                             : (${steps['Cryptographic Identity Hash (user_uin_hash)'] == 'NOT_EXPECTED'} ? 'fa-solid fa-minus' : 'fa-solid fa-key')"
+                               class=""></i>
+                        </div>
                         <div class="timeline-content">
                             <div class="timeline-header">
                                 <span class="timeline-title">4. Cryptographic UIN Key Hash</span>
-                                <span class="timeline-status completed" th:text="${steps['Cryptographic Identity Hash (user_uin_hash)']} == 'SUCCESSFULLY_PURGED' ? 'Completed' : 'Skipped'">Completed</span>
+                                <span th:classappend="${steps['Cryptographic Identity Hash (user_uin_hash)'] == 'SUCCESSFULLY_PURGED'} ? 'completed'
+                                                    : (${steps['Cryptographic Identity Hash (user_uin_hash)'] != null && steps['Cryptographic Identity Hash (user_uin_hash)'].startsWith('FAILED')} ? 'failed'
+                                                    : (${steps['Cryptographic Identity Hash (user_uin_hash)'] == 'NOT_EXPECTED'} ? 'not-expected' : 'skipped'))"
+                                      class="timeline-status"
+                                      th:text="${steps['Cryptographic Identity Hash (user_uin_hash)'] == 'SUCCESSFULLY_PURGED'} ? 'Purged'
+                                            : (${steps['Cryptographic Identity Hash (user_uin_hash)'] != null && steps['Cryptographic Identity Hash (user_uin_hash)'].startsWith('FAILED')} ? 'Failed'
+                                            : (${steps['Cryptographic Identity Hash (user_uin_hash)'] == 'NOT_EXPECTED'} ? 'Not Expected' : 'Skipped'))">
+                                    Purged
+                                </span>
                             </div>
-                            <p class="timeline-desc">Deterministic salt-modulo hash references purged from security Database 2.</p>
+                            <p class="timeline-desc">Deterministic salt-modulo hash references — security Database 2.</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="form-actions" style="justify-content: center;">
+            <div class="form-actions" style="justify-content: center; gap: 1rem;">
                 <a href="/" class="cta-button" style="width: auto; padding-left: 2rem; padding-right: 2rem;">
                     <i class="fa-solid fa-house" style="margin-right: 0.5rem;"></i> Return to Home
+                </a>
+                <a href="/audit-logs" class="cta-button-secondary" style="width: auto; padding-left: 1.5rem; padding-right: 1.5rem; margin-left: 0;">
+                    <i class="fa-solid fa-clipboard-list" style="margin-right: 0.5rem;"></i> View Audit Logs
                 </a>
             </div>
         </section>
@@ -136,6 +238,9 @@
 
     <footer class="app-footer">
         <p>&copy; 2024 MOSIP. All rights reserved.</p>
+        <div class="footer-links">
+            <a href="/audit-logs" class="footer-link" style="text-decoration: underline;">Audit Logs</a>
+        </div>
     </footer>
 </body>
 </html>

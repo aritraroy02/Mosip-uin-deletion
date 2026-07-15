@@ -9,4 +9,7 @@ public interface UserUinHashRepository extends JpaRepository<UserUinHash, String
 
     /** Checks whether a record with the given salt-modulo UIN hash exists in the hashing database. */
     boolean existsByUinSaltedHash(String uinSaltedHash);
+
+    /** Finds the record by the given UIN hash. */
+    java.util.Optional<UserUinHash> findByUinSaltedHash(String uinSaltedHash);
 }

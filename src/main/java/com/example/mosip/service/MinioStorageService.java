@@ -5,6 +5,10 @@ import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.ListObjectsArgs;
+import io.minio.RemoveObjectArgs;
+import io.minio.Result;
+import io.minio.messages.Item;
 import io.minio.http.Method;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -93,5 +97,45 @@ public class MinioStorageService {
             return originalFilename.substring(originalFilename.lastIndexOf('.'));
         }
         return "";
+    }
+
+    /**
+     * Gets the presigned URL for the profile image of a given userId, if it exists.
+     */
+    public String getProfileImagePresignedUrl(String userId) {
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(bucket)
+                            .prefix("profiles/" + userId)
+                            .build());
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                return getPresignedUrl(item.objectName());
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching profile image URL: " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Deletes the profile image associated with the given userId.
+     */
+    public void deleteProfileImage(String userId) throws Exception {
+        Iterable<Result<Item>> results = minioClient.listObjects(
+                ListObjectsArgs.builder()
+                        .bucket(bucket)
+                        .prefix("profiles/" + userId)
+                        .build());
+        for (Result<Item> result : results) {
+            Item item = result.get();
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucket)
+                            .object(item.objectName())
+                            .build());
+            System.out.println("Deleted object from MinIO: " + item.objectName());
+        }
     }
 }

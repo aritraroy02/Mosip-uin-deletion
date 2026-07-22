@@ -12,6 +12,8 @@ public class UserRegistrationDto {
     private String fatherName;
     private String motherName;
     private MultipartFile profileImage;
+    private MultipartFile aadharCardImage;
+    private MultipartFile documentImage;
     private String userId;
     private String uin;
 
@@ -92,6 +94,22 @@ public class UserRegistrationDto {
         this.profileImage = profileImage;
     }
 
+    public MultipartFile getAadharCardImage() {
+        return aadharCardImage;
+    }
+
+    public void setAadharCardImage(MultipartFile aadharCardImage) {
+        this.aadharCardImage = aadharCardImage;
+    }
+
+    public MultipartFile getDocumentImage() {
+        return documentImage;
+    }
+
+    public void setDocumentImage(MultipartFile documentImage) {
+        this.documentImage = documentImage;
+    }
+
     public String getUserId() {
         return userId;
     }
@@ -120,6 +138,8 @@ public class UserRegistrationDto {
                 ", fatherName='" + fatherName + '\'' +
                 ", motherName='" + motherName + '\'' +
                 ", hasProfileImage=" + (profileImage != null && !profileImage.isEmpty()) +
+                ", hasAadharCardImage=" + (aadharCardImage != null && !aadharCardImage.isEmpty()) +
+                ", hasDocumentImage=" + (documentImage != null && !documentImage.isEmpty()) +
                 ", userId='" + userId + '\'' +
                 ", uin='" + uin + '\'' +
                 '}';

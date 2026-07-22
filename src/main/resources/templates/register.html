@@ -87,7 +87,7 @@
 
                     <!-- User Photo Upload -->
                     <div class="form-group">
-                        <label class="form-label">User Image / Profile Photo</label>
+                        <label class="form-label"><i class="fa-solid fa-image" style="margin-right: 6px; color: var(--primary);"></i> Profile Photo (/profile-pictures/)</label>
                         <div class="upload-container">
                             <div class="upload-icon">
                                 <i class="fa-solid fa-cloud-arrow-up"></i>
@@ -96,14 +96,52 @@
                                 <span class="upload-text-bold">Click to upload</span> or drag and drop
                             </div>
                             <div class="upload-text" style="font-size: 0.75rem; margin-top: 4px; color: var(--text-muted);">
-                                PNG, JPG, JPEG up to 5MB
+                                PNG, JPG, JPEG, WEBP up to 5MB
                             </div>
-                            <input type="file" id="profileImage" th:field="*{profileImage}" class="upload-input" accept="image/*" required>
+                            <input type="file" id="profileImage" th:field="*{profileImage}" class="upload-input" accept="image/*">
                         </div>
-                        
-                        <!-- Image Preview Area -->
                         <div class="preview-container" id="previewWrapper">
-                            <img src="#" alt="User Image Preview" id="imagePreviewElement" class="image-preview">
+                            <img src="#" alt="Profile Photo Preview" id="imagePreviewElement" class="image-preview">
+                        </div>
+                    </div>
+
+                    <!-- Aadhar Card Upload -->
+                    <div class="form-group">
+                        <label class="form-label"><i class="fa-solid fa-id-card" style="margin-right: 6px; color: var(--primary);"></i> Aadhar Card Image (/aadhar-cards/)</label>
+                        <div class="upload-container">
+                            <div class="upload-icon">
+                                <i class="fa-solid fa-address-card"></i>
+                            </div>
+                            <div class="upload-text">
+                                <span class="upload-text-bold">Click to upload</span> Aadhar Card
+                            </div>
+                            <div class="upload-text" style="font-size: 0.75rem; margin-top: 4px; color: var(--text-muted);">
+                                PNG, JPG, JPEG, WEBP, PDF up to 10MB
+                            </div>
+                            <input type="file" id="aadharCardImage" th:field="*{aadharCardImage}" class="upload-input" accept="image/*,application/pdf">
+                        </div>
+                        <div class="preview-container" id="aadharPreviewWrapper">
+                            <img src="#" alt="Aadhar Card Preview" id="aadharPreviewElement" class="image-preview">
+                        </div>
+                    </div>
+
+                    <!-- Additional Identity Document Upload -->
+                    <div class="form-group">
+                        <label class="form-label"><i class="fa-solid fa-file-contract" style="margin-right: 6px; color: var(--primary);"></i> Identity Document (/documents/)</label>
+                        <div class="upload-container">
+                            <div class="upload-icon">
+                                <i class="fa-solid fa-file-arrow-up"></i>
+                            </div>
+                            <div class="upload-text">
+                                <span class="upload-text-bold">Click to upload</span> Identity Document
+                            </div>
+                            <div class="upload-text" style="font-size: 0.75rem; margin-top: 4px; color: var(--text-muted);">
+                                PNG, JPG, JPEG, WEBP, PDF up to 10MB
+                            </div>
+                            <input type="file" id="documentImage" th:field="*{documentImage}" class="upload-input" accept="image/*,application/pdf">
+                        </div>
+                        <div class="preview-container" id="docPreviewWrapper">
+                            <img src="#" alt="Document Preview" id="docPreviewElement" class="image-preview">
                         </div>
                     </div>
 
@@ -111,7 +149,7 @@
                     <div class="consent-box">
                         <input type="checkbox" id="consent" th:field="*{consent}" class="consent-checkbox" required>
                         <label for="consent" class="consent-text">
-                            I hereby confirm and state that I am willingly and voluntarily providing my personal data, demographic details, and profile photo to the professionals at MOSIP for secure identity processing and data lifecycle management purposes.
+                            I hereby confirm and state that I am willingly and voluntarily providing my personal data, demographic details, and profile images to MOSIP for secure processing and data lifecycle management purposes.
                         </label>
                     </div>
 
@@ -136,26 +174,39 @@
         </div>
     </footer>
 
-    <!-- Script for Live Image Preview -->
+    <!-- Script for Live Image Previews -->
     <script>
-        const imageInput = document.getElementById('profileImage');
-        const previewWrapper = document.getElementById('previewWrapper');
-        const imagePreviewElement = document.getElementById('imagePreviewElement');
+        function setupLivePreview(inputId, wrapperId, previewId) {
+            const input = document.getElementById(inputId);
+            const wrapper = document.getElementById(wrapperId);
+            const preview = document.getElementById(previewId);
 
-        imageInput.addEventListener('change', function() {
-            const file = this.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.addEventListener('load', function() {
-                    imagePreviewElement.setAttribute('src', this.result);
-                    previewWrapper.style.display = 'flex';
-                });
-                reader.readAsDataURL(file);
-            } else {
-                previewWrapper.style.display = 'none';
-                imagePreviewElement.setAttribute('src', '#');
-            }
-        });
+            if (!input || !wrapper || !preview) return;
+
+            input.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.addEventListener('load', function() {
+                            preview.setAttribute('src', this.result);
+                            wrapper.style.display = 'flex';
+                        });
+                        reader.readAsDataURL(file);
+                    } else {
+                        preview.setAttribute('src', '#');
+                        wrapper.style.display = 'none';
+                    }
+                } else {
+                    wrapper.style.display = 'none';
+                    preview.setAttribute('src', '#');
+                }
+            });
+        }
+
+        setupLivePreview('profileImage', 'previewWrapper', 'imagePreviewElement');
+        setupLivePreview('aadharCardImage', 'aadharPreviewWrapper', 'aadharPreviewElement');
+        setupLivePreview('documentImage', 'docPreviewWrapper', 'docPreviewElement');
     </script>
 
 </body>

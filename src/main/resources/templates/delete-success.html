@@ -169,30 +169,30 @@
                         </div>
                     </div>
 
-                    <!-- Step 3: Profile picture -->
+                    <!-- Step 3: Images & Documents Store -->
                     <div class="timeline-item">
-                        <div th:classappend="${steps['Profile Picture (MinIO object store)'] == 'SUCCESSFULLY_PURGED'} ? 'completed'
-                                           : (${steps['Profile Picture (MinIO object store)'] != null && steps['Profile Picture (MinIO object store)'].startsWith('FAILED')} ? 'failed'
-                                           : (${steps['Profile Picture (MinIO object store)'] == 'NOT_EXPECTED'} ? 'not-expected' : 'skipped'))"
+                        <div th:classappend="${steps['User Images & Documents (MinIO object store)'] != null && steps['User Images & Documents (MinIO object store)'].startsWith('SUCCESSFULLY_PURGED')} ? 'completed'
+                                           : (${steps['User Images & Documents (MinIO object store)'] != null && steps['User Images & Documents (MinIO object store)'].startsWith('FAILED')} ? 'failed'
+                                           : (${steps['User Images & Documents (MinIO object store)'] == 'NOT_EXPECTED'} ? 'not-expected' : 'skipped'))"
                              class="timeline-marker">
-                            <i th:classappend="${steps['Profile Picture (MinIO object store)'] != null && steps['Profile Picture (MinIO object store)'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
-                                             : (${steps['Profile Picture (MinIO object store)'] == 'NOT_EXPECTED'} ? 'fa-solid fa-minus' : 'fa-solid fa-file-image')"
+                            <i th:classappend="${steps['User Images & Documents (MinIO object store)'] != null && steps['User Images & Documents (MinIO object store)'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
+                                             : (${steps['User Images & Documents (MinIO object store)'] == 'NOT_EXPECTED'} ? 'fa-solid fa-minus' : 'fa-solid fa-images')"
                                class=""></i>
                         </div>
                         <div class="timeline-content">
                             <div class="timeline-header">
-                                <span class="timeline-title">3. Profile Picture Store</span>
-                                <span th:classappend="${steps['Profile Picture (MinIO object store)'] == 'SUCCESSFULLY_PURGED'} ? 'completed'
-                                                    : (${steps['Profile Picture (MinIO object store)'] != null && steps['Profile Picture (MinIO object store)'].startsWith('FAILED')} ? 'failed'
-                                                    : (${steps['Profile Picture (MinIO object store)'] == 'NOT_EXPECTED'} ? 'not-expected' : 'skipped'))"
+                                <span class="timeline-title">3. Multi-Image & Document Store</span>
+                                <span th:classappend="${steps['User Images & Documents (MinIO object store)'] != null && steps['User Images & Documents (MinIO object store)'].startsWith('SUCCESSFULLY_PURGED')} ? 'completed'
+                                                    : (${steps['User Images & Documents (MinIO object store)'] != null && steps['User Images & Documents (MinIO object store)'].startsWith('FAILED')} ? 'failed'
+                                                    : (${steps['User Images & Documents (MinIO object store)'] == 'NOT_EXPECTED'} ? 'not-expected' : 'skipped'))"
                                       class="timeline-status"
-                                      th:text="${steps['Profile Picture (MinIO object store)'] == 'SUCCESSFULLY_PURGED'} ? 'Purged'
-                                            : (${steps['Profile Picture (MinIO object store)'] != null && steps['Profile Picture (MinIO object store)'].startsWith('FAILED')} ? 'Failed'
-                                            : (${steps['Profile Picture (MinIO object store)'] == 'NOT_EXPECTED'} ? 'Not Expected' : 'Skipped/Empty'))">
+                                      th:text="${steps['User Images & Documents (MinIO object store)'] != null && steps['User Images & Documents (MinIO object store)'].startsWith('SUCCESSFULLY_PURGED')} ? 'Purged'
+                                            : (${steps['User Images & Documents (MinIO object store)'] != null && steps['User Images & Documents (MinIO object store)'].startsWith('FAILED')} ? 'Failed'
+                                            : (${steps['User Images & Documents (MinIO object store)'] == 'NOT_EXPECTED'} ? 'Not Expected' : 'Skipped/Empty'))">
                                     Purged
                                 </span>
                             </div>
-                            <p class="timeline-desc">Original profile photo — MinIO Object Storage bucket.</p>
+                            <p class="timeline-desc">Profile photos, Aadhar cards, & identity documents — MinIO folders (/profile-pictures/, /aadhar-cards/, /documents/).</p>
                         </div>
                     </div>
 
@@ -223,6 +223,15 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Audit Details & Deleted File Paths -->
+                <div th:if="${audit != null && audit.detail != null}" style="margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">
+                        <i class="fa-solid fa-file-code" style="color: var(--primary);"></i> Audit Trail File Paths & Details:
+                    </div>
+                    <code style="font-size: 0.8rem; word-break: break-all; color: #334155;" th:text="${audit.detail}">Purged file paths detail...</code>
+                </div>
+            </div>
             </div>
 
             <div class="form-actions" style="justify-content: center; gap: 1rem;">

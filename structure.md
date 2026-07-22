@@ -16,12 +16,13 @@ Mosip-uin-deletion/
 │   │   │   └── com/example/mosip/             # Root package for the project
 │   │   │       ├── config/                    # Configuration classes for databases and MinIO
 │   │   │       ├── controller/                # Spring MVC Controllers for Thymeleaf views
-│   │   │       │   └── api/                   # REST API Controllers (for endpoints & bulk operations)
+│   │   │       │   └── api/                   # REST API Controllers (for endpoints, images & bulk operations)
 │   │   │       ├── dto/                       # Data Transfer Objects
 │   │   │       ├── entity/                    # JPA Entities mapped to PostgreSQL tables
 │   │   │       │   ├── basic/                 # Entities for Basic details database
 │   │   │       │   ├── hashing/               # Entities for Hashing database
 │   │   │       │   └── parent/                # Entities for Parent details database
+│   │   │       ├── enums/                     # Enumerations for system types and folder boundaries
 │   │   │       ├── repository/                # Spring Data JPA Repository interfaces
 │   │   │       │   ├── basic/                 # Repositories for Basic details database
 │   │   │       │   ├── hashing/               # Repositories for Hashing database
@@ -48,12 +49,13 @@ Mosip-uin-deletion/
 ### Purpose of Each Directory
 
 * **`src/main/java/com/example/mosip/config/`**: Sets up Spring configurations, specifically managing the configuration of the multi-database architecture (three distinct PostgreSQL datasources) and initializing the MinIO S3-compatible client.
-* **`src/main/java/com/example/mosip/controller/`**: Orchestrates web requests. The base folder contains controllers that serve Thymeleaf templates for forms, success screens, and audits.
-* **`src/main/java/com/example/mosip/controller/api/`**: Exposes REST endpoints to allow integration, bulk onboarding, and programmatic deletion of residents' data.
-* **`src/main/java/com/example/mosip/dto/`**: Holds DTOs (Data Transfer Objects) that bind incoming registration web form submissions containing file data and strings.
+* **`src/main/java/com/example/mosip/controller/`**: Orchestrates web requests. The base folder contains controllers that serve Thymeleaf templates for forms, multi-step deletion, success screens, and audit logs.
+* **`src/main/java/com/example/mosip/controller/api/`**: Exposes REST endpoints to allow integration, bulk onboarding, programmatic deletion of residents' data, and dedicated image deletion operations (`/api/images`).
+* **`src/main/java/com/example/mosip/dto/`**: Holds DTOs (Data Transfer Objects) that bind incoming registration web form submissions containing multi-image file data and text fields.
 * **`src/main/java/com/example/mosip/entity/`**: Segmented by database concern (basic, hashing, parent). Holds entities annotated with JPA annotations mapping to tables across the PostgreSQL instances.
+* **`src/main/java/com/example/mosip/enums/`**: Defines system enums, specifically `ImageType` mapping image categories to folder structures (`/profile-pictures/`, `/aadhar-cards/`, `/documents/`) and file size boundaries.
 * **`src/main/java/com/example/mosip/repository/`**: Holds JPA repository interfaces facilitating CRUD operations. Organized into subpackages matching the three-database boundary structure.
-* **`src/main/java/com/example/mosip/service/`**: Houses utility and storage services, specifically for executing MOSIP-style salt-modulo hashing and managing file storage (uploads, URL generation, and deletions) in the MinIO instance.
+* **`src/main/java/com/example/mosip/service/`**: Houses utility and storage services, specifically for executing MOSIP-style salt-modulo hashing and managing multi-image storage (uploads, validation, presigned URL generation, and cascading file purges) in MinIO.
 * **`src/main/resources/static/`**: Houses public files served by the embedded Tomcat server (like CSS for consistent UI styling).
 * **`src/main/resources/templates/`**: Holds HTML templates processed by Thymeleaf to dynamically compile responsive light-themed user interfaces.
 * **`src/test/java/`**: Houses testing suites to verify context loading and project components.
@@ -88,56 +90,69 @@ Below is a detailed guide on what each file does and the role of each component 
   * Reads MinIO endpoint credentials from properties.
   * Registers a singleton `MinioClient` bean to connect to the local/remote S3 object storage server.
 
+### Enums (`/enums`)
+* **[ImageType.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/enums/ImageType.java)**:
+  * Defines supported image categories: `PROFILE_PICTURE`, `AADHAR_CARD`, and `DOCUMENT`.
+  * Maps each category to its folder prefix (`profile-pictures/`, `aadhar-cards/`, `documents/`) and default file size limit (5MB/10MB).
+  * Includes helper method `fromString(String text)` for case-insensitive URL parameter parsing.
+
 ### Services (`/service`)
 * **[SaltModuloHashService.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/service/SaltModuloHashService.java)**:
   * Implements MOSIP-style deterministic salt-modulo hashing.
   * Seeds 1000 random salt buckets into Database 2 (`uin_hash_salt` table) on startup if not already seeded.
   * Computes deterministic cryptographic hashes: `SHA-256(id + salt[id mod modulo])` in lowercase hex format. Numeric identifiers parse as numbers; non-numeric values use their `hashCode()`.
 * **[MinioStorageService.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/service/MinioStorageService.java)**:
-  * Manages MinIO operations.
+  * Manages MinIO operations for multiple image types.
   * Automatically creates the target bucket (`userprofilepic`) on startup if it is missing.
-  * Uploads profile images under the path namespace `profiles/{userId}-{UUID}.{extension}`.
-  * Generates temporary presigned URLs so that private photos can be displayed securely on the success screens.
-  * Implements deletion code to purge profile images from the object store when data deletion is requested.
+  * Validates file size limits per `ImageType` and checks allowed file format extensions (JPG, PNG, WEBP, PDF).
+  * Uploads images into organized folder structures: `profile-pictures/{userId}-{UUID}.ext`, `aadhar-cards/...`, `documents/...`.
+  * Generates temporary presigned URLs (`expiry=604800s`) for secure display.
+  * Implements `deleteImage(userId, imageType)`, `deleteImageByObjectKey(objectKey)`, and `deleteAllUserImages(userId)`, which purges files across all folders and returns a `List<String>` of deleted MinIO object paths for audit logging.
 
 ### Controllers (`/controller`)
 * **[RegistrationController.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/controller/RegistrationController.java)**:
-  * Renders HTML views for the home screen (`/`) and registration form (`/register`).
+  * Renders HTML views for the home screen (`/`) and multi-image registration form (`/register`).
   * Processes registrations: generates random unique User IDs (`USR-XXXXXXXX`) and 10-digit UINs.
   * Computes salt-modulo hashes for UIN/User ID.
-  * Persists demographic records (Database 1), hashes (Database 2), uploads pictures (MinIO), and calls `RegistrationApiController` via Java to record parent details (Database 3).
-  * Creates a data footprint track record in `UserDataLocation` registry to remember where data was stored.
+  * Uploads Profile Photos, Aadhar Cards, and Identity Documents to their respective MinIO folders (`/profile-pictures/`, `/aadhar-cards/`, `/documents/`).
+  * Persists demographic records (Database 1), hashes (Database 2), parent details (Database 3), and creates a footprint track record in `UserDataLocation` registry.
 * **[DeletionController.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/controller/DeletionController.java)**:
   * Controls the interactive, multi-step voluntary deletion flow.
   * **`/delete`**: Validates UIN presence and format.
   * **`/delete/send-otp`**: Verifies UIN hash existence in Hashing DB before triggering OTP page.
-  * **`/delete/verify-otp`**: Verifies demo OTP (`00000`). If verified, queries all data repositories (Demographics, Parent details, MinIO image presigned URL) and displays the confirmation page.
+  * **`/delete/verify-otp`**: Verifies demo OTP (`00000`). Fetches all user details and presigned URLs for preview before deletion.
   * **`/delete/confirm`**: Executes sequential deletion:
-    1. Demographics (`UserBasicDetails`)
-    2. Parent details (`UserParentDetails`)
-    3. MinIO profile image (`MinioStorageService.deleteProfileImage`)
-    4. Cryptographic UIN hash (`UserUinHash`)
-  * Writes execution outcomes and failure descriptions to the `DeletionAudit` table. Removes the `UserDataLocation` record on full success.
-  * **`/audit-logs`**: Queries the `DeletionAudit` database table, displays logs, calculates dashboard statistics (success/partial/failed ratios), and supports searching audits by User ID.
+    1. Demographics (`UserBasicDetails` in Database 1)
+    2. Parent details (`UserParentDetails` in Database 3)
+    3. MinIO Multi-Image Store (`MinioStorageService.deleteAllUserImages`)
+    4. Cryptographic UIN hash (`UserUinHash` in Database 2)
+  * Writes execution outcomes, database names, and exact deleted MinIO object filepaths to the `DeletionAudit` table (`audit.detail`). Removes `UserDataLocation` record on full success.
+  * **`/audit-logs`**: Queries `DeletionAudit` table, displays logs, calculates dashboard statistics (success/partial/failed ratios), and supports searching audits by User ID.
 * **[api/RegistrationApiController.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/controller/api/RegistrationApiController.java)**:
   * Exposes programmatic HTTP endpoints:
-    * `POST /api/register` - Creates a single resident.
-    * `POST /api/register/bulk` - Processes an array of residents.
-  * Contains `saveParentDetails` which acts as the **single programmatic owner** of writes to the Parent Details database.
+    * `POST /api/register` - Creates a single resident profile.
+    * `POST /api/register/bulk` - Processes an array of resident profiles.
+  * Contains `saveParentDetails` acting as the single owner of Parent Details database writes.
 * **[api/DeletionApiController.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/controller/api/DeletionApiController.java)**:
   * Exposes programmatic HTTP endpoint `DELETE /api/user/{userId}`.
-  * Purges demographic details (Database 1) and cryptographic hashes (Database 2) associated with a User ID.
+  * Purges demographic details (Database 1), cryptographic hashes (Database 2), parent details (Database 3), and performs a cascading purge of all MinIO files across all folders, returning deleted object filepaths in the API response.
+* **[api/ImageDeletionApiController.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/controller/api/ImageDeletionApiController.java)**:
+  * Dedicated REST API controller for image management under `/api/images`:
+    * `DELETE /api/images/user/{userId}?type={IMAGE_TYPE}` - Deletes specific or all images for a user.
+    * `DELETE /api/images/object?objectKey={objectKey}` - Deletes a specific image by MinIO object key.
+    * `POST /api/images/batch-delete` - Batch deletes multiple user IDs or object keys.
+  * Enforces header-based permission checks (`X-User-Role: ADMIN` or `X-User-Id` match), returning `403 FORBIDDEN` for unauthorized calls.
 
 ### Data Entities (`/entity`)
 * **[entity/basic/UserBasicDetails.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/entity/basic/UserBasicDetails.java)**: Represents demographic data (`user_id`, `name`, `phone`) stored in Database 1.
-* **[entity/basic/UserDataLocation.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/entity/basic/UserDataLocation.java)**: Records which data stores (Basic DB, Parent DB, Hashing DB, MinIO) actually contain data for a User ID. Stored in Database 1.
-* **[entity/basic/DeletionAudit.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/entity/basic/DeletionAudit.java)**: Stores audit rows tracking deletion executions. Records detailed status (`PURGED`, `NOT_FOUND`, `NOT_EXPECTED`, `FAILED`) for each system storage layer. Stored in Database 1.
-* **[entity/hashing/UserUinHash.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/entity/hashing/UserUinHash.java)**: Stores the mapping of User ID to cryptographic hash keys (`individual_id_hash`, `uin_salted_hash`) in Database 2.
-* **[entity/hashing/UinHashSalt.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/entity/hashing/UinHashSalt.java)**: Represents the salt buckets (`id` 0 to N-1, `salt` Base64 string) stored in Database 2.
+* **[entity/basic/UserDataLocation.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/entity/basic/UserDataLocation.java)**: Records which data stores (Basic DB, Parent DB, Hashing DB, MinIO) contain data for a User ID. Stored in Database 1.
+* **[entity/basic/DeletionAudit.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/entity/basic/DeletionAudit.java)**: Stores audit rows tracking deletion executions. Records detailed status (`PURGED`, `NOT_FOUND`, `NOT_EXPECTED`, `FAILED`) for each storage layer and captures deleted MinIO file paths in the `detail` column. Stored in Database 1.
+* **[entity/hashing/UserUinHash.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/entity/hashing/UserUinHash.java)**: Stores mapping of User ID to cryptographic hash keys (`individual_id_hash`, `uin_salted_hash`) in Database 2.
+* **[entity/hashing/UinHashSalt.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/entity/hashing/UinHashSalt.java)**: Represents salt buckets (`id` 0 to N-1, `salt` Base64 string) stored in Database 2.
 * **[entity/parent/UserParentDetails.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/entity/parent/UserParentDetails.java)**: Represents family details (`user_id`, `father_name`, `mother_name`) stored in Database 3.
 
 ### Data Repositories (`/repository`)
-* **[repository/basic/UserBasicDetailsRepository.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/repository/basic/UserBasicDetailsRepository.java)**: Accesses the demographic tables.
+* **[repository/basic/UserBasicDetailsRepository.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/repository/basic/UserBasicDetailsRepository.java)**: Accesses demographic tables.
 * **[repository/basic/UserDataLocationRepository.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/repository/basic/UserDataLocationRepository.java)**: Accesses and queries the data location registry.
 * **[repository/basic/DeletionAuditRepository.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/repository/basic/DeletionAuditRepository.java)**: Accesses deletion audits, sorting them chronologically.
 * **[repository/hashing/UserUinHashRepository.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/repository/hashing/UserUinHashRepository.java)**: Checks existence and queries hash matches.
@@ -145,16 +160,16 @@ Below is a detailed guide on what each file does and the role of each component 
 * **[repository/parent/UserParentDetailsRepository.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/repository/parent/UserParentDetailsRepository.java)**: Accesses parent/family details.
 
 ### DTOs (`/dto`)
-* **[UserRegistrationDto.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/dto/UserRegistrationDto.java)**: Holds fields entered on the `/register` web form, handling the uploaded multipart photo file alongside string fields (name, phone, parent names, email, dob, nationality, consent).
+* **[UserRegistrationDto.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/dto/UserRegistrationDto.java)**: Holds fields entered on the `/register` web form, handling uploaded multipart file fields (`profileImage`, `aadharCardImage`, `documentImage`) alongside demographic text fields.
 
 ### View Templates (`/resources/templates`)
 * **[home.html](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/resources/templates/home.html)**: Main landing screen with quick routes to register or voluntary deletion.
-* **[register.html](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/resources/templates/register.html)**: Form to capture demographic, family details, consent check, and file picker for profile picture.
-* **[success.html](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/resources/templates/success.html)**: Registration success page displaying the generated credentials and profile image via presigned MinIO URL.
+* **[register.html](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/resources/templates/register.html)**: Form to capture demographic, family details, consent check, and multi-image upload dropzones (Profile Photo, Aadhar Card, Document) with live JS previews.
+* **[success.html](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/resources/templates/success.html)**: Registration success page displaying generated credentials and image previews via presigned MinIO URLs.
 * **[delete.html](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/resources/templates/delete.html)**: Form to accept and validate the UIN length/digits to start the data-purge pipeline.
-* **[verify-otp.html](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/resources/templates/verify-otp.html)**: Verification view for entering the OTP.
-* **[confirm-delete.html](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/resources/templates/confirm-delete.html)**: Displays all aggregated user information found in databases, prompting for final consent to purge.
-* **[delete-success.html](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/resources/templates/delete-success.html)**: Shows the final outcomes per database/storage layer.
+* **[verify-otp.html](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/resources/templates/verify-otp.html)**: Verification view for entering the OTP (`00000`).
+* **[confirm-delete.html](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/resources/templates/confirm-delete.html)**: Displays aggregated user information found in databases, prompting for final consent to purge.
+* **[delete-success.html](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/resources/templates/delete-success.html)**: Shows the final outcomes per database/storage layer and displays exact MinIO deleted file paths.
 * **[audit-logs.html](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/resources/templates/audit-logs.html)**: Renders audit charts, detailed tables, status indicators, and search tools.
 
 ### Test Files (`src/test/java`)
@@ -172,7 +187,7 @@ The primary configuration files in the project are:
 
 Stored in: **`src/main/resources/application.properties`**
 
-This file dictates system ports, three-way Postgres database URLs/credentials, JPA configs, hash calculations, and MinIO parameters:
+This file dictates system ports, three-way Postgres database URLs/credentials, JPA configs, hash calculations, MinIO parameters, folder structures, file size limits, and retention policies:
 
 | Property Name | Configuration Category / Purpose | Expected Default Value / Example |
 |---|---|---|
@@ -199,7 +214,16 @@ This file dictates system ports, three-way Postgres database URLs/credentials, J
 | `minio.access-key` | Account login access key for MinIO | `minioadmin` |
 | `minio.secret-key` | Account login password credential for MinIO | `minioadmin` |
 | `minio.bucket` | MinIO target directory bucket | `userprofilepic` |
-| `minio.url-expiry-seconds` | Validity duration of profile picture presigned URLs | `604800` (7 days) |
+| `minio.url-expiry-seconds` | Validity duration of presigned URLs | `604800` (7 days) |
+| `minio.folder.profile-picture` | Subfolder for Profile Photos | `profile-pictures/` |
+| `minio.folder.aadhar-card` | Subfolder for Aadhar Card images | `aadhar-cards/` |
+| `minio.folder.document` | Subfolder for Identity Documents | `documents/` |
+| `minio.max-size.profile-picture` | Size limit for Profile Photos | `5242880` (5 MB) |
+| `minio.max-size.aadhar-card` | Size limit for Aadhar Cards | `10485760` (10 MB) |
+| `minio.max-size.document` | Size limit for Documents | `10485760` (10 MB) |
+| `minio.allowed-extensions` | Allowed file formats | `jpg,jpeg,png,webp,pdf` |
+| `minio.file-naming-pattern` | Pattern for MinIO object key creation | `{folder}{userId}-{uuid}{ext}` |
+| `minio.retention-days` | Storage retention policy | `365` |
 
 ---
 
@@ -239,12 +263,8 @@ flowchart TD
 
 5. **`minio.endpoint`, `minio.access-key`, `minio.secret-key`**
    * **Referenced in**: [MinioConfig.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/config/MinioConfig.java)
-   * **Impact on System**: Passes credentials to instantiate the core `MinioClient` Bean. If the credentials or ports are configured incorrectly, profile image uploads/deletions will fail, triggering transaction rollback indicators or partial deletion failures.
+   * **Impact on System**: Passes credentials to instantiate the core `MinioClient` Bean. If credentials or ports are configured incorrectly, image uploads/deletions will fail, triggering transaction rollback indicators or partial deletion failures.
 
-6. **`minio.bucket`**
+6. **`minio.folder.*`, `minio.max-size.*`, `minio.allowed-extensions`**
    * **Referenced in**: [MinioStorageService.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/service/MinioStorageService.java)
-   * **Impact on System**: Dictates the exact name of the S3 folder/bucket directory to write files into. The service validates its existence and automatically creates it on startup if missing.
-
-7. **`minio.url-expiry-seconds`**
-   * **Referenced in**: [MinioStorageService.java](file:///c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/src/main/java/com/example/mosip/service/MinioStorageService.java)
-   * **Impact on System**: Determines the lifespan of the generated presigned URLs used to display profile images. After this time period, direct links expire, protecting raw media from public access.
+   * **Impact on System**: Controls folder segregation in MinIO (`/profile-pictures/`, `/aadhar-cards/`, `/documents/`), validates file extensions, and enforces maximum byte upload limits per image type before streaming to object storage.

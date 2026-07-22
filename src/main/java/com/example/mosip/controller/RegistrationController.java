@@ -17,6 +17,7 @@ import com.example.mosip.repository.basic.UserDataLocationRepository;
 import com.example.mosip.controller.api.RegistrationApiController;
 import com.example.mosip.service.MinioStorageService;
 import com.example.mosip.service.SaltModuloHashService;
+import com.example.mosip.enums.ImageType;
 
 @Controller
 public class RegistrationController {
@@ -112,19 +113,44 @@ public class RegistrationController {
             System.err.println("Failed to save parent details to database: " + e.getMessage());
             model.addAttribute("parentDatabaseError", "Profile saved, but parent details write failed.");
         }
-
-        // Upload profile image to MinIO (bucket: userprofilepic) and show it on the success page
+        // Upload Profile Picture, Aadhar Card, and Document images to MinIO in structured subfolders
         if (registration.getProfileImage() != null && !registration.getProfileImage().isEmpty()) {
             try {
-                String objectName = minioStorageService.uploadProfileImage(
-                        registration.getProfileImage(), registration.getUserId());
+                String objectName = minioStorageService.uploadImage(
+                        registration.getProfileImage(), registration.getUserId(), ImageType.PROFILE_PICTURE);
                 minioSaved = true;
                 System.out.println("Uploaded profile image to MinIO: " + objectName);
                 model.addAttribute("profileImageObject", objectName);
                 model.addAttribute("profileImageBase64", minioStorageService.getPresignedUrl(objectName));
             } catch (Exception e) {
-                System.err.println("Error uploading profile image to MinIO: " + e.getMessage());
-                model.addAttribute("imageError", "Could not store uploaded image in object storage");
+                System.err.println("Error uploading profile image: " + e.getMessage());
+                model.addAttribute("imageError", "Could not store profile image: " + e.getMessage());
+            }
+        }
+
+        if (registration.getAadharCardImage() != null && !registration.getAadharCardImage().isEmpty()) {
+            try {
+                String objectName = minioStorageService.uploadImage(
+                        registration.getAadharCardImage(), registration.getUserId(), ImageType.AADHAR_CARD);
+                minioSaved = true;
+                System.out.println("Uploaded Aadhar card image to MinIO: " + objectName);
+                model.addAttribute("aadharImageObject", objectName);
+                model.addAttribute("aadharImageBase64", minioStorageService.getPresignedUrl(objectName));
+            } catch (Exception e) {
+                System.err.println("Error uploading Aadhar card image: " + e.getMessage());
+            }
+        }
+
+        if (registration.getDocumentImage() != null && !registration.getDocumentImage().isEmpty()) {
+            try {
+                String objectName = minioStorageService.uploadImage(
+                        registration.getDocumentImage(), registration.getUserId(), ImageType.DOCUMENT);
+                minioSaved = true;
+                System.out.println("Uploaded document image to MinIO: " + objectName);
+                model.addAttribute("documentImageObject", objectName);
+                model.addAttribute("documentImageBase64", minioStorageService.getPresignedUrl(objectName));
+            } catch (Exception e) {
+                System.err.println("Error uploading document image: " + e.getMessage());
             }
         }
 

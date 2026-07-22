@@ -4,7 +4,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import java.util.Map;
+import java.util.*;
 import com.example.mosip.entity.basic.UserBasicDetails;
 import com.example.mosip.repository.basic.UserBasicDetailsRepository;
 import com.example.mosip.entity.hashing.UserUinHash;
@@ -257,22 +257,27 @@ public class DeletionController {
                 steps.put("Parent Details (user_parent_details)", "NOT_EXPECTED");
             }
 
-            // 3. Delete profile image from MinIO
+            // 3. Cascading Delete all user images from MinIO (profile pictures, Aadhar cards, documents)
+            List<String> purgedMinioPaths = new java.util.ArrayList<>();
             if (expectMinio) {
                 try {
-                    minioStorageService.deleteProfileImage(userId);
+                    purgedMinioPaths = minioStorageService.deleteAllUserImages(userId);
                     audit.setMinioStatus(DeletionAudit.PURGED);
-                    steps.put("Profile Picture (MinIO object store)", "SUCCESSFULLY_PURGED");
+                    if (!purgedMinioPaths.isEmpty()) {
+                        steps.put("User Images & Documents (MinIO object store)", "SUCCESSFULLY_PURGED (" + purgedMinioPaths.size() + " files)");
+                    } else {
+                        steps.put("User Images & Documents (MinIO object store)", "SUCCESSFULLY_PURGED (No files found)");
+                    }
                 } catch (Exception e) {
                     audit.setMinioStatus(DeletionAudit.FAILED);
-                    steps.put("Profile Picture (MinIO object store)", "FAILED: " + e.getMessage());
-                    detailBuilder.append("MinIO: ").append(e.getMessage()).append("; ");
+                    steps.put("User Images & Documents (MinIO object store)", "FAILED: " + e.getMessage());
+                    detailBuilder.append("MinIO Storage error: ").append(e.getMessage()).append("; ");
                     anyFailed = true;
-                    System.err.println("Non-critical failure deleting profile image: " + e.getMessage());
+                    System.err.println("Non-critical failure purging user images from MinIO: " + e.getMessage());
                 }
             } else {
                 audit.setMinioStatus(DeletionAudit.NOT_EXPECTED);
-                steps.put("Profile Picture (MinIO object store)", "NOT_EXPECTED");
+                steps.put("User Images & Documents (MinIO object store)", "NOT_EXPECTED");
             }
 
             // 4. Delete from hashing database
@@ -310,9 +315,21 @@ public class DeletionController {
                 audit.setOverallStatus(anyPurged ? DeletionAudit.PARTIAL : DeletionAudit.FAILED);
             }
 
+            // Add purged store summary & MinIO file paths to audit details
+            StringBuilder summaryBuilder = new StringBuilder();
+            List<String> purgedStores = new java.util.ArrayList<>();
+            if (DeletionAudit.PURGED.equals(audit.getBasicStatus())) purgedStores.add("PostgreSQL:user_basic_details (defaultdb)");
+            if (DeletionAudit.PURGED.equals(audit.getParentStatus())) purgedStores.add("PostgreSQL:user_parent_details (user-parent-detail)");
+            if (DeletionAudit.PURGED.equals(audit.getHashStatus())) purgedStores.add("PostgreSQL:user_uin_hash (uin-hashing)");
+            
+            summaryBuilder.append("Purged Databases: ").append(purgedStores.isEmpty() ? "None" : purgedStores.toString()).append("; ");
+            summaryBuilder.append("Purged MinIO Paths: ").append(purgedMinioPaths.isEmpty() ? "None" : purgedMinioPaths.toString()).append("; ");
+            
             if (detailBuilder.length() > 0) {
-                audit.setDetail(detailBuilder.toString().trim());
+                summaryBuilder.append("Errors: ").append(detailBuilder.toString().trim());
             }
+
+            audit.setDetail(summaryBuilder.toString().trim());
 
             // Persist the audit record
             try {

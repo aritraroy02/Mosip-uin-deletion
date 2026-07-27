@@ -3,211 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOSIP - Register User Profile</title>
+    <title>Identity Portal - Register</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+<header class="app-header">
+    <div class="header-container">
+        <a href="/" class="brand-section">
+            <div class="brand-logo"><img th:src="@{/images/identity-registration-icon.png}" alt="Identity Portal"></div>
+            <div><span class="brand-name">Identity Portal</span><span class="brand-tagline">Mock eSignet Registration</span></div>
+        </a>
+        <nav><ul class="nav-links"><li><a href="/" class="nav-link">Home</a></li><li><a href="/register" class="nav-link active">Register</a></li><li><a href="/audit-logs" class="nav-link">Audit Logs</a></li></ul></nav>
+    </div>
+</header>
 
-    <!-- Header Section -->
-    <header class="app-header">
-        <div class="header-container">
-            <a href="/" class="brand-section">
-                <div class="brand-logo">M</div>
-                <div>
-                    <span class="brand-name">MOSIP</span>
-                    <span class="brand-tagline">UIN Management</span>
+<main class="main-content">
+    <div class="form-container">
+        <div class="form-header">
+            <h2 class="form-header-title">Identity Registration</h2>
+            <p class="form-header-subtitle">Details are stored only in the local mock identity service.</p>
+        </div>
+        <div th:if="${errorMessage}" class="consent-box" style="border-color:#dc2626;color:#991b1b;margin:1rem;">
+            <i class="fa-solid fa-circle-exclamation"></i>&nbsp;<span th:text="${errorMessage}">Registration failed.</span>
+        </div>
+        <form th:action="@{/register}" th:object="${registration}" method="POST" enctype="multipart/form-data">
+            <div class="form-body">
+                <div class="form-group">
+                    <label for="individualId" class="form-label">Individual ID (UIN)</label>
+                    <input type="text" id="individualId" th:field="*{individualId}" class="form-input" pattern="[0-9]{5,19}" placeholder="5 to 19 digits" required>
                 </div>
-            </a>
-            <nav>
-                <ul class="nav-links">
-                    <li><a href="/" class="nav-link">Home</a></li>
-                    <li><a href="/register" class="nav-link active">Register</a></li>
-                    <li><a href="/audit-logs" class="nav-link">Audit Logs</a></li>
-                </ul>
-            </nav>
-            <div class="profile-container">
-                <div class="profile-avatar" title="User Profile">
-                    <i class="fa-solid fa-user"></i>
+                <div class="form-group-grid">
+                    <div class="form-group"><label for="givenName" class="form-label">Given Name</label><input type="text" id="givenName" th:field="*{givenName}" class="form-input" required></div>
+                    <div class="form-group"><label for="familyName" class="form-label">Family Name</label><input type="text" id="familyName" th:field="*{familyName}" class="form-input" required></div>
                 </div>
+                <div class="form-group-grid">
+                    <div class="form-group"><label for="gender" class="form-label">Gender</label><select id="gender" th:field="*{gender}" class="form-input" required><option value="">Select</option><option value="Female">Female</option><option value="Male">Male</option><option value="Other">Other</option></select></div>
+                    <div class="form-group"><label for="preferredLang" class="form-label">Preferred Language</label><select id="preferredLang" th:field="*{preferredLang}" class="form-input" required><option value="en">English</option></select></div>
+                </div>
+                <div class="form-group-grid">
+                    <div class="form-group"><label for="phone" class="form-label">Phone Number</label><input type="tel" id="phone" th:field="*{phone}" class="form-input" placeholder="e.g. +919876543210" required></div>
+                    <div class="form-group"><label for="email" class="form-label">Email Address</label><input type="email" id="email" th:field="*{email}" class="form-input" required></div>
+                </div>
+                <div class="form-group-grid">
+                    <div class="form-group"><label for="dob" class="form-label">Date of Birth</label><input type="date" id="dob" th:field="*{dob}" class="form-input" required></div>
+                    <div class="form-group"><label for="pin" class="form-label">PIN</label><input type="password" id="pin" th:field="*{pin}" class="form-input" autocomplete="new-password" required></div>
+                </div>
+                <div class="form-group-grid">
+                    <div class="form-group"><label for="locality" class="form-label">Locality</label><input type="text" id="locality" th:field="*{locality}" class="form-input" required></div>
+                    <div class="form-group"><label for="region" class="form-label">Region / State</label><input type="text" id="region" th:field="*{region}" class="form-input" required></div>
+                </div>
+                <div class="form-group-grid">
+                    <div class="form-group"><label for="country" class="form-label">Country</label><input type="text" id="country" th:field="*{country}" class="form-input" required></div>
+                    <div class="form-group"><label for="postalCode" class="form-label">Postal Code</label><input type="text" id="postalCode" th:field="*{postalCode}" class="form-input" required></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="profileImage"><i class="fa-solid fa-image" style="margin-right:6px;color:var(--primary);"></i>Profile Photo</label>
+                    <div class="upload-container"><div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div><div class="upload-text"><span class="upload-text-bold">Click to upload</span> a profile photo</div><div class="upload-text" style="font-size:.75rem;margin-top:4px;color:var(--text-muted);">PNG, JPG, JPEG, WEBP up to 5MB</div><input type="file" id="profileImage" th:field="*{profileImage}" class="upload-input" accept="image/*" required></div>
+                    <div class="preview-container" id="previewWrapper"><img src="#" alt="Profile photo preview" id="imagePreviewElement" class="image-preview"></div>
+                </div>
+                <div class="consent-box"><input type="checkbox" id="consent" th:field="*{consent}" class="consent-checkbox" required><label for="consent" class="consent-text">I consent to storing my registration data in the local mock identity service for testing purposes.</label></div>
             </div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="form-container">
-            <div class="form-header">
-                <h2 class="form-header-title">Identity Registration</h2>
-                <p class="form-header-subtitle">Provide your demographic details and user image below</p>
-            </div>
-            
-            <form th:action="@{/register}" th:object="${registration}" method="POST" enctype="multipart/form-data">
-                <div class="form-body">
-                    
-                    <!-- Demographic Inputs -->
-                    <div class="form-group">
-                        <label for="name" class="form-label">Full Name</label>
-                        <input type="text" id="name" th:field="*{name}" class="form-input" placeholder="e.g. John Doe" required>
-                    </div>
-
-                    <div class="form-group-grid">
-                        <div class="form-group">
-                            <label for="phone" class="form-label">Phone Number</label>
-                            <input type="tel" id="phone" th:field="*{phone}" class="form-input" placeholder="e.g. +91 9876543210" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="email" class="form-label">Email ID</label>
-                            <input type="email" id="email" th:field="*{email}" class="form-input" placeholder="e.g. john.doe@example.com" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group-grid">
-                        <div class="form-group">
-                            <label for="dob" class="form-label">Date of Birth</label>
-                            <input type="date" id="dob" th:field="*{dob}" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="nationality" class="form-label">Nationality</label>
-                            <input type="text" id="nationality" th:field="*{nationality}" class="form-input" placeholder="e.g. Indian" required>
-                        </div>
-                    </div>
-
-                    <!-- Parent Details -->
-                    <div class="form-group-grid">
-                        <div class="form-group">
-                            <label for="fatherName" class="form-label">Father's Name</label>
-                            <input type="text" id="fatherName" th:field="*{fatherName}" class="form-input" placeholder="e.g. Richard Doe" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="motherName" class="form-label">Mother's Name</label>
-                            <input type="text" id="motherName" th:field="*{motherName}" class="form-input" placeholder="e.g. Jane Doe" required>
-                        </div>
-                    </div>
-
-                    <!-- User Photo Upload -->
-                    <div class="form-group">
-                        <label class="form-label"><i class="fa-solid fa-image" style="margin-right: 6px; color: var(--primary);"></i> Profile Photo (/profile-pictures/)</label>
-                        <div class="upload-container">
-                            <div class="upload-icon">
-                                <i class="fa-solid fa-cloud-arrow-up"></i>
-                            </div>
-                            <div class="upload-text">
-                                <span class="upload-text-bold">Click to upload</span> or drag and drop
-                            </div>
-                            <div class="upload-text" style="font-size: 0.75rem; margin-top: 4px; color: var(--text-muted);">
-                                PNG, JPG, JPEG, WEBP up to 5MB
-                            </div>
-                            <input type="file" id="profileImage" th:field="*{profileImage}" class="upload-input" accept="image/*">
-                        </div>
-                        <div class="preview-container" id="previewWrapper">
-                            <img src="#" alt="Profile Photo Preview" id="imagePreviewElement" class="image-preview">
-                        </div>
-                    </div>
-
-                    <!-- Aadhar Card Upload -->
-                    <div class="form-group">
-                        <label class="form-label"><i class="fa-solid fa-id-card" style="margin-right: 6px; color: var(--primary);"></i> Aadhar Card Image (/aadhar-cards/)</label>
-                        <div class="upload-container">
-                            <div class="upload-icon">
-                                <i class="fa-solid fa-address-card"></i>
-                            </div>
-                            <div class="upload-text">
-                                <span class="upload-text-bold">Click to upload</span> Aadhar Card
-                            </div>
-                            <div class="upload-text" style="font-size: 0.75rem; margin-top: 4px; color: var(--text-muted);">
-                                PNG, JPG, JPEG, WEBP, PDF up to 10MB
-                            </div>
-                            <input type="file" id="aadharCardImage" th:field="*{aadharCardImage}" class="upload-input" accept="image/*,application/pdf">
-                        </div>
-                        <div class="preview-container" id="aadharPreviewWrapper">
-                            <img src="#" alt="Aadhar Card Preview" id="aadharPreviewElement" class="image-preview">
-                        </div>
-                    </div>
-
-                    <!-- Additional Identity Document Upload -->
-                    <div class="form-group">
-                        <label class="form-label"><i class="fa-solid fa-file-contract" style="margin-right: 6px; color: var(--primary);"></i> Identity Document (/documents/)</label>
-                        <div class="upload-container">
-                            <div class="upload-icon">
-                                <i class="fa-solid fa-file-arrow-up"></i>
-                            </div>
-                            <div class="upload-text">
-                                <span class="upload-text-bold">Click to upload</span> Identity Document
-                            </div>
-                            <div class="upload-text" style="font-size: 0.75rem; margin-top: 4px; color: var(--text-muted);">
-                                PNG, JPG, JPEG, WEBP, PDF up to 10MB
-                            </div>
-                            <input type="file" id="documentImage" th:field="*{documentImage}" class="upload-input" accept="image/*,application/pdf">
-                        </div>
-                        <div class="preview-container" id="docPreviewWrapper">
-                            <img src="#" alt="Document Preview" id="docPreviewElement" class="image-preview">
-                        </div>
-                    </div>
-
-                    <!-- Consent Box -->
-                    <div class="consent-box">
-                        <input type="checkbox" id="consent" th:field="*{consent}" class="consent-checkbox" required>
-                        <label for="consent" class="consent-text">
-                            I hereby confirm and state that I am willingly and voluntarily providing my personal data, demographic details, and profile images to MOSIP for secure processing and data lifecycle management purposes.
-                        </label>
-                    </div>
-
-                </div>
-
-                <!-- Form Footer Actions -->
-                <div class="form-actions">
-                    <a href="/" class="cta-button-secondary" style="margin-left: 0;">Cancel</a>
-                    <button type="submit" class="cta-button">
-                        <i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Submit Profile
-                    </button>
-                </div>
-            </form>
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="app-footer">
-        <p>&copy; 2024 All Rights Reserved MOSIP</p>
-        <div class="footer-links">
-            <a href="/delete" class="footer-link" style="text-decoration: underline;">Delete my data</a>
-        </div>
-    </footer>
-
-    <!-- Script for Live Image Previews -->
-    <script>
-        function setupLivePreview(inputId, wrapperId, previewId) {
-            const input = document.getElementById(inputId);
-            const wrapper = document.getElementById(wrapperId);
-            const preview = document.getElementById(previewId);
-
-            if (!input || !wrapper || !preview) return;
-
-            input.addEventListener('change', function() {
-                const file = this.files[0];
-                if (file) {
-                    if (file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.addEventListener('load', function() {
-                            preview.setAttribute('src', this.result);
-                            wrapper.style.display = 'flex';
-                        });
-                        reader.readAsDataURL(file);
-                    } else {
-                        preview.setAttribute('src', '#');
-                        wrapper.style.display = 'none';
-                    }
-                } else {
-                    wrapper.style.display = 'none';
-                    preview.setAttribute('src', '#');
-                }
-            });
-        }
-
-        setupLivePreview('profileImage', 'previewWrapper', 'imagePreviewElement');
-        setupLivePreview('aadharCardImage', 'aadharPreviewWrapper', 'aadharPreviewElement');
-        setupLivePreview('documentImage', 'docPreviewWrapper', 'docPreviewElement');
-    </script>
-
+            <div class="form-actions"><a href="/" class="cta-button-secondary" style="margin-left:0;">Cancel</a><button type="submit" class="cta-button"><i class="fa-solid fa-paper-plane" style="margin-right:8px;"></i>Store in Mock Identity</button></div>
+        </form>
+    </div>
+</main>
+<footer class="app-footer"><p>&copy; 2026 Identity Portal</p></footer>
+<script>
+const input=document.getElementById('profileImage'),wrapper=document.getElementById('previewWrapper'),preview=document.getElementById('imagePreviewElement');
+input.addEventListener('change',()=>{const file=input.files[0];if(!file){wrapper.style.display='none';return;}const reader=new FileReader();reader.onload=()=>{preview.src=reader.result;wrapper.style.display='flex';};reader.readAsDataURL(file);});
+</script>
 </body>
 </html>

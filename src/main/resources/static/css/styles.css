@@ -81,6 +81,14 @@ body {
     box-shadow: var(--shadow-sm);
 }
 
+.brand-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+    display: block;
+}
+
 .brand-name {
     font-size: 1.25rem;
     font-weight: 700;

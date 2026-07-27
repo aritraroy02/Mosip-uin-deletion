@@ -4,6 +4,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 public class UserRegistrationDto {
     private String name;
+    private String individualId;
+    private String givenName;
+    private String familyName;
+    private String gender;
+    private String locality;
+    private String region;
+    private String country;
+    private String pin;
+    private String preferredLang;
+    private String postalCode;
     private String phone;
     private String email;
     private String dob;
@@ -28,6 +38,86 @@ public class UserRegistrationDto {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getIndividualId() {
+        return individualId;
+    }
+
+    public void setIndividualId(String individualId) {
+        this.individualId = individualId;
+    }
+
+    public String getGivenName() {
+        return givenName;
+    }
+
+    public void setGivenName(String givenName) {
+        this.givenName = givenName;
+    }
+
+    public String getFamilyName() {
+        return familyName;
+    }
+
+    public void setFamilyName(String familyName) {
+        this.familyName = familyName;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public String getLocality() {
+        return locality;
+    }
+
+    public void setLocality(String locality) {
+        this.locality = locality;
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public String getPin() {
+        return pin;
+    }
+
+    public void setPin(String pin) {
+        this.pin = pin;
+    }
+
+    public String getPreferredLang() {
+        return preferredLang;
+    }
+
+    public void setPreferredLang(String preferredLang) {
+        this.preferredLang = preferredLang;
+    }
+
+    public String getPostalCode() {
+        return postalCode;
+    }
+
+    public void setPostalCode(String postalCode) {
+        this.postalCode = postalCode;
     }
 
     public String getPhone() {

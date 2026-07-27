@@ -222,6 +222,33 @@
                             <p class="timeline-desc">Deterministic salt-modulo hash references — security Database 2.</p>
                         </div>
                     </div>
+
+                    <!-- Step 5: Mock Identity System (eSignet) -->
+                    <div class="timeline-item">
+                        <div th:classappend="${steps['Mock Identity Service (esignet-mock-services)'] == 'SUCCESSFULLY_PURGED'} ? 'completed'
+                                           : (${steps['Mock Identity Service (esignet-mock-services)'] != null && steps['Mock Identity Service (esignet-mock-services)'].startsWith('FAILED')} ? 'failed'
+                                           : (${steps['Mock Identity Service (esignet-mock-services)'] == 'NOT_EXPECTED'} ? 'not-expected' : 'skipped'))"
+                             class="timeline-marker">
+                            <i th:classappend="${steps['Mock Identity Service (esignet-mock-services)'] != null && steps['Mock Identity Service (esignet-mock-services)'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
+                                             : (${steps['Mock Identity Service (esignet-mock-services)'] == 'NOT_EXPECTED'} ? 'fa-solid fa-minus' : 'fa-solid fa-shield-halved')"
+                               class=""></i>
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-header">
+                                <span class="timeline-title">5. Mock Identity System (eSignet)</span>
+                                <span th:classappend="${steps['Mock Identity Service (esignet-mock-services)'] == 'SUCCESSFULLY_PURGED'} ? 'completed'
+                                                    : (${steps['Mock Identity Service (esignet-mock-services)'] != null && steps['Mock Identity Service (esignet-mock-services)'].startsWith('FAILED')} ? 'failed'
+                                                    : (${steps['Mock Identity Service (esignet-mock-services)'] == 'NOT_EXPECTED'} ? 'not-expected' : 'skipped'))"
+                                      class="timeline-status"
+                                      th:text="${steps['Mock Identity Service (esignet-mock-services)'] == 'SUCCESSFULLY_PURGED'} ? 'Purged'
+                                            : (${steps['Mock Identity Service (esignet-mock-services)'] != null && steps['Mock Identity Service (esignet-mock-services)'].startsWith('FAILED')} ? 'Failed'
+                                            : (${steps['Mock Identity Service (esignet-mock-services)'] == 'NOT_EXPECTED'} ? 'Not Expected' : 'Skipped'))">
+                                    Purged
+                                </span>
+                            </div>
+                            <p class="timeline-desc">Mock eSignet identity profile & verified claims — Docker PostgreSQL (mockidentitysystem).</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Audit Details & Deleted File Paths -->

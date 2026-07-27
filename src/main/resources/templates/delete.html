@@ -47,7 +47,7 @@
             <div class="form-header">
                 <div class="delete-icon"><i class="fa-solid fa-shield-halved"></i></div>
                 <h1 id="delete-title" class="form-header-title">Verify your UIN</h1>
-                <p class="form-header-subtitle">Enter your UIN and we'll send a one-time password to continue.</p>
+                <p class="form-header-subtitle">Enter your Individual ID (UIN) and we'll send a one-time password to continue.</p>
             </div>
 
             <form id="uin-form" method="post" action="/delete/send-otp" novalidate>
@@ -56,12 +56,12 @@
                     <div id="verification-message" class="verification-message error" role="status" aria-live="polite" style="display:none;"></div>
 
                     <div class="form-group">
-                        <label class="form-label" for="uin">UIN <span aria-hidden="true" style="color: var(--error);">*</span></label>
+                        <label class="form-label" for="uin">Individual ID (UIN) <span aria-hidden="true" style="color: var(--error);">*</span></label>
                         <div class="input-with-icon">
                             <i class="fa-solid fa-id-card" aria-hidden="true"></i>
-                            <input class="form-input" id="uin" name="uin" type="text" inputmode="numeric" autocomplete="off" pattern="[0-9]{10,16}" maxlength="16" placeholder="Enter your UIN" th:value="${uin}" required>
+                            <input class="form-input" id="uin" name="uin" type="text" autocomplete="off" pattern="[a-zA-Z0-9-]{5,36}" maxlength="36" placeholder="5 to 36 digits or characters" th:value="${uin}" required>
                         </div>
-                        <p class="form-header-subtitle">Enter the UIN issued during registration.</p>
+                        <p class="form-header-subtitle">Enter the Individual ID or UIN issued during registration.</p>
                     </div>
 
                     <div class="otp-note">
@@ -90,11 +90,11 @@
 
         form.addEventListener('submit', (event) => {
             const uin = document.getElementById('uin').value.trim();
-            if (!/^\d{10,16}$/.test(uin)) {
+            if (!/^[a-zA-Z0-9-]{5,36}$/.test(uin)) {
                 event.preventDefault();
                 message.style.display = 'block';
                 message.className = 'verification-message error';
-                message.textContent = 'Enter a valid 10 to 16 digit UIN.';
+                message.textContent = 'Enter a valid Individual ID or UIN (5 to 36 characters).';
             }
         });
     </script>

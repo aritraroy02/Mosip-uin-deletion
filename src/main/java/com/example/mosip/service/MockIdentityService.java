@@ -26,9 +26,129 @@ import java.util.Map;
 public class MockIdentityService {
 
     private final RestClient restClient;
+    private final String mockIdentityDbUrl;
+    private final String mockIdentityDbUsername;
+    private final String mockIdentityDbPassword;
 
-    public MockIdentityService(@Value("${mock-identity.base-url:http://localhost:8082/v1/mock-identity-system}") String mockIdentityBaseUrl) {
+    public MockIdentityService(
+            @Value("${mock-identity.base-url:http://localhost:8082/v1/mock-identity-system}") String mockIdentityBaseUrl,
+            @Value("${mock-identity.datasource.url:jdbc:postgresql://localhost:5455/mosip_mockidentitysystem}") String mockIdentityDbUrl,
+            @Value("${mock-identity.datasource.username:postgres}") String mockIdentityDbUsername,
+            @Value("${mock-identity.datasource.password:postgres}") String mockIdentityDbPassword) {
         this.restClient = RestClient.builder().baseUrl(mockIdentityBaseUrl).build();
+        this.mockIdentityDbUrl = mockIdentityDbUrl;
+        this.mockIdentityDbUsername = mockIdentityDbUsername;
+        this.mockIdentityDbPassword = mockIdentityDbPassword;
+    }
+
+    /**
+     * Checks if an identity exists in the local Mock Identity System by Individual ID or UIN.
+     */
+    public boolean existsIdentity(String identifier) {
+        if (identifier == null || identifier.trim().isEmpty()) {
+            return false;
+        }
+        String id = identifier.trim();
+        // 1. Try REST API endpoint
+        try {
+            Map<?, ?> response = restClient.get()
+                    .uri("/identity/{individualId}", id)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .body(Map.class);
+            if (response != null && response.get("response") != null && !hasErrors(response)) {
+                return true;
+            }
+        } catch (Exception ignored) {}
+
+        // 2. Fallback to direct DB query
+        try (java.sql.Connection conn = java.sql.DriverManager.getConnection(mockIdentityDbUrl, mockIdentityDbUsername, mockIdentityDbPassword)) {
+            String sql = "SELECT COUNT(*) FROM mockidentitysystem.mock_identity WHERE individual_id = ? OR identity_json LIKE ? OR identity_json LIKE ?";
+            try (java.sql.PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, id);
+                stmt.setString(2, "%\"individualId\":\"" + id + "\"%");
+                stmt.setString(3, "%\"uin\":\"" + id + "\"%");
+                try (java.sql.ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt(1) > 0;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Mock identity exists check error for '" + id + "': " + e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * Retrieves raw identity details from the local Mock Identity System.
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getIdentityDetails(String identifier) {
+        if (identifier == null || identifier.trim().isEmpty()) {
+            return null;
+        }
+        String id = identifier.trim();
+        // 1. Try REST API
+        try {
+            Map<?, ?> response = restClient.get()
+                    .uri("/identity/{individualId}", id)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .body(Map.class);
+            if (response != null && response.get("response") instanceof Map<?, ?> details) {
+                return (Map<String, Object>) details;
+            }
+        } catch (Exception ignored) {}
+
+        // 2. Fallback to DB
+        try (java.sql.Connection conn = java.sql.DriverManager.getConnection(mockIdentityDbUrl, mockIdentityDbUsername, mockIdentityDbPassword)) {
+            String sql = "SELECT identity_json FROM mockidentitysystem.mock_identity WHERE individual_id = ? OR identity_json LIKE ? OR identity_json LIKE ? LIMIT 1";
+            try (java.sql.PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, id);
+                stmt.setString(2, "%\"individualId\":\"" + id + "\"%");
+                stmt.setString(3, "%\"uin\":\"" + id + "\"%");
+                try (java.sql.ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        String json = rs.getString("identity_json");
+                        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                        return mapper.readValue(json, Map.class);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Mock identity details fetch error for '" + id + "': " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Purges identity data from the local esignet-mock-services PostgreSQL database matching the given ID or UIN.
+     */
+    public boolean deleteIdentity(String identifier) {
+        if (identifier == null || identifier.trim().isEmpty()) {
+            return false;
+        }
+        String id = identifier.trim();
+        try (java.sql.Connection conn = java.sql.DriverManager.getConnection(mockIdentityDbUrl, mockIdentityDbUsername, mockIdentityDbPassword)) {
+            try (java.sql.PreparedStatement stmtClaims = conn.prepareStatement(
+                    "DELETE FROM mockidentitysystem.verified_claim WHERE individual_id = ?")) {
+                stmtClaims.setString(1, id);
+                stmtClaims.executeUpdate();
+            }
+
+            String sql = "DELETE FROM mockidentitysystem.mock_identity WHERE individual_id = ? OR identity_json LIKE ? OR identity_json LIKE ?";
+            try (java.sql.PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, id);
+                stmt.setString(2, "%\"individualId\":\"" + id + "\"%");
+                stmt.setString(3, "%\"uin\":\"" + id + "\"%");
+                int affected = stmt.executeUpdate();
+                return affected > 0;
+            }
+        } catch (Exception e) {
+            System.err.println("Mock identity purge error for identifier '" + id + "': " + e.getMessage());
+            return false;
+        }
     }
 
     public void createIdentity(UserRegistrationDto registration) {

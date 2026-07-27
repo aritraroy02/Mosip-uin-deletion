@@ -17,6 +17,7 @@ import com.example.mosip.entity.basic.DeletionAudit;
 import com.example.mosip.repository.basic.DeletionAuditRepository;
 import com.example.mosip.service.MinioStorageService;
 import com.example.mosip.service.SaltModuloHashService;
+import com.example.mosip.service.MockIdentityService;
 
 /**
  * Web views & forms for the voluntary data-deletion flow.
@@ -35,6 +36,7 @@ public class DeletionController {
     private final DeletionAuditRepository deletionAuditRepository;
     private final MinioStorageService minioStorageService;
     private final SaltModuloHashService saltModuloHashService;
+    private final MockIdentityService mockIdentityService;
 
     public DeletionController(UserBasicDetailsRepository userBasicDetailsRepository,
                               UserUinHashRepository userUinHashRepository,
@@ -42,7 +44,8 @@ public class DeletionController {
                               UserDataLocationRepository userDataLocationRepository,
                               DeletionAuditRepository deletionAuditRepository,
                               MinioStorageService minioStorageService,
-                              SaltModuloHashService saltModuloHashService) {
+                              SaltModuloHashService saltModuloHashService,
+                              MockIdentityService mockIdentityService) {
         this.userBasicDetailsRepository = userBasicDetailsRepository;
         this.userUinHashRepository = userUinHashRepository;
         this.userParentDetailsRepository = userParentDetailsRepository;
@@ -50,6 +53,7 @@ public class DeletionController {
         this.deletionAuditRepository = deletionAuditRepository;
         this.minioStorageService = minioStorageService;
         this.saltModuloHashService = saltModuloHashService;
+        this.mockIdentityService = mockIdentityService;
     }
 
     @GetMapping("/delete")
@@ -58,42 +62,42 @@ public class DeletionController {
     }
 
     /**
-     * Step 1: accept a UIN and "send" an OTP. Validates the UIN format, then confirms the UIN
-     * exists in the hashing database (Database 2) before routing to the OTP verification page.
-     * If the UIN is not found, the user is kept on the delete page with a "user does not exist"
-     * message. (Demo-only: OTP delivery is not wired to an SMS/email provider — the fixed demo
-     * OTP {@code 00000} is used on the next page.)
+     * Step 1: accept an Individual ID / UIN and "send" an OTP. Validates the ID format, then confirms
+     * the ID exists in the Mock Identity System or identity registry database before routing to OTP verification.
      */
     @PostMapping("/delete/send-otp")
     public String sendOtp(@org.springframework.web.bind.annotation.RequestParam("uin") String uin,
                           Model model) {
-        if (uin == null || !uin.trim().matches("\\d{10,16}")) {
-            model.addAttribute("errorMessage", "Enter a valid 10 to 16 digit UIN.");
+        if (uin == null || !uin.trim().matches("[a-zA-Z0-9-]{5,36}")) {
+            model.addAttribute("errorMessage", "Enter a valid Individual ID or UIN (5 to 36 characters).");
             return "delete";
         }
 
         uin = uin.trim();
         model.addAttribute("uin", uin);
 
-        // Only send an OTP if the UIN actually exists in the identity registry.
         try {
-            String uinSaltedHash = saltModuloHashService.hash(uin);
-            boolean exists = userUinHashRepository.existsByUinSaltedHash(uinSaltedHash);
-            if (!exists) {
-                model.addAttribute("errorMessage", "This UIN does not exist in the identity registry.");
+            boolean mockExists = mockIdentityService.existsIdentity(uin);
+            boolean dbExists = false;
+            try {
+                String uinSaltedHash = saltModuloHashService.hash(uin);
+                dbExists = userUinHashRepository.existsByUinSaltedHash(uinSaltedHash);
+            } catch (Exception ignored) {}
+
+            if (!mockExists && !dbExists) {
+                model.addAttribute("errorMessage", "This Individual ID / UIN does not exist in the mock identity service or identity registry.");
                 return "delete";
             }
         } catch (Exception e) {
-            model.addAttribute("errorMessage", "An error occurred while checking the UIN: " + e.getMessage());
+            model.addAttribute("errorMessage", "An error occurred while checking the identity: " + e.getMessage());
             return "delete";
         }
 
-        // UIN exists — carry it forward to the OTP verification page.
         return "verify-otp";
     }
 
     /**
-     * Step 2: verify the OTP, look up the UIN hash, retrieve all registered user data,
+     * Step 2: verify the OTP, retrieve user identity details from Mock Identity System or DBs,
      * and route to the confirm-delete screen.
      */
     @PostMapping("/delete/verify-otp")
@@ -102,8 +106,8 @@ public class DeletionController {
                             Model model) {
         model.addAttribute("uin", uin);
 
-        if (uin == null || !uin.trim().matches("\\d{10,16}")) {
-            model.addAttribute("errorMessage", "Enter a valid 10 to 16 digit UIN.");
+        if (uin == null || !uin.trim().matches("[a-zA-Z0-9-]{5,36}")) {
+            model.addAttribute("errorMessage", "Enter a valid Individual ID or UIN.");
             return "delete";
         }
         if (otp == null || !otp.trim().equals("00000")) {
@@ -112,6 +116,9 @@ public class DeletionController {
         }
 
         uin = uin.trim();
+        boolean foundData = false;
+
+        // 1. Check local databases (Database 1, 2, 3)
         try {
             String uinSaltedHash = saltModuloHashService.hash(uin);
             java.util.Optional<UserUinHash> uinHashOpt = userUinHashRepository.findByUinSaltedHash(uinSaltedHash);
@@ -120,36 +127,70 @@ public class DeletionController {
                 String userId = uinHash.getUserId();
                 model.addAttribute("userId", userId);
 
-                // Fetch Basic Details (Database 1)
-                java.util.Optional<UserBasicDetails> basicDetailsOpt = userBasicDetailsRepository.findById(userId);
-                if (basicDetailsOpt.isPresent()) {
-                    model.addAttribute("basicDetails", basicDetailsOpt.get());
-                } else {
-                    model.addAttribute("errorMessage", "Demographic details not found for this UIN.");
-                    return "verify-otp";
-                }
+                userBasicDetailsRepository.findById(userId).ifPresent(b -> model.addAttribute("basicDetails", b));
+                userParentDetailsRepository.findById(userId).ifPresent(p -> model.addAttribute("parentDetails", p));
 
-                // Fetch Parent Details (Database 3)
-                java.util.Optional<UserParentDetails> parentDetailsOpt = userParentDetailsRepository.findById(userId);
-                if (parentDetailsOpt.isPresent()) {
-                    model.addAttribute("parentDetails", parentDetailsOpt.get());
-                }
-
-                // Fetch Profile Image presigned URL from MinIO (if any exists)
                 String profileImageUrl = minioStorageService.getProfileImagePresignedUrl(userId);
                 if (profileImageUrl != null) {
                     model.addAttribute("profileImageUrl", profileImageUrl);
                 }
-
-                return "confirm-delete";
-            } else {
-                model.addAttribute("errorMessage", "OTP verified, but this UIN was not found in the identity registry.");
+                foundData = true;
             }
-        } catch (Exception e) {
-            model.addAttribute("errorMessage", "An error occurred while checking the UIN: " + e.getMessage());
-        }
+        } catch (Exception ignored) {}
 
-        return "verify-otp";
+        // 2. Check Mock Identity System if DB basic details are missing or for fallback
+        try {
+            Map<String, Object> mockDetails = mockIdentityService.getIdentityDetails(uin);
+            if (mockDetails != null) {
+                foundData = true;
+                if (!model.containsAttribute("userId")) {
+                    Object indId = mockDetails.get("individualId");
+                    model.addAttribute("userId", indId != null ? indId.toString() : uin);
+                }
+                if (!model.containsAttribute("basicDetails")) {
+                    UserBasicDetails mockBasic = buildBasicDetailsFromMock(mockDetails, uin);
+                    model.addAttribute("basicDetails", mockBasic);
+                }
+            }
+        } catch (Exception ignored) {}
+
+        if (foundData) {
+            return "confirm-delete";
+        } else {
+            model.addAttribute("errorMessage", "OTP verified, but identity details were not found.");
+            return "verify-otp";
+        }
+    }
+
+    private UserBasicDetails buildBasicDetailsFromMock(Map<String, Object> mockDetails, String defaultUin) {
+        UserBasicDetails b = new UserBasicDetails();
+        Object indId = mockDetails.get("individualId");
+        b.setUserId(indId != null ? indId.toString() : defaultUin);
+        String nameVal = extractValue(mockDetails.get("fullName"));
+        if (nameVal.isEmpty()) {
+            nameVal = extractValue(mockDetails.get("name"));
+        }
+        if (nameVal.isEmpty()) {
+            nameVal = "Mock Identity User";
+        }
+        b.setName(nameVal);
+
+        Object phone = mockDetails.get("phone");
+        b.setPhone(phone != null && !phone.toString().isEmpty() ? phone.toString() : "Not Provided");
+        return b;
+    }
+
+    private String extractValue(Object field) {
+        if (field == null) return "";
+        if (field instanceof List<?> list && !list.isEmpty()) {
+            Object first = list.get(0);
+            if (first instanceof Map<?, ?> map) {
+                Object val = map.get("value");
+                return val != null ? val.toString() : "";
+            }
+            return first.toString();
+        }
+        return field.toString();
     }
 
     /**
@@ -175,24 +216,20 @@ public class DeletionController {
             return "confirm-delete";
         }
 
-        if (uin == null || !uin.trim().matches("\\d{10,16}")) {
-            model.addAttribute("errorMessage", "Enter a valid 10 to 16 digit UIN.");
+        if (uin == null || !uin.trim().matches("[a-zA-Z0-9-]{5,36}")) {
+            model.addAttribute("errorMessage", "Enter a valid Individual ID or UIN.");
             return "delete";
         }
 
         uin = uin.trim();
         String uinSaltedHash = saltModuloHashService.hash(uin);
+        String userId = uin;
 
         try {
             java.util.Optional<UserUinHash> uinHashOpt = userUinHashRepository.findByUinSaltedHash(uinSaltedHash);
-
-            if (uinHashOpt.isEmpty()) {
-                model.addAttribute("errorMessage", "This UIN does not exist in the identity registry.");
-                return "delete";
+            if (uinHashOpt.isPresent()) {
+                userId = uinHashOpt.get().getUserId();
             }
-
-            UserUinHash uinHash = uinHashOpt.get();
-            String userId = uinHash.getUserId();
             model.addAttribute("userId", userId);
 
             // Look up the data-location registry to know which stores SHOULD hold data
@@ -302,29 +339,45 @@ public class DeletionController {
                 steps.put("Cryptographic Identity Hash (user_uin_hash)", "NOT_EXPECTED");
             }
 
+            // 5. Delete from local Mock Identity System (esignet-mock-services)
+            boolean mockPurged = false;
+            try {
+                mockPurged = mockIdentityService.deleteIdentity(userId) || mockIdentityService.deleteIdentity(uin);
+                if (mockPurged) {
+                    steps.put("Mock Identity Service (esignet-mock-services)", "SUCCESSFULLY_PURGED");
+                } else {
+                    steps.put("Mock Identity Service (esignet-mock-services)", "NOT_FOUND_SKIPPED");
+                }
+            } catch (Exception e) {
+                steps.put("Mock Identity Service (esignet-mock-services)", "FAILED: " + e.getMessage());
+                detailBuilder.append("Mock Identity DB: ").append(e.getMessage()).append("; ");
+            }
+
             // Compute overall status
-            boolean allExpectedPurged = !anyFailed;
-            if (allExpectedPurged) {
+            boolean anyDbPurged = DeletionAudit.PURGED.equals(audit.getBasicStatus())
+                    || DeletionAudit.PURGED.equals(audit.getParentStatus())
+                    || DeletionAudit.PURGED.equals(audit.getHashStatus())
+                    || mockPurged;
+
+            if (!anyFailed) {
                 audit.setOverallStatus(DeletionAudit.SUCCESS);
+            } else if (anyDbPurged) {
+                audit.setOverallStatus(DeletionAudit.PARTIAL);
             } else {
-                // Check if anything was purged at all
-                boolean anyPurged = DeletionAudit.PURGED.equals(audit.getBasicStatus())
-                        || DeletionAudit.PURGED.equals(audit.getParentStatus())
-                        || DeletionAudit.PURGED.equals(audit.getHashStatus())
-                        || DeletionAudit.PURGED.equals(audit.getMinioStatus());
-                audit.setOverallStatus(anyPurged ? DeletionAudit.PARTIAL : DeletionAudit.FAILED);
+                audit.setOverallStatus(DeletionAudit.FAILED);
             }
 
             // Add purged store summary & MinIO file paths to audit details
             StringBuilder summaryBuilder = new StringBuilder();
             List<String> purgedStores = new java.util.ArrayList<>();
-            if (DeletionAudit.PURGED.equals(audit.getBasicStatus())) purgedStores.add("PostgreSQL:user_basic_details (defaultdb)");
-            if (DeletionAudit.PURGED.equals(audit.getParentStatus())) purgedStores.add("PostgreSQL:user_parent_details (user-parent-detail)");
-            if (DeletionAudit.PURGED.equals(audit.getHashStatus())) purgedStores.add("PostgreSQL:user_uin_hash (uin-hashing)");
-            
+            if (DeletionAudit.PURGED.equals(audit.getBasicStatus())) purgedStores.add("user_basic_details (defaultdb)");
+            if (DeletionAudit.PURGED.equals(audit.getParentStatus())) purgedStores.add("user_parent_details (user-parent-detail)");
+            if (DeletionAudit.PURGED.equals(audit.getHashStatus())) purgedStores.add("user_uin_hash (uin-hashing)");
+            if (mockPurged) purgedStores.add("esignet-mock-services (mock_identity)");
+
             summaryBuilder.append("Purged Databases: ").append(purgedStores.isEmpty() ? "None" : purgedStores.toString()).append("; ");
             summaryBuilder.append("Purged MinIO Paths: ").append(purgedMinioPaths.isEmpty() ? "None" : purgedMinioPaths.toString()).append("; ");
-            
+
             if (detailBuilder.length() > 0) {
                 summaryBuilder.append("Errors: ").append(detailBuilder.toString().trim());
             }
@@ -368,11 +421,11 @@ public class DeletionController {
             try {
                 java.util.Optional<UserUinHash> uinHashOpt = userUinHashRepository.findByUinSaltedHash(uinSaltedHash);
                 if (uinHashOpt.isPresent()) {
-                    String userId = uinHashOpt.get().getUserId();
-                    model.addAttribute("userId", userId);
-                    userBasicDetailsRepository.findById(userId).ifPresent(b -> model.addAttribute("basicDetails", b));
-                    userParentDetailsRepository.findById(userId).ifPresent(p -> model.addAttribute("parentDetails", p));
-                    String profileImageUrl = minioStorageService.getProfileImagePresignedUrl(userId);
+                    String catchUserId = uinHashOpt.get().getUserId();
+                    model.addAttribute("userId", catchUserId);
+                    userBasicDetailsRepository.findById(catchUserId).ifPresent(b -> model.addAttribute("basicDetails", b));
+                    userParentDetailsRepository.findById(catchUserId).ifPresent(p -> model.addAttribute("parentDetails", p));
+                    String profileImageUrl = minioStorageService.getProfileImagePresignedUrl(catchUserId);
                     if (profileImageUrl != null) {
                         model.addAttribute("profileImageUrl", profileImageUrl);
                     }

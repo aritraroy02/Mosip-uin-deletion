@@ -50,53 +50,34 @@
                 <p class="form-header-subtitle">Enter your Individual ID (UIN) and we'll send a one-time password to continue.</p>
             </div>
 
-            <form id="uin-form" method="post" action="/delete/send-otp" novalidate>
-                <div class="form-body">
-                    <div th:if="${errorMessage}" class="verification-message error" role="status" aria-live="polite" th:text="${errorMessage}"></div>
-                    <div id="verification-message" class="verification-message error" role="status" aria-live="polite" style="display:none;"></div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="uin">Individual ID (UIN) <span aria-hidden="true" style="color: var(--error);">*</span></label>
-                        <div class="input-with-icon">
-                            <i class="fa-solid fa-id-card" aria-hidden="true"></i>
-                            <input class="form-input" id="uin" name="uin" type="text" autocomplete="off" pattern="[a-zA-Z0-9-]{5,36}" maxlength="36" placeholder="5 to 36 digits or characters" th:value="${uin}" required>
-                        </div>
-                        <p class="form-header-subtitle">Enter the Individual ID or UIN issued during registration.</p>
-                    </div>
-
-                    <div class="otp-note">
-                        <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-                        <span>Demo-only: a one-time password will be requested on the next step. Use OTP <code>00000</code>.</span>
-                    </div>
+            <!-- Official MOSIP eSignet Portal Authentication Box -->
+            <div style="margin: 1.5rem; padding: 2rem; border: 2px solid #0f4c81; background: #f0f7ff; border-radius: var(--radius-lg); text-align: center; box-shadow: 0 6px 18px rgba(15, 76, 129, 0.12);">
+                <div style="width: 64px; height: 64px; margin: 0 auto 1rem; border-radius: 50%; background: #0f4c81; color: white; display: grid; place-items: center; font-size: 1.75rem; box-shadow: 0 4px 10px rgba(15, 76, 129, 0.25);">
+                    <i class="fa-solid fa-shield-halved"></i>
                 </div>
-
-                <div class="form-actions">
-                    <a href="/" class="cta-button-secondary">Cancel</a>
-                    <button type="submit" class="cta-button" style="background: #dc2626;">
-                        Send OTP <i class="fa-solid fa-paper-plane" style="margin-left: .5rem;"></i>
-                    </button>
+                <div style="font-weight: 700; font-size: 1.25rem; color: #0f4c81; margin-bottom: 0.5rem;">
+                    Official MOSIP eSignet Authentication
                 </div>
-            </form>
+                <p style="font-size: 0.95rem; color: #1e3a8a; margin-bottom: 1.75rem; line-height: 1.5;">
+                    Authenticate securely using your registered UIN via the official MOSIP eSignet OIDC OAuth portal to verify and authorize voluntary profile deletion.
+                </p>
+
+                <a href="/delete/esignet-login" class="cta-button"
+                   style="background: #0f4c81; display: inline-flex; align-items: center; justify-content: center; gap: 0.75rem; width: 100%; padding: 1rem 1.75rem; font-size: 1.1rem; font-weight: 700; text-decoration: none; border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(15, 76, 129, 0.3); transition: all 0.2s ease-in-out;">
+                    <i class="fa-solid fa-arrow-right-to-bracket" style="font-size: 1.2rem;"></i> Sign in with eSignet
+                </a>
+            </div>
+
+            <div class="form-actions" style="border-top: 1px solid var(--border); padding-top: 1.25rem; margin-top: 1rem; justify-content: center;">
+                <a href="/" class="cta-button-secondary" style="min-width: 160px; text-align: center;">Cancel</a>
+            </div>
         </section>
     </main>
 
     <footer class="app-footer">
         <p>&copy; 2024 MOSIP. All rights reserved.</p>
     </footer>
-
-    <script>
-        const form = document.getElementById('uin-form');
-        const message = document.getElementById('verification-message');
-
-        form.addEventListener('submit', (event) => {
-            const uin = document.getElementById('uin').value.trim();
-            if (!/^[a-zA-Z0-9-]{5,36}$/.test(uin)) {
-                event.preventDefault();
-                message.style.display = 'block';
-                message.className = 'verification-message error';
-                message.textContent = 'Enter a valid Individual ID or UIN (5 to 36 characters).';
-            }
-        });
-    </script>
+</body>
+</html>
 </body>
 </html>

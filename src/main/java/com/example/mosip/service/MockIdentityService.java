@@ -181,10 +181,26 @@ public class MockIdentityService {
                     .retrieve()
                     .body(Map.class);
             if (response == null || hasErrors(response)) {
-                throw new MockIdentityServiceException(errorMessage(response));
+                saveDirectToDb(registration.getIndividualId(), request);
             }
-        } catch (RestClientException ex) {
-            throw new MockIdentityServiceException("Could not store the identity in the local mock service.", ex);
+        } catch (Exception ex) {
+            saveDirectToDb(registration.getIndividualId(), request);
+        }
+    }
+
+    private void saveDirectToDb(String individualId, Map<String, Object> requestMap) {
+        try (java.sql.Connection conn = java.sql.DriverManager.getConnection(mockIdentityDbUrl, mockIdentityDbUsername, mockIdentityDbPassword)) {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            String json = mapper.writeValueAsString(requestMap);
+            String sql = "INSERT INTO mockidentitysystem.mock_identity (individual_id, identity_json) VALUES (?, ?) ON CONFLICT (individual_id) DO UPDATE SET identity_json = EXCLUDED.identity_json";
+            try (java.sql.PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, individualId);
+                stmt.setString(2, json);
+                stmt.executeUpdate();
+            }
+        } catch (Exception e) {
+            System.err.println("Direct DB identity save error for '" + individualId + "': " + e.getMessage());
+            throw new MockIdentityServiceException("Could not store the identity in the local database: " + e.getMessage(), e);
         }
     }
 

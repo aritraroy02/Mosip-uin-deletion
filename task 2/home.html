@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOSIP Collab</title>
+  <meta name="description" content="Try MOSIP's modular building blocks — Pre-Registration, Registration Clients and the Resident Portal — on the MOSIP Collab sandbox." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;600;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ============================= HERO ============================= -->
+  <header class="hero hero--home">
+    <div class="hero__overlay"></div>
+
+    <nav class="nav container" aria-label="Primary">
+      <a class="nav__logo" href="home.html" aria-label="MOSIP Collab home">
+        <img src="assets/mosip-logo.png" alt="MOSIP" width="169" height="68" />
+      </a>
+
+      <input class="nav__toggle" type="checkbox" id="nav-toggle" />
+      <label class="nav__burger" for="nav-toggle" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </label>
+
+      <div class="nav__menu">
+        <a class="nav__link" href="#">
+          About MOSIP
+          <img class="nav__caret" src="assets/icon-caret.svg" alt="" />
+        </a>
+        <a class="nav__link" href="#">
+          Contact Us
+          <img class="nav__ext" src="assets/icon-external-link.svg" alt="" />
+        </a>
+        <a class="nav__link" href="#">APIs</a>
+        <a class="btn btn--ghost nav__cta" href="index.html">Get UIN</a>
+      </div>
+    </nav>
+
+    <div class="hero__intro container">
+      <h1 class="hero__title">MOSIP Collab</h1>
+      <p class="hero__subtitle">
+        With over 20 independent building blocks, MOSIP&rsquo;s modular architecture allows
+        countries to customise the ideal foundational ID system to best represent their unique
+        populations.
+      </p>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Browse MOSIP Collab">
+      <a class="tab tab--active" href="home.html" role="tab" aria-selected="true">Applications</a>
+      <a class="tab" href="#" role="tab" aria-selected="false">Use Cases</a>
+    </div>
+  </header>
+
+  <!-- ============================= MAIN ============================= -->
+  <main class="page page--home">
+    <div class="container">
+      <p class="section-intro">
+        Lorem ipsum dolor sit amet consectetur. Leo sit in risus augue venenatis vulputate laoreet
+        sed arcu.. Nibh sed amet lectus nibh elementum lorem ornare..
+      </p>
+
+      <ul class="app-grid">
+
+        <li class="app-card">
+          <div class="app-card__thumb">
+            <img class="app-card__icon" src="assets/icon-mosip-mark.png" alt="" width="64" height="67" />
+            <span class="app-card__caption">Pre-Registration</span>
+          </div>
+          <h2 class="app-card__title">Pre-Registration</h2>
+          <div class="app-card__actions">
+            <a class="pill pill--solid" href="#">Try It Out!</a>
+            <a class="pill" href="#">User Guide</a>
+            <a class="pill" href="#">Docs</a>
+          </div>
+        </li>
+
+        <li class="app-card">
+          <div class="app-card__thumb">
+            <img class="app-card__icon" src="assets/icon-mosip-mark.png" alt="" width="64" height="67" />
+            <span class="app-card__caption">Android Registration Client</span>
+          </div>
+          <h2 class="app-card__title">Android Registration Client</h2>
+          <div class="app-card__actions">
+            <a class="pill pill--solid" href="#">Try It Out!</a>
+            <a class="pill" href="#">User Guide</a>
+            <a class="pill" href="#">Docs</a>
+          </div>
+        </li>
+
+        <li class="app-card">
+          <div class="app-card__thumb">
+            <img class="app-card__icon" src="assets/icon-mosip-mark.png" alt="" width="64" height="67" />
+            <span class="app-card__caption">Desktop Registration Client</span>
+          </div>
+          <h2 class="app-card__title">Desktop Registration Client</h2>
+          <div class="app-card__actions">
+            <a class="pill pill--solid" href="#">Try It Out!</a>
+            <a class="pill" href="#">User Guide</a>
+            <a class="pill" href="#">Docs</a>
+          </div>
+        </li>
+
+        <li class="app-card">
+          <div class="app-card__thumb">
+            <img class="app-card__icon" src="assets/icon-mosip-mark.png" alt="" width="64" height="67" />
+            <span class="app-card__caption">Resident Portal</span>
+          </div>
+          <h2 class="app-card__title">Resident Portal</h2>
+          <div class="app-card__actions">
+            <a class="pill pill--solid" href="#">Try It Out!</a>
+            <a class="pill" href="#">User Guide</a>
+            <a class="pill" href="#">Docs</a>
+          </div>
+        </li>
+
+      </ul>
+    </div>
+  </main>
+
+  <!-- ============================ FOOTER ============================ -->
+  <footer class="site-footer site-footer--tall">
+    <p>&copy; 2024 All Rights Reserved MOSIP</p>
+    <a class="site-footer__link" href="#">Unsubscribe</a>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,1236 @@
+/* =================================================================
+   MOSIP Collab — Self Registration Form
+   Design tokens
+   ================================================================= */
+:root {
+  /* Brand */
+  --blue-600:      #1763ac;
+  --blue-700:      #12518e;
+  --blue-800:      #0e4171;
+
+  /* Surfaces */
+  --page-bg:       #eff3f8;
+  --surface:       #ffffff;
+
+  /* Text */
+  --text-heading:  #2c3345;
+  --text-label:    #323639;
+  --text-muted:    #727272;
+  --text-placeholder: #a0a8ac;
+  --text-hero-sub: #c4d6e6;
+
+  /* Lines */
+  --border-input:  #e8ebec;
+  --border-head:   #d7d8e1;
+  --border-foot:   #e5e7f2;
+  --border-check:  #6c6c6c;
+
+  /* Accent */
+  --required:      #fe6b6b;
+  --success:       #0a8754;
+  --outline-blue:  #014daf;
+  --text-summary:  #666666;
+  --navy:          #01315f;
+  --tab-inactive:  #013464;
+  --tab-muted:     #4d7397;
+  --thumb-bg:      #f4f8fa;
+  --text-caption:  #2b2b2b;
+
+  /* Metrics */
+  --radius-card:   25px;
+  --radius-ctl:    8px;
+  /* 1282px of content (the design's frame width) + 2 x 24px gutter */
+  --container:     1330px;
+  --card-max:      900px;
+  --card-pad-x:    52px;
+  --hero-h:        382px;
+  --card-offset:   46px; /* how far the card overlaps the hero */
+
+  /* Type */
+  --font-ui:       'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display:  'Montserrat', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-hero:     'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* =================================================================
+   Reset
+   ================================================================= */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--page-bg);
+  font-family: var(--font-ui);
+  color: var(--text-heading);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, p { margin: 0; }
+
+img { max-width: 100%; display: block; }
+
+a { text-decoration: none; color: inherit; }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--blue-600);
+  outline-offset: 2px;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+
+.req {
+  color: var(--required);
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.is-locked { overflow: hidden; }
+
+/* =================================================================
+   Hero
+   ================================================================= */
+.hero {
+  position: relative;
+  min-height: var(--hero-h);
+  padding-bottom: var(--card-offset);
+  background: var(--blue-800) url('assets/hero-bg.png') center 34% / cover no-repeat;
+}
+
+/* NOTE: .hero is `position: relative` with `z-index: auto` on purpose — it must not
+   create a stacking context, so the nav can be layered above the overlapping card. */
+.hero__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(180deg, rgba(6, 39, 71, 0) 0%, rgba(6, 39, 71, 0.28) 100%);
+}
+
+/* ---------------------------- Nav ---------------------------- */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-top: 32px;
+  position: relative;
+  z-index: 20;
+}
+
+.nav__logo img {
+  width: 169px;
+  height: auto;
+}
+
+.nav__menu {
+  display: flex;
+  align-items: center;
+  gap: 37px;
+}
+
+.nav__link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.35;
+  color: #fff;
+  padding-bottom: 6px;
+}
+
+/* Decorative underline accent from the design, revealed on interaction */
+.nav__link::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 34px;
+  height: 1px;
+  background: #fff;
+  transform: translateX(-50%) scaleX(0);
+  transform-origin: center;
+  transition: transform 0.2s ease;
+}
+
+.nav__link:hover::after,
+.nav__link:focus-visible::after { transform: translateX(-50%) scaleX(1); }
+
+/* Icons keep the exact aspect ratio of their exported artwork */
+.nav__caret {
+  width: 8.07px;
+  height: 6.94px;
+  flex: none;
+  transform: rotate(180deg);
+}
+
+.nav__ext { width: 14.53px; height: 13.83px; flex: none; }
+
+/* Burger (CSS-only mobile menu) */
+.nav__toggle { position: absolute; opacity: 0; pointer-events: none; }
+
+.nav__burger {
+  display: none;
+  width: 44px;
+  height: 44px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: var(--radius-ctl);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.nav__burger span {
+  display: block;
+  height: 2px;
+  background: #fff;
+  border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* ---------------------------- Intro ---------------------------- */
+.hero__intro {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding-top: 54px;
+  padding-bottom: 8px;
+}
+
+.hero__title {
+  font-family: var(--font-hero);
+  font-weight: 700;
+  font-size: 50px;
+  line-height: 1.18;
+  color: #fff;
+}
+
+.hero__subtitle {
+  max-width: 830px;
+  margin: 18px auto 0;
+  font-family: var(--font-hero);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--text-hero-sub);
+}
+
+/* ------------------- Hero variant: landing page ------------------- */
+/* No card overlaps this hero — instead the tabs sit flush on its bottom edge. */
+.hero--home {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0;
+}
+
+.hero--home .hero__intro { padding-bottom: 0; }
+
+/* ---------------------------- Tabs ---------------------------- */
+.tabs {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin-top: auto;
+  padding: 60px 24px 0;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 254px;
+  height: 46px;
+  background: var(--tab-inactive);
+  border: 1px solid var(--tab-muted);
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--tab-muted);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.tab:hover { color: #7ea3c4; }
+
+.tab--active {
+  background: var(--surface);
+  border-color: var(--surface);
+  color: var(--navy);
+}
+
+.tab--active:hover { color: var(--navy); }
+
+/* =================================================================
+   Page / Card
+   ================================================================= */
+.page {
+  padding: 0 24px 74px;
+  margin-top: calc(var(--card-offset) * -1);
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: var(--card-max);
+  margin-inline: auto;
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.10);
+  overflow: hidden;
+}
+
+/* The landing page has no floating card, so it needs no negative offset */
+.page--home {
+  margin-top: 0;
+  padding: 30px 0 30px;
+}
+
+/* Confirm Details page uses a narrower card (642px in the design) */
+.card--narrow { max-width: 642px; }
+
+/* =================================================================
+   Landing page — intro + application cards
+   ================================================================= */
+.section-intro {
+  max-width: 815px;
+  margin-inline: auto;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--navy);
+}
+
+.app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 25px;
+  margin: 31px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-card {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 10px 15px;
+  background: var(--surface);
+  border-radius: 20px;
+  box-shadow: 2px 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.app-card__thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-height: 209px;
+  padding: 52px 16px 20px;
+  background: var(--thumb-bg);
+  border-radius: 10px;
+}
+
+.app-card__icon {
+  width: 64px;
+  height: 67px;
+  flex: none;
+}
+
+.app-card__caption {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 19px;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--text-caption);
+}
+
+.app-card__title {
+  margin: 14px 5px 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--navy);
+}
+
+/* margin-top:auto keeps every card's action row on the same baseline,
+   however many lines the title above it wraps to. */
+.app-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 5px;
+  padding-top: 21px;
+  margin-top: auto;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 29px;
+  padding: 5px 8px;
+  border: 1px solid var(--blue-600);
+  border-radius: 6px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--blue-600);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.pill:hover { background: #eaf2fa; }
+
+.pill--solid {
+  background: var(--blue-600);
+  color: #fff;
+}
+
+.pill--solid:hover { background: var(--blue-700); }
+
+/* ---------------------------- Head ---------------------------- */
+.card__head {
+  padding: 33px var(--card-pad-x) 32px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-head);
+}
+
+.card__head--compact { padding: 23px var(--card-pad-x) 22px; }
+
+.card__title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 46.4px;
+  color: var(--text-heading);
+}
+
+.card__title--sm { font-size: 24px; }
+
+.card__subtitle {
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--text-heading);
+}
+
+/* ---------------------------- Body ---------------------------- */
+.card__body { padding: 34px var(--card-pad-x) 30px; }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 26px;
+  row-gap: 30px;
+  align-items: start;
+}
+
+.field--name    { grid-column: 1; grid-row: 1; }
+.field--photo   { grid-column: 2; grid-row: 1 / span 3; }
+.field--dob     { grid-column: 1; grid-row: 2; }
+.field--gender  { grid-column: 1; grid-row: 3; }
+.field--email   { grid-column: 1; grid-row: 4; }
+.field--mobile  { grid-column: 2; grid-row: 4; }
+.field--address { grid-column: 1; grid-row: 5; }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field__label {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 16px;
+  color: var(--text-label);
+}
+
+/* ---------------------------- Inputs ---------------------------- */
+.input {
+  width: 100%;
+  height: 44px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius-ctl);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--text-label);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input::placeholder { color: var(--text-placeholder); }
+
+.input:hover { border-color: #d3d8db; }
+
+.input:focus {
+  outline: none;
+  border-color: var(--blue-600);
+  box-shadow: 0 0 0 3px rgba(23, 99, 172, 0.12);
+}
+
+/* Empty by default, so it takes no space until a message appears. */
+.field__error:empty { display: none; }
+
+.field__error {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #d64545;
+}
+
+.input--error,
+.input--error:hover { border-color: var(--required); }
+
+.input--error:focus {
+  border-color: var(--required);
+  box-shadow: 0 0 0 3px rgba(254, 107, 107, 0.16);
+}
+
+.input-wrap { position: relative; }
+
+.input--icon { padding-right: 38px; }
+
+.input__icon {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.input__icon--calendar { width: 12px;   height: 12.67px; }
+.input__icon--chevron  { width: 9.34px; height: 5.34px;  }
+
+/* The calendar icon is a real button — it opens the native date picker. */
+.input__icon-btn {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  transform: translateY(-50%);
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.input__icon-btn:hover { background: #f0f3f5; }
+
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  color: var(--text-label);
+}
+
+.select:invalid,
+.select option[value=""] { color: var(--text-placeholder); }
+
+.textarea {
+  height: 66px;
+  min-height: 66px;
+  resize: vertical;
+  line-height: 21px;
+}
+
+/* ---------------------------- Photo ---------------------------- */
+.field--photo { gap: 6px; }
+
+.photo {
+  position: relative;
+  width: 247px;
+  max-width: 100%;
+  aspect-ratio: 247 / 170;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease;
+}
+
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo:hover { box-shadow: 0 0 0 2px rgba(23, 99, 172, 0.35); }
+
+/* Once a real photo is in place the box stops behaving like a drop target. */
+.photo--filled { cursor: default; }
+.photo--filled:hover { box-shadow: none; }
+
+.photo--error { box-shadow: 0 0 0 2px var(--required); }
+
+.link-btn {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 0;
+  background: none;
+  border: 0;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--blue-600);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.link-btn:hover { color: var(--blue-700); }
+
+/* ---------------------------- Consent ---------------------------- */
+.consent { margin-top: 24px; }
+
+.consent__text {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-heading);
+}
+
+.consent__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-check);
+  border-radius: 2px;
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.checkbox::after {
+  content: '';
+  width: 10px;
+  height: 6px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) scale(0);
+  transition: transform 0.15s ease;
+}
+
+.checkbox:checked {
+  background: var(--blue-600);
+  border-color: var(--blue-600);
+}
+
+.checkbox:checked::after { transform: rotate(-45deg) scale(1); }
+
+.checkbox--error { border-color: var(--required); box-shadow: 0 0 0 2px rgba(254, 107, 107, 0.25); }
+
+.consent .field__error { margin-top: 8px; }
+
+.consent__label {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 19px;
+  color: var(--text-heading);
+  cursor: pointer;
+}
+
+/* =================================================================
+   Confirm Details — read-only summary
+   ================================================================= */
+.summary {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  column-gap: 26px;
+  row-gap: 25px;
+  margin: 0;
+  align-items: start;
+}
+
+.summary__item--name    { grid-column: 1; grid-row: 1; }
+.summary__item--photo   { grid-column: 2; grid-row: 1 / span 3; }
+.summary__item--dob     { grid-column: 1; grid-row: 2; }
+.summary__item--gender  { grid-column: 1; grid-row: 3; }
+.summary__item--email   { grid-column: 1; grid-row: 4; }
+.summary__item--mobile  { grid-column: 2; grid-row: 4; }
+.summary__item--address { grid-column: 1 / -1; grid-row: 5; }
+
+.summary__label {
+  font-family: var(--font-ui);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--text-summary);
+}
+
+.summary__value {
+  margin: 8px 0 0;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.25;
+  color: #000;
+}
+
+.summary__photo {
+  width: 116px;
+  height: 148px;
+  object-fit: cover;
+  border-radius: var(--radius-ctl);
+}
+
+/* =================================================================
+   Success
+   ================================================================= */
+.card--success {
+  border-top: 10px solid var(--success);
+  text-align: center;
+}
+
+.success { padding: 65px var(--card-pad-x) 45px; }
+
+.success__badge {
+  display: grid;
+  place-items: center;
+  width: 160px;
+  height: 160px;
+  margin-inline: auto;
+  background: var(--surface);
+  border-radius: 50%;
+  box-shadow: 0 3px 7.5px rgba(0, 0, 0, 0.06);
+}
+
+.success__ring {
+  display: grid;
+  place-items: center;
+  width: 143px;
+  height: 143px;
+  background: rgba(10, 135, 84, 0.1);
+  border-radius: 50%;
+}
+
+.success__check { width: 39.87px; height: 29.19px; }
+
+.success__title {
+  margin-top: 48px;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.22;
+  color: #000;
+}
+
+.success__message {
+  max-width: 581px;
+  margin: 29px auto 0;
+  font-family: var(--font-ui);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1.4;
+  color: var(--text-summary);
+}
+
+.success__uin { font-weight: 600; }
+
+.success__note {
+  max-width: 432px;
+  margin: 30px auto 0;
+  font-family: var(--font-ui);
+  font-weight: 300;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text-summary);
+}
+
+/* ---------------------------- Foot ---------------------------- */
+.card__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 24px;
+  padding: 23px var(--card-pad-x) 45px;
+  border-top: 1px solid var(--border-foot);
+}
+
+.card__foot--stacked {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 30px var(--card-pad-x) 40px;
+}
+
+/* =================================================================
+   Buttons
+   ================================================================= */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--radius-ctl);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn--primary,
+.btn--secondary {
+  width: 180px;
+  height: 48px;
+  font-size: 16px;
+  line-height: 19px;
+  border: 1px solid var(--blue-600);
+}
+
+.btn--primary {
+  background: var(--blue-600);
+  color: #fff;
+}
+
+.btn--primary:hover { background: var(--blue-700); border-color: var(--blue-700); }
+
+.btn--secondary {
+  background: var(--surface);
+  color: var(--blue-600);
+}
+
+.btn--secondary:hover { background: #f2f7fc; }
+
+/* Confirm Details uses a slightly different outline blue */
+.card--narrow .btn--secondary { border-color: var(--outline-blue); color: var(--outline-blue); }
+
+/* "Continue to MOSIP Collab" — full-bleed primary with the success outline */
+.btn--wide {
+  width: 487px;
+  max-width: 100%;
+  height: 48px;
+  background: var(--blue-600);
+  border: 1px solid var(--success);
+  color: #fff;
+  font-size: 15.3px;
+  line-height: 19px;
+}
+
+.btn--wide:hover { background: var(--blue-700); }
+
+/* "Take Photo" — skeuomorphic treatment from the design */
+.btn--photo {
+  width: 247px;
+  max-width: 100%;
+  margin-top: 12px;
+  height: 48px;
+  padding: 12px 18px;
+  background: var(--blue-600);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 16px;
+  line-height: 24px;
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.05),
+    inset 0 0 0 1px rgba(16, 24, 40, 0.18),
+    inset 0 -2px 0 rgba(16, 24, 40, 0.05);
+}
+
+.btn--photo:hover { background: var(--blue-700); }
+
+.btn__icon { width: 22px; height: 21px; flex: none; }
+
+.btn--ghost {
+  height: 36px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid #fff;
+  color: #fff;
+  font-size: 14px;
+  line-height: 20px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.btn--ghost:hover { background: rgba(255, 255, 255, 0.14); }
+
+/* =================================================================
+   Camera dialog
+   ================================================================= */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.modal[hidden] { display: none; }
+
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 25, 45, 0.62);
+}
+
+.modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  padding: 24px;
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: 0 18px 48px rgba(16, 24, 40, 0.28);
+}
+
+.modal__title {
+  margin: 0 0 16px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--text-heading);
+}
+
+.modal__stage {
+  aspect-ratio: 4 / 3;
+  background: #0d1b2a;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.modal__stage video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Mirrored so the preview behaves like a mirror, as users expect. */
+  transform: scaleX(-1);
+}
+
+.modal__error:empty { display: none; }
+
+.modal__error {
+  margin: 14px 0 0;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.4;
+  color: #d64545;
+}
+
+.modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* Specific enough to beat the fixed .btn--primary width at every breakpoint. */
+.modal .modal__actions .btn {
+  width: auto;
+  min-width: 120px;
+  padding-inline: 18px;
+}
+
+.modal .modal__actions .btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .modal__panel { padding: 18px; }
+  .modal .modal__actions .btn { flex: 1 1 100%; min-width: 0; }
+}
+
+/* =================================================================
+   Site footer
+   ================================================================= */
+.site-footer {
+  margin-top: auto;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 24px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.site-footer p {
+  font-family: var(--font-hero);
+  font-size: 16px;
+  line-height: 19px;
+  color: var(--text-muted);
+}
+
+/* Landing page footer carries a second line */
+.site-footer--tall {
+  flex-direction: column;
+  gap: 9px;
+  min-height: 87px;
+}
+
+.site-footer--tall p { font-family: var(--font-display); }
+
+.site-footer__link {
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 20px;
+  color: var(--text-muted);
+  text-decoration: underline;
+}
+
+.site-footer__link:hover { color: var(--blue-600); }
+
+/* =================================================================
+   Responsive
+   ================================================================= */
+
+/* ---- Large tablet / small laptop ---- */
+@media (max-width: 1023px) {
+  :root { --card-pad-x: 36px; }
+
+  .hero__title { font-size: 42px; }
+  .nav__menu { gap: 26px; }
+}
+
+/* ---- Tablet: nav collapses, form goes single column ---- */
+@media (max-width: 860px) {
+  :root {
+    --card-pad-x: 28px;
+    --radius-card: 18px;
+    --hero-h: 340px;
+  }
+
+  .nav { padding-top: 22px; }
+
+  .nav__burger { display: flex; }
+
+  .nav__menu {
+    position: absolute;
+    top: calc(100% + 14px);
+    right: 24px;
+    left: auto;
+    width: min(340px, calc(100% - 48px));
+    z-index: 10;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 10px;
+    background: rgba(9, 45, 80, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 12px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+
+    /* collapsed state */
+    max-height: 0;
+    padding-block: 0;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.25s ease;
+  }
+
+  .nav__toggle:checked ~ .nav__menu {
+    max-height: 340px;
+    padding-block: 10px;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .nav__link {
+    justify-content: space-between;
+    padding: 12px 10px;
+    border-radius: 8px;
+  }
+
+  .nav__link:hover { background: rgba(255, 255, 255, 0.10); }
+  .nav__link::after { display: none; }
+
+  .nav__cta {
+    margin-top: 6px;
+    width: 100%;
+    height: 42px;
+  }
+
+  /* burger → X */
+  .nav__toggle:checked ~ .nav__burger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav__toggle:checked ~ .nav__burger span:nth-child(2) { opacity: 0; }
+  .nav__toggle:checked ~ .nav__burger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .hero__intro { padding-top: 40px; }
+  .hero__title { font-size: 36px; }
+
+  .tabs { padding-top: 40px; }
+  .tab { flex: 1 1 0; min-width: 0; max-width: 254px; }
+
+  .form-grid { column-gap: 20px; }
+
+  .card__title { font-size: 26px; line-height: 1.3; }
+  .card__head { padding: 26px var(--card-pad-x) 24px; }
+  .card__body { padding: 26px var(--card-pad-x); }
+  .card__foot { padding: 20px var(--card-pad-x) 28px; }
+}
+
+/* ---- Small tablet: the form stacks into a single column ---- */
+@media (max-width: 720px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    row-gap: 22px;
+  }
+
+  .field--name,
+  .field--photo,
+  .field--dob,
+  .field--gender,
+  .field--email,
+  .field--mobile,
+  .field--address {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .photo,
+  .btn--photo {
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .photo { aspect-ratio: 16 / 10; }
+
+  /* Summary stacks too, but the passport photo keeps its fixed proportions */
+  .summary {
+    grid-template-columns: 1fr;
+    row-gap: 20px;
+  }
+
+  .summary__item--name,
+  .summary__item--photo,
+  .summary__item--dob,
+  .summary__item--gender,
+  .summary__item--email,
+  .summary__item--mobile,
+  .summary__item--address {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
+/* ---- Phone ---- */
+@media (max-width: 560px) {
+  :root {
+    --card-pad-x: 20px;
+    --card-offset: 30px;
+    --hero-h: 300px;
+  }
+
+  .container { padding-inline: 16px; }
+
+  .nav__menu { left: 16px; right: 16px; width: auto; }
+
+  .nav__logo img { width: 132px; }
+
+  .hero__intro { padding-top: 32px; }
+  .hero__title { font-size: 28px; }
+  .hero__subtitle { font-size: 14px; margin-top: 14px; }
+
+  .page { padding: 0 16px 48px; }
+  .page--home { padding: 24px 0 30px; }
+
+  .card__title { font-size: 22px; }
+  .card__subtitle { font-size: 14px; }
+
+  .consent__text { font-size: 14px; }
+  .consent__label { font-size: 14px; }
+
+  .card__foot:not(.card__foot--stacked) {
+    flex-direction: column-reverse;
+    gap: 12px;
+  }
+
+  .btn--primary,
+  .btn--secondary { width: 100%; }
+
+  .tabs { padding: 32px 16px 0; }
+  .tab { height: 42px; font-size: 14px; }
+
+  .section-intro { font-size: 14px; }
+  .app-grid { grid-template-columns: 1fr; gap: 18px; margin-top: 24px; }
+  .app-card__thumb { min-height: 0; padding: 36px 16px 24px; }
+  .app-card__caption { font-size: 17px; }
+  .app-card__title { font-size: 18px; }
+  .app-card__actions { gap: 10px; }
+
+  .success { padding: 44px var(--card-pad-x) 32px; }
+  .success__badge { width: 124px; height: 124px; }
+  .success__ring  { width: 111px; height: 111px; }
+  .success__check { width: 32px; height: 23.4px; }
+  .success__title { margin-top: 32px; font-size: 24px; }
+  .success__message { margin-top: 20px; font-size: 16px; }
+  .success__note { font-size: 13px; }
+
+  .site-footer p { font-size: 14px; }
+}
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

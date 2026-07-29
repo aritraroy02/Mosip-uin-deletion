@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOSIP Collab — Registration Successful</title>
+  <meta name="description" content="Your Unique Identification Number (UIN) has been successfully issued." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;600;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ============================= HERO ============================= -->
+  <header class="hero">
+    <div class="hero__overlay"></div>
+
+    <nav class="nav container" aria-label="Primary">
+      <a class="nav__logo" href="home.html" aria-label="MOSIP Collab home">
+        <img src="assets/mosip-logo.png" alt="MOSIP" width="169" height="68" />
+      </a>
+
+      <input class="nav__toggle" type="checkbox" id="nav-toggle" />
+      <label class="nav__burger" for="nav-toggle" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </label>
+
+      <div class="nav__menu">
+        <a class="nav__link" href="#">
+          About MOSIP
+          <img class="nav__caret" src="assets/icon-caret.svg" alt="" />
+        </a>
+        <a class="nav__link" href="#">
+          Contact Us
+          <img class="nav__ext" src="assets/icon-external-link.svg" alt="" />
+        </a>
+        <a class="nav__link" href="#">APIs</a>
+        <a class="btn btn--ghost nav__cta" href="index.html">Get UIN</a>
+      </div>
+    </nav>
+
+    <div class="hero__intro container">
+      <h1 class="hero__title">Register Now &amp; Get your UIN!</h1>
+      <p class="hero__subtitle">
+        &lt;With over 20 independent building blocks, MOSIP&rsquo;s modular architecture allows
+        countries to customise the ideal foundational ID system to best represent their unique
+        populations.&gt;
+      </p>
+    </div>
+  </header>
+
+  <!-- ============================= MAIN ============================= -->
+  <main class="page">
+    <section class="card card--success" id="successCard" aria-labelledby="success-title">
+
+      <div class="success">
+        <div class="success__badge" aria-hidden="true">
+          <span class="success__ring">
+            <img class="success__check" src="assets/icon-success-check.svg" alt="" />
+          </span>
+        </div>
+
+        <h2 class="success__title" id="success-title">Congratulations!</h2>
+
+        <p class="success__message">
+          Your Unique Identification Number (UIN) has been successfully issued:
+          <strong class="success__uin" data-value="uin">4586403984</strong><br />
+          Please check your email for further details
+        </p>
+      </div>
+
+      <div class="card__foot card__foot--stacked">
+        <a class="btn btn--primary btn--wide" href="home.html">Continue to MOSIP Collab</a>
+        <p class="success__note">
+          You&rsquo;ll return to the Collab landing page where you can try eSignet, Inji Wallet,
+          and other applications.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================ FOOTER ============================ -->
+  <footer class="site-footer">
+    <p>&copy; 2024 All Rights Reserved MOSIP</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

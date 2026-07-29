@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOSIP Collab — Self Registration Form</title>
+  <meta name="description" content="Register now and get your UIN. Complete the MOSIP self-registration form to receive a Unique Identification Number." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@400;600;700&family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ============================= HERO ============================= -->
+  <header class="hero">
+    <div class="hero__overlay"></div>
+
+    <!-- ---------------------------- NAV ---------------------------- -->
+    <nav class="nav container" aria-label="Primary">
+      <a class="nav__logo" href="home.html" aria-label="MOSIP Collab home">
+        <img src="assets/mosip-logo.png" alt="MOSIP" width="169" height="68" />
+      </a>
+
+      <input class="nav__toggle" type="checkbox" id="nav-toggle" />
+      <label class="nav__burger" for="nav-toggle" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </label>
+
+      <div class="nav__menu">
+        <a class="nav__link" href="#">
+          About MOSIP
+          <img class="nav__caret" src="assets/icon-caret.svg" alt="" />
+        </a>
+        <a class="nav__link" href="#">
+          Contact Us
+          <img class="nav__ext" src="assets/icon-external-link.svg" alt="" />
+        </a>
+        <a class="nav__link" href="#">APIs</a>
+        <a class="btn btn--ghost nav__cta" href="#">Get UIN</a>
+      </div>
+    </nav>
+
+    <!-- --------------------------- INTRO --------------------------- -->
+    <div class="hero__intro container">
+      <h1 class="hero__title">Register Now &amp; Get your UIN!</h1>
+      <p class="hero__subtitle">
+        &lt;With over 20 independent building blocks, MOSIP&rsquo;s modular architecture allows
+        countries to customise the ideal foundational ID system to best represent their unique
+        populations.&gt;
+      </p>
+    </div>
+  </header>
+
+  <!-- ============================= MAIN ============================= -->
+  <main class="page">
+    <form class="card" id="registrationForm" action="#" method="post" novalidate>
+
+      <div class="card__head">
+        <h2 class="card__title">Self Registration Form</h2>
+        <p class="card__subtitle">
+          Complete this form to self-register and receive a Unique Identification Number (UIN)
+        </p>
+      </div>
+
+      <div class="card__body">
+        <div class="form-grid">
+
+          <!-- Full Name -->
+          <div class="field field--name">
+            <label class="field__label" for="fullName">Full Name<span class="req">*</span></label>
+            <input class="input" type="text" id="fullName" name="fullName"
+                   placeholder="Enter Full Name Here" autocomplete="name"
+                   maxlength="80" required aria-describedby="fullNameError" />
+            <p class="field__error" id="fullNameError" role="alert"></p>
+          </div>
+
+          <!-- Photo -->
+          <div class="field field--photo">
+            <span class="field__label" id="photo-label">Photo<span class="req">*</span></span>
+
+            <div class="photo" id="photoPreview" role="img"
+                 aria-labelledby="photo-label" aria-label="Photo preview">
+              <img id="photoImage" src="assets/photo-placeholder.svg" alt="" />
+            </div>
+
+            <input class="visually-hidden" type="file" id="photoFile" name="photo"
+                   accept="image/*" aria-labelledby="photo-label" />
+
+            <button class="btn btn--primary btn--photo" type="button" id="takePhotoBtn">
+              <img class="btn__icon" src="assets/icon-camera.svg" alt="" />
+              <span>Take Photo</span>
+            </button>
+
+            <button class="link-btn" type="button" id="removePhotoBtn" hidden>Remove photo</button>
+            <p class="field__error" id="photoError" role="alert"></p>
+          </div>
+
+          <!-- Date of Birth -->
+          <div class="field field--dob">
+            <label class="field__label" for="dob">Date of Birth<span class="req">*</span></label>
+            <div class="input-wrap">
+              <input class="input input--icon" type="text" id="dob" name="dob"
+                     placeholder="DD-MM-YYYY" inputmode="numeric" maxlength="10"
+                     autocomplete="bday" required aria-describedby="dobError" />
+              <button class="input__icon-btn" type="button" id="dobButton" aria-label="Pick a date">
+                <img class="input__icon--calendar" src="assets/icon-calendar.svg" alt="" />
+              </button>
+              <input class="visually-hidden" type="date" id="dobPicker" tabindex="-1"
+                     aria-hidden="true" />
+            </div>
+            <p class="field__error" id="dobError" role="alert"></p>
+          </div>
+
+          <!-- Gender -->
+          <div class="field field--gender">
+            <label class="field__label" for="gender">Gender</label>
+            <div class="input-wrap">
+              <select class="input input--icon select" id="gender" name="gender">
+                <option value="" selected disabled>Select an Option</option>
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+                <option value="other">Other</option>
+                <option value="undisclosed">Prefer not to say</option>
+              </select>
+              <img class="input__icon input__icon--chevron" src="assets/icon-chevron-down.svg" alt="" />
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="field field--email">
+            <label class="field__label" for="email">Email ID<span class="req">*</span></label>
+            <input class="input" type="email" id="email" name="email"
+                   placeholder="Enter Email ID Here" autocomplete="email"
+                   required aria-describedby="emailError" />
+            <p class="field__error" id="emailError" role="alert"></p>
+          </div>
+
+          <!-- Mobile -->
+          <div class="field field--mobile">
+            <label class="field__label" for="mobile">Mobile Number</label>
+            <input class="input" type="tel" id="mobile" name="mobile"
+                   placeholder="Enter Mobile Number Here" autocomplete="tel"
+                   maxlength="18" aria-describedby="mobileError" />
+            <p class="field__error" id="mobileError" role="alert"></p>
+          </div>
+
+          <!-- Address -->
+          <div class="field field--address">
+            <label class="field__label" for="address">Address</label>
+            <textarea class="input textarea" id="address" name="address" rows="2"
+                      maxlength="240" placeholder="Enter Address Here"></textarea>
+          </div>
+        </div>
+
+        <!-- Consent -->
+        <div class="consent">
+          <p class="consent__text">
+            The data collected above will be used only to create credential(s) for you, that will
+            further facilitate your use of MOSIP. By ticking the box below, you consent to
+            submitting your data to be stored and processed for the above purpose.
+          </p>
+          <div class="consent__row">
+            <input class="checkbox" type="checkbox" id="consent" name="consent"
+                   required aria-describedby="consentError" />
+            <label class="consent__label" for="consent">I consent<span class="req">*</span></label>
+          </div>
+          <p class="field__error" id="consentError" role="alert"></p>
+        </div>
+      </div>
+
+      <div class="card__foot">
+        <button class="btn btn--secondary" type="button" id="clearFormBtn">Clear Form</button>
+        <button class="btn btn--primary" type="submit">Preview</button>
+      </div>
+    </form>
+  </main>
+
+  <!-- ========================= CAMERA DIALOG ========================= -->
+  <div class="modal" id="cameraModal" hidden>
+    <div class="modal__backdrop" data-close></div>
+
+    <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="cameraTitle">
+      <h3 class="modal__title" id="cameraTitle">Take Photo</h3>
+
+      <div class="modal__stage">
+        <video id="cameraVideo" autoplay playsinline muted></video>
+      </div>
+
+      <p class="modal__error" id="cameraError" role="alert"></p>
+
+      <div class="modal__actions">
+        <button class="btn btn--secondary" type="button" data-close>Cancel</button>
+        <button class="btn btn--secondary" type="button" id="uploadInsteadBtn">Upload instead</button>
+        <button class="btn btn--primary" type="button" id="captureBtn">Capture</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ FOOTER ============================ -->
+  <footer class="site-footer">
+    <p>&copy; 2024 All Rights Reserved MOSIP</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

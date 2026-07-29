@@ -1,0 +1,35 @@
+name: Daily Auto Commit
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  daily-autocommit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout task-2 branch
+        uses: actions/checkout@v4
+        with:
+          ref: task-2
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit changes if any exist
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "chore: daily auto-commit $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+            git push origin HEAD:task-2
+          else
+            echo "No changes to commit."
+          fi

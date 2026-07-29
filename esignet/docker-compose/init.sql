@@ -1,0 +1,328 @@
+CREATE DATABASE mosip_esignet
+  ENCODING = 'UTF8' 
+  LC_COLLATE = 'en_US.UTF-8' 
+  LC_CTYPE = 'en_US.UTF-8' 
+  TABLESPACE = pg_default 
+  OWNER = postgres
+  TEMPLATE  = template0;
+
+COMMENT ON DATABASE mosip_esignet IS 'e-Signet related data is stored in this database';
+
+CREATE DATABASE mosip_mockidentitysystem
+  ENCODING = 'UTF8' 
+  LC_COLLATE = 'en_US.UTF-8' 
+  LC_CTYPE = 'en_US.UTF-8' 
+  TABLESPACE = pg_default 
+  OWNER = postgres
+  TEMPLATE  = template0;
+
+COMMENT ON DATABASE mosip_mockidentitysystem IS 'Mock identity related data is stored in this database';
+
+\c mosip_esignet postgres
+
+DROP SCHEMA IF EXISTS esignet CASCADE;
+CREATE SCHEMA esignet;
+ALTER SCHEMA esignet OWNER TO postgres;
+ALTER DATABASE mosip_esignet SET search_path TO esignet,pg_catalog,public;
+
+CREATE TABLE esignet.client_detail(
+	id varchar(100) NOT NULL,
+	name varchar(600) NOT NULL,
+	rp_id varchar(100) NOT NULL,
+	logo_uri varchar(2048) NOT NULL,
+	redirect_uris varchar(2048) NOT NULL,
+	claims varchar(2048) NOT NULL,
+	acr_values varchar(1024) NOT NULL,
+	public_key varchar(1024) NOT NULL,
+	public_key_hash varchar(128) NOT NULL,
+	enc_public_key varchar(1024),
+	enc_public_key_hash varchar(128),
+	enc_public_key_cert varchar(4000),
+	grant_types varchar(512) NOT NULL,
+	auth_methods varchar(512) NOT NULL,
+	status varchar(20) NOT NULL,
+	additional_config varchar(2048),
+	cr_dtimes timestamp NOT NULL,
+	upd_dtimes timestamp,
+	CONSTRAINT pk_clntdtl_id PRIMARY KEY (id),
+	CONSTRAINT uk_clntdtl_public_key_hash UNIQUE (public_key_hash)
+);
+
+CREATE TABLE esignet.consent_detail (
+    id VARCHAR(36) NOT NULL,
+    client_id VARCHAR(256) NOT NULL,
+    psu_token VARCHAR(256) NOT NULL,
+    claims VARCHAR(2048) NOT NULL,
+    authorization_scopes VARCHAR(1024) NOT NULL,
+    cr_dtimes TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    expire_dtimes TIMESTAMP,
+    signature VARCHAR(1024),
+    hash VARCHAR(100),
+    accepted_claims VARCHAR(1024),
+    permitted_scopes VARCHAR(1024),
+    PRIMARY KEY (id),
+    CONSTRAINT unique_client_token UNIQUE (client_id, psu_token)
+);
+
+CREATE INDEX idx_consent_psu_client ON esignet.consent_detail(psu_token, client_id);
+
+create table esignet.consent_history (
+    id varchar(36) NOT NULL,
+    client_id VARCHAR(256) NOT NULL,
+    psu_token VARCHAR(256) NOT NULL,
+    claims VARCHAR(2048) NOT NULL,
+    authorization_scopes VARCHAR(1024) NOT NULL,
+    cr_dtimes TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    expire_dtimes TIMESTAMP,
+    signature VARCHAR(1024),
+    hash VARCHAR(1024),
+    accepted_claims VARCHAR(1024),
+    permitted_scopes VARCHAR(1024),
+    PRIMARY KEY (id)
+);
+CREATE INDEX idx_consent_history_psu_client ON esignet.consent_history(psu_token, client_id);
+
+CREATE TABLE esignet.key_alias(
+    id varchar(36) NOT NULL,
+    app_id varchar(36) NOT NULL,
+    ref_id varchar(128),
+    key_gen_dtimes timestamp,
+    key_expire_dtimes timestamp,
+    status_code varchar(36),
+    lang_code varchar(3),
+    cr_by varchar(256) NOT NULL,
+    cr_dtimes timestamp NOT NULL,
+    upd_by varchar(256),
+    upd_dtimes timestamp,
+    is_deleted boolean DEFAULT FALSE,
+    del_dtimes timestamp,
+    cert_thumbprint varchar(100),
+    uni_ident varchar(50),
+    CONSTRAINT pk_keymals_id PRIMARY KEY (id),
+    CONSTRAINT uni_ident_const UNIQUE (uni_ident)
+);
+
+CREATE TABLE esignet.key_policy_def(
+    app_id varchar(36) NOT NULL,
+    key_validity_duration smallint,
+    is_active boolean NOT NULL,
+    pre_expire_days smallint,
+    access_allowed varchar(1024),
+    cr_by varchar(256) NOT NULL,
+    cr_dtimes timestamp NOT NULL,
+    upd_by varchar(256),
+    upd_dtimes timestamp,
+    is_deleted boolean DEFAULT FALSE,
+    del_dtimes timestamp,
+    CONSTRAINT pk_keypdef_id PRIMARY KEY (app_id)
+);
+
+CREATE TABLE esignet.key_store(
+	id varchar(36) NOT NULL,
+	master_key varchar(36) NOT NULL,
+	private_key varchar(2500) NOT NULL,
+	certificate_data varchar(4000) NOT NULL,
+	cr_by varchar(256) NOT NULL,
+	cr_dtimes timestamp NOT NULL,
+	upd_by varchar(256),
+	upd_dtimes timestamp,
+	is_deleted boolean DEFAULT FALSE,
+	del_dtimes timestamp,
+	CONSTRAINT pk_keystr_id PRIMARY KEY (id)
+);
+
+CREATE TABLE esignet.public_key_registry(
+    id_hash varchar(100) NOT NULL,
+    auth_factor varchar(25) NOT NULL,
+	psu_token varchar(256) NOT NULL,
+	public_key varchar(2500) NOT NULL,
+	expire_dtimes timestamp NOT NULL,
+	wallet_binding_id varchar(256) NOT NULL,
+	public_key_hash varchar(100) NOT NULL,
+	certificate varchar(4000) NOT NULL,
+	cr_dtimes timestamp NOT NULL,
+	thumbprint varchar(128) NOT NULL,
+	CONSTRAINT pk_public_key_registry PRIMARY KEY (id_hash, auth_factor)
+);
+
+CREATE TABLE esignet.ca_cert_store(
+	cert_id varchar(36) NOT NULL,
+	cert_subject varchar(500) NOT NULL,
+	cert_issuer varchar(500) NOT NULL,
+	issuer_id varchar(36) NOT NULL,
+	cert_not_before timestamp,
+	cert_not_after timestamp,
+	crl_uri varchar(120),
+	cert_data varchar(4000),
+	cert_thumbprint varchar(100),
+	cert_serial_no varchar(50),
+	partner_domain varchar(36),
+	cr_by varchar(256),
+	cr_dtimes timestamp,
+	upd_by varchar(256),
+	upd_dtimes timestamp,
+	is_deleted boolean DEFAULT FALSE,
+	del_dtimes timestamp,
+	ca_cert_type varchar(25),
+	CONSTRAINT pk_cacs_id PRIMARY KEY (cert_id),
+	CONSTRAINT cert_thumbprint_unique UNIQUE (cert_thumbprint,partner_domain)
+);
+
+CREATE TABLE IF NOT EXISTS esignet.server_profile (
+    profile_name VARCHAR(100) NOT NULL,
+    feature VARCHAR(100) NOT NULL,
+    additional_config_key VARCHAR(200) NOT NULL,
+    CONSTRAINT pk_server_profile PRIMARY KEY (profile_name, feature)
+);
+
+INSERT INTO esignet.KEY_POLICY_DEF(APP_ID,KEY_VALIDITY_DURATION,PRE_EXPIRE_DAYS,ACCESS_ALLOWED,IS_ACTIVE,CR_BY,CR_DTIMES) VALUES('ROOT', 2920, 1125, 'NA', true, 'mosipadmin', now());
+INSERT INTO esignet.KEY_POLICY_DEF(APP_ID,KEY_VALIDITY_DURATION,PRE_EXPIRE_DAYS,ACCESS_ALLOWED,IS_ACTIVE,CR_BY,CR_DTIMES) VALUES('OIDC_SERVICE', 1095, 50, 'NA', true, 'mosipadmin', now());
+INSERT INTO esignet.KEY_POLICY_DEF(APP_ID,KEY_VALIDITY_DURATION,PRE_EXPIRE_DAYS,ACCESS_ALLOWED,IS_ACTIVE,CR_BY,CR_DTIMES) VALUES('OIDC_PARTNER', 1095, 50, 'NA', true, 'mosipadmin', now());
+INSERT INTO esignet.KEY_POLICY_DEF(APP_ID,KEY_VALIDITY_DURATION,PRE_EXPIRE_DAYS,ACCESS_ALLOWED,IS_ACTIVE,CR_BY,CR_DTIMES) VALUES('BINDING_SERVICE', 1095, 50, 'NA', true, 'mosipadmin', now());
+INSERT INTO esignet.KEY_POLICY_DEF(APP_ID,KEY_VALIDITY_DURATION,PRE_EXPIRE_DAYS,ACCESS_ALLOWED,IS_ACTIVE,CR_BY,CR_DTIMES) VALUES('MOCK_BINDING_SERVICE', 1095, 50, 'NA', true, 'mosipadmin', now());
+
+INSERT INTO esignet.server_profile(profile_name, feature, additional_config_key) VALUES ('fapi2.0', 'PAR', 'require_pushed_authorization_requests');
+INSERT INTO esignet.server_profile(profile_name, feature, additional_config_key) VALUES ('fapi2.0', 'DPOP', 'dpop_bound_access_tokens');
+INSERT INTO esignet.server_profile(profile_name, feature, additional_config_key) VALUES ('fapi2.0', 'PKCE', 'require_pkce');
+
+
+\c mosip_mockidentitysystem postgres
+
+DROP SCHEMA IF EXISTS mockidentitysystem CASCADE;
+CREATE SCHEMA mockidentitysystem;
+ALTER SCHEMA mockidentitysystem OWNER TO postgres;
+ALTER DATABASE mosip_mockidentitysystem SET search_path TO mockidentitysystem,pg_catalog,public;
+
+CREATE TABLE mockidentitysystem.key_alias(
+    id character varying(36) NOT NULL,
+    app_id character varying(36) NOT NULL,
+    ref_id character varying(128),
+    key_gen_dtimes timestamp,
+    key_expire_dtimes timestamp,
+    status_code character varying(36),
+    lang_code character varying(3),
+    cr_by character varying(256) NOT NULL,
+    cr_dtimes timestamp NOT NULL,
+    upd_by character varying(256),
+    upd_dtimes timestamp,
+    is_deleted boolean DEFAULT FALSE,
+    del_dtimes timestamp,
+    cert_thumbprint character varying(100),
+    uni_ident character varying(50),
+    CONSTRAINT pk_keymals_id PRIMARY KEY (id),
+    CONSTRAINT uni_ident_const UNIQUE (uni_ident)
+);
+
+CREATE TABLE mockidentitysystem.key_policy_def(
+    app_id character varying(36) NOT NULL,
+    key_validity_duration smallint,
+    is_active boolean NOT NULL,
+    pre_expire_days smallint,
+    access_allowed character varying(1024),
+    cr_by character varying(256) NOT NULL,
+    cr_dtimes timestamp NOT NULL,
+    upd_by character varying(256),
+    upd_dtimes timestamp,
+    is_deleted boolean DEFAULT FALSE,
+    del_dtimes timestamp,
+    CONSTRAINT pk_keypdef_id PRIMARY KEY (app_id)
+);
+
+CREATE TABLE mockidentitysystem.key_store(
+  id character varying(36) NOT NULL,
+  master_key character varying(36) NOT NULL,
+  private_key character varying(2500) NOT NULL,
+  certificate_data character varying NOT NULL,
+  cr_by character varying(256) NOT NULL,
+  cr_dtimes timestamp NOT NULL,
+  upd_by character varying(256),
+  upd_dtimes timestamp,
+  is_deleted boolean DEFAULT FALSE,
+  del_dtimes timestamp,
+  CONSTRAINT pk_keystr_id PRIMARY KEY (id)
+);
+
+CREATE TABLE mockidentitysystem.kyc_auth(
+    kyc_token VARCHAR(255),
+    individual_id VARCHAR(255),
+    partner_specific_user_token VARCHAR(255),
+    response_time TIMESTAMP,
+    transaction_id VARCHAR(255),
+    validity INTEGER
+);
+
+CREATE TABLE mockidentitysystem.mock_identity(
+  individual_id VARCHAR(36) NOT NULL,
+  identity_json VARCHAR NOT NULL,
+    CONSTRAINT pk_mock_id_code PRIMARY KEY (individual_id)
+);
+
+CREATE TABLE mockidentitysystem.verified_claim(
+    id VARCHAR(100) NOT NULL,
+	individual_id VARCHAR(36) NOT NULL,
+	claim VARCHAR NOT NULL,
+	trust_framework VARCHAR NOT NULL,
+	detail VARCHAR,
+	cr_by character varying(256) NOT NULL,
+    cr_dtimes timestamp NOT NULL,
+    upd_by character varying(256),
+    upd_dtimes timestamp,
+    is_active boolean DEFAULT TRUE,
+    CONSTRAINT pk_verified_claim_id PRIMARY KEY (id)
+);
+
+CREATE TABLE mockidentitysystem.partner_data (
+    partner_id character varying(100) NOT NULL,
+    client_id character varying(100) NOT NULL,
+    public_key text,
+    status character varying(50),
+    cr_dtimes timestamp NOT NULL,
+    CONSTRAINT pk_partner_data_partner_id_client_id PRIMARY KEY (partner_id, client_id)
+);
+
+CREATE TABLE mockidentitysystem.ca_cert_store(
+	cert_id character varying(36) NOT NULL,
+	cert_subject character varying(500) NOT NULL,
+	cert_issuer character varying(500) NOT NULL,
+	issuer_id character varying(36) NOT NULL,
+	cert_not_before timestamp,
+	cert_not_after timestamp,
+	crl_uri character varying(120),
+	cert_data character varying,
+	cert_thumbprint character varying(100),
+	cert_serial_no character varying(50),
+	partner_domain character varying(36),
+	cr_by character varying(256),
+	cr_dtimes timestamp,
+	upd_by character varying(256),
+	upd_dtimes timestamp,
+	is_deleted boolean DEFAULT FALSE,
+	del_dtimes timestamp,
+	ca_cert_type character varying(25),
+	CONSTRAINT pk_cacs_id PRIMARY KEY (cert_id),
+	CONSTRAINT cert_thumbprint_unique UNIQUE (cert_thumbprint,partner_domain)
+);
+
+INSERT INTO mockidentitysystem.KEY_POLICY_DEF(APP_ID,KEY_VALIDITY_DURATION,PRE_EXPIRE_DAYS,ACCESS_ALLOWED,IS_ACTIVE,CR_BY,CR_DTIMES) VALUES('ROOT', 2920, 1125, 'NA', true, 'mosipadmin', now());
+INSERT INTO mockidentitysystem.KEY_POLICY_DEF(APP_ID,KEY_VALIDITY_DURATION,PRE_EXPIRE_DAYS,ACCESS_ALLOWED,IS_ACTIVE,CR_BY,CR_DTIMES) VALUES('MOCK_AUTHENTICATION_SERVICE', 1095, 50, 'NA', true, 'mosipadmin', now());
+
+\c mosip_esignet postgres
+INSERT INTO esignet.client_detail (
+    id, name, rp_id, logo_uri, redirect_uris, claims, acr_values, public_key, public_key_hash, grant_types, auth_methods, status, cr_dtimes
+) VALUES 
+('mosip-uin-deletion-rp', 'MOSIP UIN Deletion Portal', 'mosip-uin-deletion-rp', 'http://localhost:8081/logo.png', '["http://localhost:8081/delete/callback","http://localhost:3000/userprofile"]', '["openid","profile"]', '["mosip:idp:acr:generated-code"]', 'dummy_pub_key_1', 'dummy_pub_key_hash_1', '["authorization_code"]', '["private_key_jwt"]', 'ACTIVE', CURRENT_TIMESTAMP),
+('_UgkpFCOsqoxsbLfywjXFuVRYZaHeYK6l0GmxMg3Rg8', 'MOSIP Relying Party', 'mock-relying-party-ui', 'http://localhost:3000/logo.png', '["http://localhost:8081/delete/callback","http://localhost:3000/userprofile"]', '["openid","profile"]', '["mosip:idp:acr:generated-code"]', '{"kty":"RSA","e":"AQAB","use":"sig","alg":"RS256","n":"ldqDC1avLKn_XeBUMJWUB-6p89SPvF6ZPXZbv5r4d0FbyYJMledt5X6BlfwJ3CCC4duwfDOi-0MsnT408w21jB1nnkR4vLv4ejpgAbpjoFL-zxY2yl5S1XlTR9v8rWKdtvkQqn6YbsBDg-pXgd7nvU67SwHl6zSkuPx2BrLyKqdf-bkpBv3q6lh0bw8oVyJMuEKir3JRgZeFtS5-leeXwVZ4CZgCISuMG0QXdt03bbRwqUD4bh2feIIZAMFCrlRybpIT_mFajqYIDem8Jwvpr57tRb6ZobKLQjDS8cks4MbFcAJ4clUtd19kUJiJ-o03L__5E0U9qy9F6xxQwxE3cQ"}', '07beeca7ee935d54c647073514547735', '["authorization_code"]', '["private_key_jwt"]', 'ACTIVE', CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO UPDATE SET 
+redirect_uris = EXCLUDED.redirect_uris,
+status = 'ACTIVE';
+
+\c mosip_mockidentitysystem postgres
+INSERT INTO mockidentitysystem.verified_claim (
+    id, individual_id, claim, trust_framework, detail, cr_by, cr_dtimes, is_active
+) VALUES 
+('claim_phone_1234567890', '1234567890', 'phone', 'mosip', '{"phone": "+919876543210"}', 'admin', CURRENT_TIMESTAMP, true),
+('claim_email_1234567890', '1234567890', 'email', 'mosip', '{"email": "user@example.com"}', 'admin', CURRENT_TIMESTAMP, true)
+ON CONFLICT (id) DO UPDATE SET 
+detail = EXCLUDED.detail,
+is_active = true;
+

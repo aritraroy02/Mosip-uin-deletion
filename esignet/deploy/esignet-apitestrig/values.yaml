@@ -1,0 +1,40 @@
+modules:
+  esignet:
+    enabled: true
+    image:
+      repository: mosipid/apitest-esignet
+      tag: 1.8.0
+      pullPolicy: Always
+
+extraEnvVarsCM:
+  - esignet-global
+  - s3
+  - keycloak-host
+  - db
+  - apitestrig
+
+extraEnvVarsSecret:
+  - apitestrig-esignet-apitestrig
+  - s3-esignet-apitestrig
+  - keycloak-client-secrets
+  - postgres-postgresql
+
+resources:
+  limits:
+    cpu: 300m
+    memory: 500Mi
+  requests:
+    cpu: 300m
+    memory: 500Mi
+
+apitestrig:
+  configmaps:
+    apitestrig:
+      # Wait time (in milliseconds) after UIN generation in IDREPO before proceeding
+      uinGenerationProcessingDelayTimeInMilliSeconds: "90000"
+
+      # Wait time (in milliseconds) after VID generation in Resident before proceeding
+      vidGenerationProcessingDelayTimeInMilliSeconds: "90000"
+
+      # Maximum number of retry attempts for UIN availability check during OTP generation
+      uinGenMaxLoopCount: "20"

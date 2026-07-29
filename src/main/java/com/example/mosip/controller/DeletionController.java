@@ -48,7 +48,7 @@ public class DeletionController {
                               MinioStorageService minioStorageService,
                               SaltModuloHashService saltModuloHashService,
                               MockIdentityService mockIdentityService,
-                              @org.springframework.beans.factory.annotation.Value("${mosip.esignet.client-id:mosip-uin-deletion-rp}") String clientId,
+                              @org.springframework.beans.factory.annotation.Value("${mosip.esignet.client-id:_UgkpFCOsqoxsbLfywjXFuVRYZaHeYK6l0GmxMg3Rg8}") String clientId,
                               @org.springframework.beans.factory.annotation.Value("${mosip.esignet.client-secret:secret-token-mosip-uin-deletion-rp-2026}") String clientSecret,
                               @org.springframework.beans.factory.annotation.Value("${mosip.esignet.redirect-uri:http://localhost:8081/delete/callback}") String redirectUri,
                               @org.springframework.beans.factory.annotation.Value("${mosip.esignet.authorize-url:http://localhost:3000/authorize}") String authorizeUrl,

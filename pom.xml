@@ -63,6 +63,14 @@
 			<version>8.5.17</version>
 		</dependency>
 
+		<!-- JOSE/JWT: signs the private_key_jwt client assertion sent to the
+		     eSignet token endpoint and verifies the returned id_token. -->
+		<dependency>
+			<groupId>com.nimbusds</groupId>
+			<artifactId>nimbus-jose-jwt</artifactId>
+			<version>9.40</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-thymeleaf-test</artifactId>

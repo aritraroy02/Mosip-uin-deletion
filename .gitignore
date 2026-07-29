@@ -36,3 +36,6 @@ build/
 .jdks/
 *.zip
 src/main/resources/application.properties
+
+### eSignet relying-party signing key (private) ###
+src/main/resources/esignet-rp-private-key.pem

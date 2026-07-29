@@ -109,31 +109,7 @@ public class DeletionController {
                                   jakarta.servlet.http.HttpSession session,
                                   Model model) {
         String targetUin = (uin != null && !uin.trim().isEmpty()) ? uin.trim() : "1234567890";
-
-        Map<String, Object> mockDetails = mockIdentityService.getIdentityDetails(targetUin);
-        UserBasicDetails basicUser = new UserBasicDetails();
-        basicUser.setUserId(targetUin);
-
-        if (mockDetails != null) {
-            Object nameObj = mockDetails.get("fullName");
-            if (nameObj instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof Map<?, ?> item) {
-                basicUser.setName(String.valueOf(item.get("value")));
-            } else {
-                basicUser.setName("MOSIP Resident");
-            }
-            basicUser.setPhone(String.valueOf(mockDetails.getOrDefault("phone", "+919876543210")));
-        } else {
-            basicUser.setName("MOSIP Resident");
-            basicUser.setPhone("+919876543210");
-        }
-
-        model.addAttribute("user", basicUser);
-        model.addAttribute("basicDetails", basicUser);
-        model.addAttribute("uin", targetUin);
-        model.addAttribute("userId", targetUin);
-        model.addAttribute("profileImageBase64", null);
-        model.addAttribute("esignetVerified", true);
-
+        populateFullIdentityModel(targetUin, model);
         return "confirm-delete";
     }
 
@@ -234,6 +210,67 @@ public class DeletionController {
             model.addAttribute("errorMessage", "OTP verified, but identity details were not found.");
             return "verify-otp";
         }
+    }
+
+    private void populateFullIdentityModel(String uin, Model model) {
+        model.addAttribute("uin", uin);
+        model.addAttribute("userId", uin);
+        model.addAttribute("esignetVerified", true);
+
+        // 1. Fetch from Mock Identity System (JSON profile)
+        Map<String, Object> mockDetails = mockIdentityService.getIdentityDetails(uin);
+        if (mockDetails != null) {
+            String nameVal = extractValue(mockDetails.get("fullName"));
+            if (nameVal.isEmpty()) nameVal = extractValue(mockDetails.get("name"));
+            if (nameVal.isEmpty()) nameVal = "MOSIP Resident";
+
+            UserBasicDetails basicUser = new UserBasicDetails();
+            basicUser.setUserId(uin);
+            basicUser.setName(nameVal);
+            basicUser.setPhone(String.valueOf(mockDetails.getOrDefault("phone", "Not Provided")));
+            model.addAttribute("basicDetails", basicUser);
+
+            model.addAttribute("dob", extractValue(mockDetails.get("dateOfBirth")));
+            model.addAttribute("gender", extractValue(mockDetails.get("gender")));
+            model.addAttribute("email", mockDetails.getOrDefault("email", "Not Provided"));
+            model.addAttribute("locality", extractValue(mockDetails.get("locality")));
+            model.addAttribute("region", extractValue(mockDetails.get("region")));
+            model.addAttribute("country", extractValue(mockDetails.get("country")));
+            model.addAttribute("postalCode", mockDetails.getOrDefault("postalCode", mockDetails.getOrDefault("pin", "Not Provided")));
+            model.addAttribute("preferredLang", mockDetails.getOrDefault("preferredLang", "en"));
+
+            Object photo = mockDetails.get("encodedPhoto");
+            if (photo != null && !photo.toString().isEmpty()) {
+                model.addAttribute("photoBase64", photo.toString());
+            }
+        } else {
+            UserBasicDetails basicUser = new UserBasicDetails();
+            basicUser.setUserId(uin);
+            basicUser.setName("MOSIP Resident");
+            basicUser.setPhone("Not Provided");
+            model.addAttribute("basicDetails", basicUser);
+        }
+
+        // 2. Fetch from Local Database Tables
+        try {
+            String uinSaltedHash = saltModuloHashService.hash(uin);
+            model.addAttribute("uinSaltedHash", uinSaltedHash);
+
+            java.util.Optional<UserUinHash> uinHashOpt = userUinHashRepository.findByUinSaltedHash(uinSaltedHash);
+            if (uinHashOpt.isPresent()) {
+                String userId = uinHashOpt.get().getUserId();
+                model.addAttribute("userId", userId);
+
+                userBasicDetailsRepository.findById(userId).ifPresent(b -> model.addAttribute("basicDetails", b));
+                userParentDetailsRepository.findById(userId).ifPresent(p -> model.addAttribute("parentDetails", p));
+                userDataLocationRepository.findById(userId).ifPresent(l -> model.addAttribute("userDataLocation", l));
+
+                String profileImageUrl = minioStorageService.getProfileImagePresignedUrl(userId);
+                if (profileImageUrl != null) {
+                    model.addAttribute("profileImageUrl", profileImageUrl);
+                }
+            }
+        } catch (Exception ignored) {}
     }
 
     private UserBasicDetails buildBasicDetailsFromMock(Map<String, Object> mockDetails, String defaultUin) {

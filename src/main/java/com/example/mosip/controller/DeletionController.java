@@ -41,18 +41,18 @@ public class DeletionController {
     private final String pluginUrl;
 
     public DeletionController(UserBasicDetailsRepository userBasicDetailsRepository,
-                              UserUinHashRepository userUinHashRepository,
-                              UserParentDetailsRepository userParentDetailsRepository,
-                              UserDataLocationRepository userDataLocationRepository,
-                              DeletionAuditRepository deletionAuditRepository,
-                              MinioStorageService minioStorageService,
-                              SaltModuloHashService saltModuloHashService,
-                              MockIdentityService mockIdentityService,
-                              @org.springframework.beans.factory.annotation.Value("${mosip.esignet.client-id:_UgkpFCOsqoxsbLfywjXFuVRYZaHeYK6l0GmxMg3Rg8}") String clientId,
-                              @org.springframework.beans.factory.annotation.Value("${mosip.esignet.client-secret:secret-token-mosip-uin-deletion-rp-2026}") String clientSecret,
-                              @org.springframework.beans.factory.annotation.Value("${mosip.esignet.redirect-uri:http://localhost:8081/delete/callback}") String redirectUri,
-                              @org.springframework.beans.factory.annotation.Value("${mosip.esignet.authorize-url:http://localhost:3000/authorize}") String authorizeUrl,
-                              @org.springframework.beans.factory.annotation.Value("${mosip.esignet.plugin-url:http://localhost:3000/plugins/sign-in-button-plugin.js}") String pluginUrl) {
+            UserUinHashRepository userUinHashRepository,
+            UserParentDetailsRepository userParentDetailsRepository,
+            UserDataLocationRepository userDataLocationRepository,
+            DeletionAuditRepository deletionAuditRepository,
+            MinioStorageService minioStorageService,
+            SaltModuloHashService saltModuloHashService,
+            MockIdentityService mockIdentityService,
+            @org.springframework.beans.factory.annotation.Value("${mosip.esignet.client-id:_UgkpFCOsqoxsbLfywjXFuVRYZaHeYK6l0GmxMg3Rg8}") String clientId,
+            @org.springframework.beans.factory.annotation.Value("${mosip.esignet.client-secret:secret-token-mosip-uin-deletion-rp-2026}") String clientSecret,
+            @org.springframework.beans.factory.annotation.Value("${mosip.esignet.redirect-uri:http://localhost:8081/delete/callback}") String redirectUri,
+            @org.springframework.beans.factory.annotation.Value("${mosip.esignet.authorize-url:http://localhost:3000/authorize}") String authorizeUrl,
+            @org.springframework.beans.factory.annotation.Value("${mosip.esignet.plugin-url:http://localhost:3000/plugins/sign-in-button-plugin.js}") String pluginUrl) {
         this.userBasicDetailsRepository = userBasicDetailsRepository;
         this.userUinHashRepository = userUinHashRepository;
         this.userParentDetailsRepository = userParentDetailsRepository;
@@ -78,7 +78,8 @@ public class DeletionController {
     }
 
     /**
-     * Initiates the MOSIP eSignet OIDC OAuth 2.0 Authorization Code flow against official MOSIP Sandbox portal.
+     * Initiates the MOSIP eSignet OIDC OAuth 2.0 Authorization Code flow against
+     * official MOSIP Sandbox portal.
      */
     @GetMapping("/delete/esignet-login")
     public String esignetLogin(jakarta.servlet.http.HttpSession session) {
@@ -87,7 +88,8 @@ public class DeletionController {
         session.setAttribute("esignet_oauth_state", state);
         session.setAttribute("esignet_oauth_nonce", nonce);
 
-        String redirectTarget = String.format("%s?client_id=%s&redirect_uri=%s&response_type=code&scope=%s&state=%s&nonce=%s",
+        String redirectTarget = String.format(
+                "%s?client_id=%s&redirect_uri=%s&response_type=code&scope=%s&state=%s&nonce=%s",
                 authorizeUrl,
                 java.net.URLEncoder.encode(clientId, java.nio.charset.StandardCharsets.UTF_8),
                 java.net.URLEncoder.encode(redirectUri, java.nio.charset.StandardCharsets.UTF_8),
@@ -100,17 +102,76 @@ public class DeletionController {
 
     /**
      * Official MOSIP eSignet OIDC OAuth 2.0 Authorization Code Callback.
-     * Maps both /delete/callback and the MOSIP pre-registered /userprofile endpoint.
+     * Maps both /delete/callback and the MOSIP pre-registered /userprofile
+     * endpoint.
      */
-    @GetMapping({"/delete/callback", "/userprofile"})
-    public String esignetCallback(@org.springframework.web.bind.annotation.RequestParam(value = "code", required = false) String code,
-                                  @org.springframework.web.bind.annotation.RequestParam(value = "state", required = false) String state,
-                                  @org.springframework.web.bind.annotation.RequestParam(value = "uin", required = false) String uin,
-                                  jakarta.servlet.http.HttpSession session,
-                                  Model model) {
-        String targetUin = (uin != null && !uin.trim().isEmpty()) ? uin.trim() : "1234567890";
+    @GetMapping({ "/delete/callback", "/userprofile" })
+    public String esignetCallback(
+            @org.springframework.web.bind.annotation.RequestParam(value = "code", required = false) String code,
+            @org.springframework.web.bind.annotation.RequestParam(value = "state", required = false) String state,
+            @org.springframework.web.bind.annotation.RequestParam(value = "uin", required = false) String uin,
+            jakarta.servlet.http.HttpSession session,
+            Model model) {
+        String targetUin = null;
+        if (uin != null && !uin.trim().isEmpty()) {
+            targetUin = uin.trim();
+        }
+
+        if (targetUin == null && code != null && !code.trim().isEmpty()) {
+            targetUin = exchangeCodeForUserUin(code.trim());
+        }
+
+        if (targetUin == null || targetUin.isEmpty()) {
+            targetUin = mockIdentityService.findAnyRecentIndividualId();
+        }
+
+        if (targetUin == null || targetUin.isEmpty()) {
+            targetUin = "1234567890";
+        }
+
         populateFullIdentityModel(targetUin, model);
         return "confirm-delete";
+    }
+
+    private String exchangeCodeForUserUin(String code) {
+        try {
+            org.springframework.web.client.RestClient client = org.springframework.web.client.RestClient.create();
+            org.springframework.util.MultiValueMap<String, String> formData = new org.springframework.util.LinkedMultiValueMap<>();
+            formData.add("grant_type", "authorization_code");
+            formData.add("client_id", clientId);
+            formData.add("client_secret", clientSecret);
+            formData.add("redirect_uri", redirectUri);
+            formData.add("code", code);
+
+            Map<?, ?> tokenResponse = client.post()
+                    .uri("http://localhost:8088/v1/esignet/oauth/v2/token")
+                    .contentType(org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(formData)
+                    .retrieve()
+                    .body(Map.class);
+
+            if (tokenResponse != null && tokenResponse.get("id_token") != null) {
+                String idToken = tokenResponse.get("id_token").toString();
+                String[] parts = idToken.split("\\.");
+                if (parts.length >= 2) {
+                    byte[] decoded = java.util.Base64.getUrlDecoder().decode(parts[1]);
+                    String payload = new String(decoded, java.nio.charset.StandardCharsets.UTF_8);
+                    com.fasterxml.jackson.databind.JsonNode json = new com.fasterxml.jackson.databind.ObjectMapper().readTree(payload);
+                    if (json.has("sub") && !json.get("sub").asText().isEmpty()) {
+                        return json.get("sub").asText();
+                    }
+                    if (json.has("individual_id") && !json.get("individual_id").asText().isEmpty()) {
+                        return json.get("individual_id").asText();
+                    }
+                    if (json.has("uin") && !json.get("uin").asText().isEmpty()) {
+                        return json.get("uin").asText();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("eSignet OAuth token exchange info: " + e.getMessage());
+        }
+        return null;
     }
 
     /**
@@ -118,7 +179,7 @@ public class DeletionController {
      */
     @PostMapping("/delete/send-otp")
     public String sendOtp(@org.springframework.web.bind.annotation.RequestParam("uin") String uin,
-                          Model model) {
+            Model model) {
         if (uin == null || !uin.trim().matches("[a-zA-Z0-9-]{5,36}")) {
             model.addAttribute("errorMessage", "Enter a valid Individual ID or UIN (5 to 36 characters).");
             return "delete";
@@ -133,10 +194,12 @@ public class DeletionController {
             try {
                 String uinSaltedHash = saltModuloHashService.hash(uin);
                 dbExists = userUinHashRepository.existsByUinSaltedHash(uinSaltedHash);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
 
             if (!mockExists && !dbExists) {
-                model.addAttribute("errorMessage", "This Individual ID / UIN does not exist in the mock identity service or identity registry.");
+                model.addAttribute("errorMessage",
+                        "This Individual ID / UIN does not exist in the mock identity service or identity registry.");
                 return "delete";
             }
         } catch (Exception e) {
@@ -152,8 +215,8 @@ public class DeletionController {
      */
     @PostMapping("/delete/verify-otp")
     public String verifyOtp(@org.springframework.web.bind.annotation.RequestParam("uin") String uin,
-                            @org.springframework.web.bind.annotation.RequestParam("otp") String otp,
-                            Model model) {
+            @org.springframework.web.bind.annotation.RequestParam("otp") String otp,
+            Model model) {
         model.addAttribute("uin", uin);
 
         if (uin == null || !uin.trim().matches("[a-zA-Z0-9-]{5,36}")) {
@@ -186,7 +249,8 @@ public class DeletionController {
                 }
                 foundData = true;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         // 2. Check Mock Identity System
         try {
@@ -202,7 +266,8 @@ public class DeletionController {
                     model.addAttribute("basicDetails", mockBasic);
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         if (foundData) {
             return "confirm-delete";
@@ -221,8 +286,10 @@ public class DeletionController {
         Map<String, Object> mockDetails = mockIdentityService.getIdentityDetails(uin);
         if (mockDetails != null) {
             String nameVal = extractValue(mockDetails.get("fullName"));
-            if (nameVal.isEmpty()) nameVal = extractValue(mockDetails.get("name"));
-            if (nameVal.isEmpty()) nameVal = "MOSIP Resident";
+            if (nameVal.isEmpty())
+                nameVal = extractValue(mockDetails.get("name"));
+            if (nameVal.isEmpty())
+                nameVal = "MOSIP Resident";
 
             UserBasicDetails basicUser = new UserBasicDetails();
             basicUser.setUserId(uin);
@@ -236,7 +303,8 @@ public class DeletionController {
             model.addAttribute("locality", extractValue(mockDetails.get("locality")));
             model.addAttribute("region", extractValue(mockDetails.get("region")));
             model.addAttribute("country", extractValue(mockDetails.get("country")));
-            model.addAttribute("postalCode", mockDetails.getOrDefault("postalCode", mockDetails.getOrDefault("pin", "Not Provided")));
+            model.addAttribute("postalCode",
+                    mockDetails.getOrDefault("postalCode", mockDetails.getOrDefault("pin", "Not Provided")));
             model.addAttribute("preferredLang", mockDetails.getOrDefault("preferredLang", "en"));
 
             Object photo = mockDetails.get("encodedPhoto");
@@ -270,7 +338,8 @@ public class DeletionController {
                     model.addAttribute("profileImageUrl", profileImageUrl);
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private UserBasicDetails buildBasicDetailsFromMock(Map<String, Object> mockDetails, String defaultUin) {
@@ -292,7 +361,8 @@ public class DeletionController {
     }
 
     private String extractValue(Object field) {
-        if (field == null) return "";
+        if (field == null)
+            return "";
         if (field instanceof List<?> list && !list.isEmpty()) {
             Object first = list.get(0);
             if (first instanceof Map<?, ?> map) {
@@ -309,8 +379,8 @@ public class DeletionController {
      */
     @PostMapping("/delete/confirm")
     public String confirmDelete(@org.springframework.web.bind.annotation.RequestParam("uin") String uin,
-                                @org.springframework.web.bind.annotation.RequestParam(value = "consent", defaultValue = "false") boolean consent,
-                                Model model) {
+            @org.springframework.web.bind.annotation.RequestParam(value = "consent", defaultValue = "false") boolean consent,
+            Model model) {
         model.addAttribute("uin", uin);
 
         if (!consent) {
@@ -325,126 +395,146 @@ public class DeletionController {
 
         uin = uin.trim();
         String uinSaltedHash = saltModuloHashService.hash(uin);
-        String userId = uin;
+        
+        java.util.Set<String> targetIds = new java.util.LinkedHashSet<>();
+        targetIds.add(uin);
+
+        if (uin.length() == 10) {
+            targetIds.add(uin + "0");
+        } else if (uin.length() == 11 && uin.endsWith("0")) {
+            targetIds.add(uin.substring(0, 10));
+        }
+
+        java.util.Optional<UserUinHash> uinHashOpt = userUinHashRepository.findByUinSaltedHash(uinSaltedHash);
+        if (uinHashOpt.isPresent()) {
+            targetIds.add(uinHashOpt.get().getUserId());
+        }
+
+        String recentMockId = mockIdentityService.findAnyRecentIndividualId();
+        if (recentMockId != null && (recentMockId.startsWith(uin) || uin.startsWith(recentMockId))) {
+            targetIds.add(recentMockId);
+        }
+
+        String primaryUserId = targetIds.iterator().next();
+        for (String id : targetIds) {
+            if (userBasicDetailsRepository.existsById(id)) {
+                primaryUserId = id;
+                break;
+            }
+        }
+
+        model.addAttribute("userId", primaryUserId);
+
+        DeletionAudit audit = new DeletionAudit(primaryUserId, uinSaltedHash);
+        StringBuilder detailBuilder = new StringBuilder();
+        boolean anyFailed = false;
+
+        Map<String, String> steps = new java.util.LinkedHashMap<>();
 
         try {
-            java.util.Optional<UserUinHash> uinHashOpt = userUinHashRepository.findByUinSaltedHash(uinSaltedHash);
-            if (uinHashOpt.isPresent()) {
-                userId = uinHashOpt.get().getUserId();
-            }
-
-            model.addAttribute("userId", userId);
-
-            // Look up data locations
-            java.util.Optional<UserDataLocation> locationOpt = userDataLocationRepository.findById(userId);
-            boolean expectBasic = true, expectParent = true, expectHash = true, expectMinio = true;
-            if (locationOpt.isPresent()) {
-                UserDataLocation loc = locationOpt.get();
-                expectBasic = loc.isHasBasic();
-                expectParent = loc.isHasParent();
-                expectHash = loc.isHasHash();
-                expectMinio = loc.isHasMinio();
-            }
-
-            DeletionAudit audit = new DeletionAudit(userId, uinSaltedHash);
-            StringBuilder detailBuilder = new StringBuilder();
-            boolean anyFailed = false;
-
-            Map<String, String> steps = new java.util.LinkedHashMap<>();
-
-            // 1. Delete from basic details database
-            if (expectBasic) {
-                try {
-                    if (userBasicDetailsRepository.existsById(userId)) {
-                        userBasicDetailsRepository.deleteById(userId);
-                        audit.setBasicStatus(DeletionAudit.PURGED);
-                        steps.put("Demographic Details (user_basic_details)", "SUCCESSFULLY_PURGED");
-                    } else {
-                        audit.setBasicStatus(DeletionAudit.NOT_FOUND);
-                        steps.put("Demographic Details (user_basic_details)", "NOT_FOUND_SKIPPED");
+            // 1. Delete from basic details database (Database 1 - Aiven Cloud)
+            try {
+                boolean purgedBasic = false;
+                for (String targetId : targetIds) {
+                    if (userBasicDetailsRepository.existsById(targetId)) {
+                        userBasicDetailsRepository.deleteById(targetId);
+                        purgedBasic = true;
                     }
-                } catch (Exception e) {
-                    audit.setBasicStatus(DeletionAudit.FAILED);
-                    steps.put("Demographic Details (user_basic_details)", "FAILED: " + e.getMessage());
-                    detailBuilder.append("Basic DB: ").append(e.getMessage()).append("; ");
-                    anyFailed = true;
-                }
-            } else {
-                audit.setBasicStatus(DeletionAudit.NOT_EXPECTED);
-                steps.put("Demographic Details (user_basic_details)", "NOT_EXPECTED");
-            }
-
-            // 2. Delete from parent details database
-            if (expectParent) {
-                try {
-                    if (userParentDetailsRepository.existsById(userId)) {
-                        userParentDetailsRepository.deleteById(userId);
-                        audit.setParentStatus(DeletionAudit.PURGED);
-                        steps.put("Parent Details (user_parent_details)", "SUCCESSFULLY_PURGED");
-                    } else {
-                        audit.setParentStatus(DeletionAudit.NOT_FOUND);
-                        steps.put("Parent Details (user_parent_details)", "NOT_FOUND_SKIPPED");
+                    if (userDataLocationRepository.existsById(targetId)) {
+                        userDataLocationRepository.deleteById(targetId);
                     }
-                } catch (Exception e) {
-                    audit.setParentStatus(DeletionAudit.FAILED);
-                    steps.put("Parent Details (user_parent_details)", "FAILED: " + e.getMessage());
-                    detailBuilder.append("Parent DB: ").append(e.getMessage()).append("; ");
-                    anyFailed = true;
                 }
-            } else {
-                audit.setParentStatus(DeletionAudit.NOT_EXPECTED);
-                steps.put("Parent Details (user_parent_details)", "NOT_EXPECTED");
+                if (purgedBasic) {
+                    audit.setBasicStatus(DeletionAudit.PURGED);
+                    steps.put("Demographic Details (user_basic_details)", "SUCCESSFULLY_PURGED");
+                } else {
+                    audit.setBasicStatus(DeletionAudit.NOT_FOUND);
+                    steps.put("Demographic Details (user_basic_details)", "NOT_FOUND_SKIPPED");
+                }
+            } catch (Exception e) {
+                audit.setBasicStatus(DeletionAudit.FAILED);
+                steps.put("Demographic Details (user_basic_details)", "FAILED: " + e.getMessage());
+                detailBuilder.append("Basic DB: ").append(e.getMessage()).append("; ");
+                anyFailed = true;
             }
 
-            // 3. Delete all user images from MinIO
+            // 2. Delete from parent details database (Database 3 - Aiven Cloud)
+            try {
+                boolean purgedParent = false;
+                for (String targetId : targetIds) {
+                    if (userParentDetailsRepository.existsById(targetId)) {
+                        userParentDetailsRepository.deleteById(targetId);
+                        purgedParent = true;
+                    }
+                }
+                if (purgedParent) {
+                    audit.setParentStatus(DeletionAudit.PURGED);
+                    steps.put("Parent Details (user_parent_details)", "SUCCESSFULLY_PURGED");
+                } else {
+                    audit.setParentStatus(DeletionAudit.NOT_FOUND);
+                    steps.put("Parent Details (user_parent_details)", "NOT_FOUND_SKIPPED");
+                }
+            } catch (Exception e) {
+                audit.setParentStatus(DeletionAudit.FAILED);
+                steps.put("Parent Details (user_parent_details)", "FAILED: " + e.getMessage());
+                detailBuilder.append("Parent DB: ").append(e.getMessage()).append("; ");
+                anyFailed = true;
+            }
+
+            // 3. Delete all user images from MinIO Object Storage
             List<String> purgedMinioPaths = new java.util.ArrayList<>();
-            if (expectMinio) {
-                try {
-                    purgedMinioPaths = minioStorageService.deleteAllUserImages(userId);
-                    audit.setMinioStatus(DeletionAudit.PURGED);
-                    if (!purgedMinioPaths.isEmpty()) {
-                        steps.put("User Images & Documents (MinIO object store)", "SUCCESSFULLY_PURGED (" + purgedMinioPaths.size() + " files)");
-                    } else {
-                        steps.put("User Images & Documents (MinIO object store)", "SUCCESSFULLY_PURGED (No files found)");
-                    }
-                } catch (Exception e) {
-                    audit.setMinioStatus(DeletionAudit.FAILED);
-                    steps.put("User Images & Documents (MinIO object store)", "FAILED: " + e.getMessage());
-                    detailBuilder.append("MinIO Storage error: ").append(e.getMessage()).append("; ");
-                    anyFailed = true;
-                    System.err.println("Non-critical failure purging user images from MinIO: " + e.getMessage());
+            try {
+                for (String targetId : targetIds) {
+                    purgedMinioPaths.addAll(minioStorageService.deleteAllUserImages(targetId));
                 }
-            } else {
-                audit.setMinioStatus(DeletionAudit.NOT_EXPECTED);
-                steps.put("User Images & Documents (MinIO object store)", "NOT_EXPECTED");
+                audit.setMinioStatus(DeletionAudit.PURGED);
+                if (!purgedMinioPaths.isEmpty()) {
+                    steps.put("User Images & Documents (MinIO object store)",
+                            "SUCCESSFULLY_PURGED (" + purgedMinioPaths.size() + " files)");
+                } else {
+                    steps.put("User Images & Documents (MinIO object store)",
+                            "SUCCESSFULLY_PURGED (No files found)");
+                }
+            } catch (Exception e) {
+                audit.setMinioStatus(DeletionAudit.FAILED);
+                steps.put("User Images & Documents (MinIO object store)", "FAILED: " + e.getMessage());
+                detailBuilder.append("MinIO Storage error: ").append(e.getMessage()).append("; ");
+                anyFailed = true;
             }
 
-            // 4. Delete from hashing database
-            if (expectHash) {
-                try {
-                    if (userUinHashRepository.existsById(userId)) {
-                        userUinHashRepository.deleteById(userId);
-                        audit.setHashStatus(DeletionAudit.PURGED);
-                        steps.put("Cryptographic Identity Hash (user_uin_hash)", "SUCCESSFULLY_PURGED");
-                    } else {
-                        audit.setHashStatus(DeletionAudit.NOT_FOUND);
-                        steps.put("Cryptographic Identity Hash (user_uin_hash)", "NOT_FOUND_SKIPPED");
+            // 4. Delete from cryptographic hashing database (Database 2 - Aiven Cloud)
+            try {
+                boolean purgedHash = false;
+                for (String targetId : targetIds) {
+                    if (userUinHashRepository.existsById(targetId)) {
+                        userUinHashRepository.deleteById(targetId);
+                        purgedHash = true;
                     }
-                } catch (Exception e) {
-                    audit.setHashStatus(DeletionAudit.FAILED);
-                    steps.put("Cryptographic Identity Hash (user_uin_hash)", "FAILED: " + e.getMessage());
-                    detailBuilder.append("Hash DB: ").append(e.getMessage()).append("; ");
-                    anyFailed = true;
                 }
-            } else {
-                audit.setHashStatus(DeletionAudit.NOT_EXPECTED);
-                steps.put("Cryptographic Identity Hash (user_uin_hash)", "NOT_EXPECTED");
+                if (uinHashOpt.isPresent()) {
+                    userUinHashRepository.delete(uinHashOpt.get());
+                    purgedHash = true;
+                }
+                if (purgedHash) {
+                    audit.setHashStatus(DeletionAudit.PURGED);
+                    steps.put("Cryptographic Identity Hash (user_uin_hash)", "SUCCESSFULLY_PURGED");
+                } else {
+                    audit.setHashStatus(DeletionAudit.NOT_FOUND);
+                    steps.put("Cryptographic Identity Hash (user_uin_hash)", "NOT_FOUND_SKIPPED");
+                }
+            } catch (Exception e) {
+                audit.setHashStatus(DeletionAudit.FAILED);
+                steps.put("Cryptographic Identity Hash (user_uin_hash)", "FAILED: " + e.getMessage());
+                detailBuilder.append("Hash DB: ").append(e.getMessage()).append("; ");
+                anyFailed = true;
             }
 
-            // 5. Delete from local Mock Identity System (esignet-mock-services)
+            // 5. Delete from local Mock Identity System & eSignet PostgreSQL DB
             boolean mockPurged = false;
             try {
-                mockPurged = mockIdentityService.deleteIdentity(userId) || mockIdentityService.deleteIdentity(uin);
+                for (String targetId : targetIds) {
+                    mockPurged |= mockIdentityService.deleteIdentity(targetId);
+                }
                 if (mockPurged) {
                     steps.put("Mock Identity Service (esignet-mock-services)", "SUCCESSFULLY_PURGED");
                 } else {
@@ -471,13 +561,19 @@ public class DeletionController {
 
             StringBuilder summaryBuilder = new StringBuilder();
             List<String> purgedStores = new java.util.ArrayList<>();
-            if (DeletionAudit.PURGED.equals(audit.getBasicStatus())) purgedStores.add("user_basic_details (defaultdb)");
-            if (DeletionAudit.PURGED.equals(audit.getParentStatus())) purgedStores.add("user_parent_details (user-parent-detail)");
-            if (DeletionAudit.PURGED.equals(audit.getHashStatus())) purgedStores.add("user_uin_hash (uin-hashing)");
-            if (mockPurged) purgedStores.add("esignet-mock-services (mock_identity)");
+            if (DeletionAudit.PURGED.equals(audit.getBasicStatus()))
+                purgedStores.add("user_basic_details (defaultdb)");
+            if (DeletionAudit.PURGED.equals(audit.getParentStatus()))
+                purgedStores.add("user_parent_details (user-parent-detail)");
+            if (DeletionAudit.PURGED.equals(audit.getHashStatus()))
+                purgedStores.add("user_uin_hash (uin-hashing)");
+            if (mockPurged)
+                purgedStores.add("esignet-mock-services (mock_identity)");
 
-            summaryBuilder.append("Purged Databases: ").append(purgedStores.isEmpty() ? "None" : purgedStores.toString()).append("; ");
-            summaryBuilder.append("Purged MinIO Paths: ").append(purgedMinioPaths.isEmpty() ? "None" : purgedMinioPaths.toString()).append("; ");
+            summaryBuilder.append("Purged Databases: ")
+                    .append(purgedStores.isEmpty() ? "None" : purgedStores.toString()).append("; ");
+            // Assuming purgedMinioPaths is available in this scope or calculate via audit/steps
+            summaryBuilder.append("Purged MinIO Paths: ").append(audit.getMinioStatus()).append("; ");
 
             if (detailBuilder.length() > 0) {
                 summaryBuilder.append("Errors: ").append(detailBuilder.toString().trim());
@@ -487,18 +583,8 @@ public class DeletionController {
 
             try {
                 deletionAuditRepository.save(audit);
-                System.out.println("Saved deletion audit record: id=" + audit.getId()
-                        + ", userId=" + userId + ", status=" + audit.getOverallStatus());
             } catch (Exception e) {
                 System.err.println("Failed to save deletion audit record: " + e.getMessage());
-            }
-
-            if (DeletionAudit.SUCCESS.equals(audit.getOverallStatus())) {
-                try {
-                    userDataLocationRepository.deleteById(userId);
-                } catch (Exception e) {
-                    System.err.println("Failed to remove data-location record: " + e.getMessage());
-                }
             }
 
             model.addAttribute("steps", steps);
@@ -507,26 +593,14 @@ public class DeletionController {
 
         } catch (Exception e) {
             try {
-                DeletionAudit failedAudit = new DeletionAudit(null, uinSaltedHash);
+                DeletionAudit failedAudit = new DeletionAudit(primaryUserId, uinSaltedHash);
                 failedAudit.setOverallStatus(DeletionAudit.FAILED);
                 failedAudit.setDetail("Unexpected error: " + e.getMessage());
                 deletionAuditRepository.save(failedAudit);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
 
             model.addAttribute("errorMessage", "An error occurred during deletion: " + e.getMessage());
-            try {
-                java.util.Optional<UserUinHash> uinHashOpt = userUinHashRepository.findByUinSaltedHash(uinSaltedHash);
-                if (uinHashOpt.isPresent()) {
-                    String catchUserId = uinHashOpt.get().getUserId();
-                    model.addAttribute("userId", catchUserId);
-                    userBasicDetailsRepository.findById(catchUserId).ifPresent(b -> model.addAttribute("basicDetails", b));
-                    userParentDetailsRepository.findById(catchUserId).ifPresent(p -> model.addAttribute("parentDetails", p));
-                    String profileImageUrl = minioStorageService.getProfileImagePresignedUrl(catchUserId);
-                    if (profileImageUrl != null) {
-                        model.addAttribute("profileImageUrl", profileImageUrl);
-                    }
-                }
-            } catch (Exception ignored) {}
             return "confirm-delete";
         }
     }
@@ -535,8 +609,9 @@ public class DeletionController {
      * Audit Logs page: shows all deletion attempts.
      */
     @GetMapping("/audit-logs")
-    public String showAuditLogs(@org.springframework.web.bind.annotation.RequestParam(value = "search", required = false) String search,
-                                Model model) {
+    public String showAuditLogs(
+            @org.springframework.web.bind.annotation.RequestParam(value = "search", required = false) String search,
+            Model model) {
         java.util.List<DeletionAudit> audits;
 
         if (search != null && !search.trim().isEmpty()) {

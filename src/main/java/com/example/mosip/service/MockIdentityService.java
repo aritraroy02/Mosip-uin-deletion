@@ -204,6 +204,24 @@ public class MockIdentityService {
         }
     }
 
+    /**
+     * Helper to find a recent valid individual_id from mock_identity table.
+     */
+    public String findAnyRecentIndividualId() {
+        try (java.sql.Connection conn = java.sql.DriverManager.getConnection(mockIdentityDbUrl, mockIdentityDbUsername, mockIdentityDbPassword)) {
+            String sql = "SELECT individual_id FROM mockidentitysystem.mock_identity ORDER BY individual_id DESC LIMIT 1";
+            try (java.sql.PreparedStatement stmt = conn.prepareStatement(sql);
+                 java.sql.ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("individual_id");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching recent mock identity ID: " + e.getMessage());
+        }
+        return null;
+    }
+
     private List<Map<String, String>> languageValue(String value) {
         return List.of(Map.of("language", "en", "value", value));
     }

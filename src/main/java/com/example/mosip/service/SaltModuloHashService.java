@@ -71,6 +71,7 @@ public class SaltModuloHashService {
      * @param id the identifier to hash (e.g. a UIN or an individual ID)
      * @return the salted hash, or {@code null} if {@code id} is null
      */
+    @Transactional(transactionManager = "hashingTransactionManager", readOnly = true)
     public String hash(String id) {
         if (id == null) {
             return null;

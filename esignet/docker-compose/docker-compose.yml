@@ -8,6 +8,11 @@ services:
       - POSTGRES_PASSWORD=postgres
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
 
   redis:
     image: redis:6.0
@@ -15,6 +20,11 @@ services:
     ports:
       - "6379:6379"
     restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
 
   mock-identity-system:
     image: "mosipid/mock-identity-system:0.13.0"
@@ -30,7 +40,8 @@ services:
       - MOSIP_MOCK_IDA_KYC_TRANSACTION_TIMEOUT_SECS=900
       - MOSIP_ESIGNET_HOST=localhost:8088
     depends_on:
-      - database
+      database:
+        condition: service_healthy
 
   esignet:
     image: "mosipid/esignet-with-plugins:1.8.0"
@@ -51,10 +62,19 @@ services:
       - SPRING_REDIS_PASSWORD=
       - KAFKA_ENABLED=false
       - SPRING_AUTOCONFIGURE_EXCLUDE=org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8088/v1/esignet/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 15s
     depends_on:
-      - database
-      - mock-identity-system
-      - redis
+      database:
+        condition: service_healthy
+      mock-identity-system:
+        condition: service_started
+      redis:
+        condition: service_healthy
 
   esignet-ui:
     image: "mosipid/oidc-ui:1.8.0"
@@ -68,4 +88,5 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
     depends_on:
-      - esignet
+      esignet:
+        condition: service_healthy

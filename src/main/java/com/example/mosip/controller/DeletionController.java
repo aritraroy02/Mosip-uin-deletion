@@ -394,8 +394,6 @@ public class DeletionController {
         }
 
         uin = uin.trim();
-        String uinSaltedHash = saltModuloHashService.hash(uin);
-        
         java.util.Set<String> targetIds = new java.util.LinkedHashSet<>();
         targetIds.add(uin);
 
@@ -405,33 +403,51 @@ public class DeletionController {
             targetIds.add(uin.substring(0, 10));
         }
 
-        java.util.Optional<UserUinHash> uinHashOpt = userUinHashRepository.findByUinSaltedHash(uinSaltedHash);
-        if (uinHashOpt.isPresent()) {
-            targetIds.add(uinHashOpt.get().getUserId());
-        }
+        String primaryUserId = uin;
+        String uinSaltedHash = uin;
 
-        String recentMockId = mockIdentityService.findAnyRecentIndividualId();
-        if (recentMockId != null && (recentMockId.startsWith(uin) || uin.startsWith(recentMockId))) {
-            targetIds.add(recentMockId);
-        }
-
-        String primaryUserId = targetIds.iterator().next();
-        for (String id : targetIds) {
-            if (userBasicDetailsRepository.existsById(id)) {
-                primaryUserId = id;
-                break;
-            }
-        }
-
-        model.addAttribute("userId", primaryUserId);
-
-        DeletionAudit audit = new DeletionAudit(primaryUserId, uinSaltedHash);
+        Map<String, String> steps = new java.util.LinkedHashMap<>();
         StringBuilder detailBuilder = new StringBuilder();
         boolean anyFailed = false;
 
-        Map<String, String> steps = new java.util.LinkedHashMap<>();
-
         try {
+            try {
+                String computedHash = saltModuloHashService.hash(uin);
+                if (computedHash != null) {
+                    uinSaltedHash = computedHash;
+                }
+            } catch (Exception e) {
+                System.err.println("Hash service exception: " + e.getMessage());
+            }
+
+            java.util.Optional<UserUinHash> uinHashOpt = java.util.Optional.empty();
+            try {
+                uinHashOpt = userUinHashRepository.findByUinSaltedHash(uinSaltedHash);
+                if (uinHashOpt.isPresent()) {
+                    targetIds.add(uinHashOpt.get().getUserId());
+                }
+            } catch (Exception e) {
+                System.err.println("UserUinHash lookup exception: " + e.getMessage());
+            }
+
+            try {
+                String recentMockId = mockIdentityService.findAnyRecentIndividualId();
+                if (recentMockId != null && (recentMockId.startsWith(uin) || uin.startsWith(recentMockId))) {
+                    targetIds.add(recentMockId);
+                }
+            } catch (Exception ignored) {}
+
+            for (String id : targetIds) {
+                try {
+                    if (userBasicDetailsRepository.existsById(id)) {
+                        primaryUserId = id;
+                        break;
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            model.addAttribute("userId", primaryUserId);
+            DeletionAudit audit = new DeletionAudit(primaryUserId, uinSaltedHash);
             // 1. Delete from basic details database (Database 1 - Aiven Cloud)
             try {
                 boolean purgedBasic = false;

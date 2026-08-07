@@ -18,6 +18,10 @@ CREATE DATABASE mosip_mockidentitysystem
 
 COMMENT ON DATABASE mosip_mockidentitysystem IS 'Mock identity related data is stored in this database';
 
+CREATE DATABASE mosip_basicdetails OWNER postgres;
+CREATE DATABASE mosip_uindeletion_hashing OWNER postgres;
+CREATE DATABASE mosip_parentdetails OWNER postgres;
+
 \c mosip_esignet postgres
 
 DROP SCHEMA IF EXISTS esignet CASCADE;

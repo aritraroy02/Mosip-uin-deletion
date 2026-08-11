@@ -21,13 +21,16 @@ import java.time.Instant;
 @Table(name = "deletion_audit")
 public class DeletionAudit {
 
-    /** Per-store / overall outcome values used throughout the deletion flow and UI. */
-    public static final String PURGED = "PURGED";
-    public static final String NOT_FOUND = "NOT_FOUND";
-    public static final String NOT_EXPECTED = "NOT_EXPECTED";
-    public static final String SUCCESS = "SUCCESS";
+    /** Per-module and overall status values specified by Issue #9. */
+    public static final String DELETED = "DELETED";
     public static final String PARTIAL = "PARTIAL";
     public static final String FAILED = "FAILED";
+    public static final String SKIPPED = "SKIPPED";
+    public static final String NOT_FOUND = "NOT_FOUND";
+
+    /** Backward-compatibility aliases. */
+    public static final String PURGED = DELETED;
+    public static final String SUCCESS = DELETED;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

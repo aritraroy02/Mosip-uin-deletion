@@ -57,7 +57,7 @@
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
         }
         .stat-card.total::before { background: linear-gradient(90deg, var(--primary), #6366f1); }
-        .stat-card.success::before { background: linear-gradient(90deg, #059669, #34d399); }
+        .stat-card.success::before, .stat-card.deleted::before { background: linear-gradient(90deg, #059669, #34d399); }
         .stat-card.partial::before { background: linear-gradient(90deg, #d97706, #fbbf24); }
         .stat-card.failed::before { background: linear-gradient(90deg, #dc2626, #f87171); }
         .stat-icon {
@@ -66,7 +66,7 @@
             font-size: 1.1rem; margin-bottom: 0.75rem;
         }
         .stat-card.total .stat-icon { background: #eff6ff; color: var(--primary); }
-        .stat-card.success .stat-icon { background: #ecfdf5; color: #059669; }
+        .stat-card.success .stat-icon, .stat-card.deleted .stat-icon { background: #ecfdf5; color: #059669; }
         .stat-card.partial .stat-icon { background: #fffbeb; color: #d97706; }
         .stat-card.failed .stat-icon { background: #fef2f2; color: #dc2626; }
         .stat-value { font-size: 1.75rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; }
@@ -115,11 +115,11 @@
             font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
             letter-spacing: 0.3px; white-space: nowrap;
         }
-        .status-badge.purged, .status-badge.success { background: #d1fae5; color: #065f46; }
+        .status-badge.deleted, .status-badge.purged, .status-badge.success { background: #d1fae5; color: #065f46; }
         .status-badge.not-found { background: #fef3c7; color: #92400e; }
-        .status-badge.not-expected { background: #f1f5f9; color: #64748b; }
+        .status-badge.skipped { background: #f1f5f9; color: #475569; }
         .status-badge.failed { background: #fee2e2; color: #991b1b; }
-        .status-badge.partial { background: #fef3c7; color: #92400e; }
+        .status-badge.partial { background: #fffbeb; color: #92400e; }
         .status-badge i { font-size: 0.6rem; }
 
         /* Store Status Dots */
@@ -133,9 +133,9 @@
             transition: var(--transition); position: relative;
         }
         .store-dot:hover { transform: scale(1.2); z-index: 2; }
-        .store-dot.purged { background: #d1fae5; color: #065f46; border: 1.5px solid #34d399; }
+        .store-dot.deleted, .store-dot.purged { background: #d1fae5; color: #065f46; border: 1.5px solid #34d399; }
         .store-dot.not-found { background: #fef3c7; color: #92400e; border: 1.5px solid #fbbf24; }
-        .store-dot.not-expected { background: #f1f5f9; color: #94a3b8; border: 1.5px solid #e2e8f0; }
+        .store-dot.skipped { background: #f1f5f9; color: #475569; border: 1.5px solid #cbd5e1; }
         .store-dot.failed { background: #fee2e2; color: #991b1b; border: 1.5px solid #f87171; }
 
         /* Tooltip on dot hover */
@@ -174,9 +174,9 @@
         .legend-dot {
             width: 10px; height: 10px; border-radius: 50%;
         }
-        .legend-dot.purged { background: #34d399; }
+        .legend-dot.deleted, .legend-dot.purged { background: #34d399; }
         .legend-dot.not-found { background: #fbbf24; }
-        .legend-dot.not-expected { background: #cbd5e1; }
+        .legend-dot.skipped { background: #cbd5e1; }
         .legend-dot.failed { background: #f87171; }
 
         /* Responsive Table Scroll */
@@ -197,14 +197,9 @@
             justify-content: center;
         }
         .page-subtitle { font-size: 0.95rem; color: var(--text-secondary); margin-top: 0.25rem; margin-left: 3.75rem; }
-
-        /* Audit ID tag */
-        .audit-id-tag { font-size: 0.7rem; color: var(--text-muted); font-family: monospace; }
     </style>
 </head>
 <body>
-
-    <!-- Header Section -->
     <header class="app-header">
         <div class="header-container">
             <a href="/" class="brand-section">
@@ -221,22 +216,15 @@
                     <li><a href="/audit-logs" class="nav-link active">Audit Logs</a></li>
                 </ul>
             </nav>
-            <div class="profile-container" onclick="location.href='/register'">
-                <div class="profile-avatar" title="User Profile">
-                    <i class="fa-solid fa-user"></i>
-                </div>
-            </div>
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="main-content audit-page">
-
-        <!-- Page Title -->
+        <!-- Page Header -->
         <div class="page-title-section">
             <h1 class="page-title">
-                <i class="fa-solid fa-clipboard-list"></i>
-                Deletion Audit Logs
+                <i class="fa-solid fa-clipboard-check"></i>
+                Deletion Audit Trail
             </h1>
             <p class="page-subtitle">Complete traceability of all UIN deletion operations across every data store.</p>
         </div>
@@ -262,10 +250,10 @@
                 <div class="stat-value" th:text="${totalCount}">0</div>
                 <div class="stat-label">Total Deletions</div>
             </div>
-            <div class="stat-card success">
+            <div class="stat-card deleted">
                 <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
                 <div class="stat-value" th:text="${successCount}">0</div>
-                <div class="stat-label">Fully Purged</div>
+                <div class="stat-label">Fully Cleaned (DELETED)</div>
             </div>
             <div class="stat-card partial">
                 <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
@@ -325,14 +313,20 @@
 
                             <!-- Overall Status Badge -->
                             <td>
-                                <span th:if="${audit.overallStatus == 'SUCCESS'}" class="status-badge success">
-                                    <i class="fa-solid fa-check"></i> Success
+                                <span th:if="${audit.overallStatus == 'DELETED' || audit.overallStatus == 'SUCCESS'}" class="status-badge deleted">
+                                    <i class="fa-solid fa-check"></i> DELETED
                                 </span>
                                 <span th:if="${audit.overallStatus == 'PARTIAL'}" class="status-badge partial">
-                                    <i class="fa-solid fa-exclamation"></i> Partial
+                                    <i class="fa-solid fa-exclamation"></i> PARTIAL
                                 </span>
                                 <span th:if="${audit.overallStatus == 'FAILED'}" class="status-badge failed">
-                                    <i class="fa-solid fa-xmark"></i> Failed
+                                    <i class="fa-solid fa-xmark"></i> FAILED
+                                </span>
+                                <span th:if="${audit.overallStatus == 'NOT_FOUND'}" class="status-badge not-found">
+                                    <i class="fa-solid fa-magnifying-glass"></i> NOT_FOUND
+                                </span>
+                                <span th:if="${audit.overallStatus == 'SKIPPED'}" class="status-badge skipped">
+                                    <i class="fa-solid fa-forward"></i> SKIPPED
                                 </span>
                             </td>
 
@@ -340,32 +334,32 @@
                             <td>
                                 <div class="store-dots">
                                     <!-- Basic DB -->
-                                    <div th:if="${audit.basicStatus == 'PURGED'}" class="store-dot purged" title="Basic DB: Purged"><i class="fa-solid fa-check"></i></div>
-                                    <div th:if="${audit.basicStatus == 'NOT_FOUND'}" class="store-dot not-found" title="Basic DB: Not Found"><i class="fa-solid fa-question"></i></div>
-                                    <div th:if="${audit.basicStatus == 'NOT_EXPECTED'}" class="store-dot not-expected" title="Basic DB: Not Expected"><i class="fa-solid fa-minus"></i></div>
-                                    <div th:if="${audit.basicStatus == 'FAILED'}" class="store-dot failed" title="Basic DB: Failed"><i class="fa-solid fa-xmark"></i></div>
-                                    <div th:if="${audit.basicStatus == null}" class="store-dot not-expected" title="Basic DB: N/A"><i class="fa-solid fa-minus"></i></div>
+                                    <div th:if="${audit.basicStatus == 'DELETED' || audit.basicStatus == 'PURGED'}" class="store-dot deleted" title="Basic DB: DELETED"><i class="fa-solid fa-check"></i></div>
+                                    <div th:if="${audit.basicStatus == 'NOT_FOUND'}" class="store-dot not-found" title="Basic DB: NOT_FOUND"><i class="fa-solid fa-magnifying-glass"></i></div>
+                                    <div th:if="${audit.basicStatus == 'SKIPPED' || audit.basicStatus == 'NOT_EXPECTED'}" class="store-dot skipped" title="Basic DB: SKIPPED"><i class="fa-solid fa-minus"></i></div>
+                                    <div th:if="${audit.basicStatus == 'FAILED'}" class="store-dot failed" title="Basic DB: FAILED"><i class="fa-solid fa-xmark"></i></div>
+                                    <div th:if="${audit.basicStatus == null}" class="store-dot skipped" title="Basic DB: N/A"><i class="fa-solid fa-minus"></i></div>
 
                                     <!-- Parent DB -->
-                                    <div th:if="${audit.parentStatus == 'PURGED'}" class="store-dot purged" title="Parent DB: Purged"><i class="fa-solid fa-check"></i></div>
-                                    <div th:if="${audit.parentStatus == 'NOT_FOUND'}" class="store-dot not-found" title="Parent DB: Not Found"><i class="fa-solid fa-question"></i></div>
-                                    <div th:if="${audit.parentStatus == 'NOT_EXPECTED'}" class="store-dot not-expected" title="Parent DB: Not Expected"><i class="fa-solid fa-minus"></i></div>
-                                    <div th:if="${audit.parentStatus == 'FAILED'}" class="store-dot failed" title="Parent DB: Failed"><i class="fa-solid fa-xmark"></i></div>
-                                    <div th:if="${audit.parentStatus == null}" class="store-dot not-expected" title="Parent DB: N/A"><i class="fa-solid fa-minus"></i></div>
+                                    <div th:if="${audit.parentStatus == 'DELETED' || audit.parentStatus == 'PURGED'}" class="store-dot deleted" title="Parent DB: DELETED"><i class="fa-solid fa-check"></i></div>
+                                    <div th:if="${audit.parentStatus == 'NOT_FOUND'}" class="store-dot not-found" title="Parent DB: NOT_FOUND"><i class="fa-solid fa-magnifying-glass"></i></div>
+                                    <div th:if="${audit.parentStatus == 'SKIPPED' || audit.parentStatus == 'NOT_EXPECTED'}" class="store-dot skipped" title="Parent DB: SKIPPED"><i class="fa-solid fa-minus"></i></div>
+                                    <div th:if="${audit.parentStatus == 'FAILED'}" class="store-dot failed" title="Parent DB: FAILED"><i class="fa-solid fa-xmark"></i></div>
+                                    <div th:if="${audit.parentStatus == null}" class="store-dot skipped" title="Parent DB: N/A"><i class="fa-solid fa-minus"></i></div>
 
                                     <!-- MinIO -->
-                                    <div th:if="${audit.minioStatus == 'PURGED'}" class="store-dot purged" title="MinIO: Purged"><i class="fa-solid fa-check"></i></div>
-                                    <div th:if="${audit.minioStatus == 'NOT_FOUND'}" class="store-dot not-found" title="MinIO: Not Found"><i class="fa-solid fa-question"></i></div>
-                                    <div th:if="${audit.minioStatus == 'NOT_EXPECTED'}" class="store-dot not-expected" title="MinIO: Not Expected"><i class="fa-solid fa-minus"></i></div>
-                                    <div th:if="${audit.minioStatus == 'FAILED'}" class="store-dot failed" title="MinIO: Failed"><i class="fa-solid fa-xmark"></i></div>
-                                    <div th:if="${audit.minioStatus == null}" class="store-dot not-expected" title="MinIO: N/A"><i class="fa-solid fa-minus"></i></div>
+                                    <div th:if="${audit.minioStatus == 'DELETED' || audit.minioStatus == 'PURGED'}" class="store-dot deleted" title="MinIO: DELETED"><i class="fa-solid fa-check"></i></div>
+                                    <div th:if="${audit.minioStatus == 'NOT_FOUND'}" class="store-dot not-found" title="MinIO: NOT_FOUND"><i class="fa-solid fa-magnifying-glass"></i></div>
+                                    <div th:if="${audit.minioStatus == 'SKIPPED' || audit.minioStatus == 'NOT_EXPECTED'}" class="store-dot skipped" title="MinIO: SKIPPED"><i class="fa-solid fa-minus"></i></div>
+                                    <div th:if="${audit.minioStatus == 'FAILED'}" class="store-dot failed" title="MinIO: FAILED"><i class="fa-solid fa-xmark"></i></div>
+                                    <div th:if="${audit.minioStatus == null}" class="store-dot skipped" title="MinIO: N/A"><i class="fa-solid fa-minus"></i></div>
 
                                     <!-- Hash DB -->
-                                    <div th:if="${audit.hashStatus == 'PURGED'}" class="store-dot purged" title="Hash DB: Purged"><i class="fa-solid fa-check"></i></div>
-                                    <div th:if="${audit.hashStatus == 'NOT_FOUND'}" class="store-dot not-found" title="Hash DB: Not Found"><i class="fa-solid fa-question"></i></div>
-                                    <div th:if="${audit.hashStatus == 'NOT_EXPECTED'}" class="store-dot not-expected" title="Hash DB: Not Expected"><i class="fa-solid fa-minus"></i></div>
-                                    <div th:if="${audit.hashStatus == 'FAILED'}" class="store-dot failed" title="Hash DB: Failed"><i class="fa-solid fa-xmark"></i></div>
-                                    <div th:if="${audit.hashStatus == null}" class="store-dot not-expected" title="Hash DB: N/A"><i class="fa-solid fa-minus"></i></div>
+                                    <div th:if="${audit.hashStatus == 'DELETED' || audit.hashStatus == 'PURGED'}" class="store-dot deleted" title="Hash DB: DELETED"><i class="fa-solid fa-check"></i></div>
+                                    <div th:if="${audit.hashStatus == 'NOT_FOUND'}" class="store-dot not-found" title="Hash DB: NOT_FOUND"><i class="fa-solid fa-magnifying-glass"></i></div>
+                                    <div th:if="${audit.hashStatus == 'SKIPPED' || audit.hashStatus == 'NOT_EXPECTED'}" class="store-dot skipped" title="Hash DB: SKIPPED"><i class="fa-solid fa-minus"></i></div>
+                                    <div th:if="${audit.hashStatus == 'FAILED'}" class="store-dot failed" title="Hash DB: FAILED"><i class="fa-solid fa-xmark"></i></div>
+                                    <div th:if="${audit.hashStatus == null}" class="store-dot skipped" title="Hash DB: N/A"><i class="fa-solid fa-minus"></i></div>
                                 </div>
                             </td>
 
@@ -379,13 +373,14 @@
                 </table>
             </div>
 
-            <!-- Legend -->
+            <!-- Legend (Issue #9) -->
             <div th:if="${!#lists.isEmpty(audits)}" class="status-legend">
-                <span style="font-weight: 600; margin-right: 0.25rem;">Legend:</span>
-                <div class="legend-item"><div class="legend-dot purged"></div> Purged</div>
-                <div class="legend-item"><div class="legend-dot not-found"></div> Not Found</div>
-                <div class="legend-item"><div class="legend-dot not-expected"></div> Not Expected</div>
-                <div class="legend-item"><div class="legend-dot failed"></div> Failed</div>
+                <span style="font-weight: 600; margin-right: 0.25rem;">Standardized Status Legend:</span>
+                <div class="legend-item"><div class="legend-dot deleted"></div> DELETED (Cleaned)</div>
+                <div class="legend-item"><div class="legend-dot partial" style="background:#f59e0b;"></div> PARTIAL (Residual data)</div>
+                <div class="legend-item"><div class="legend-dot failed"></div> FAILED (Error)</div>
+                <div class="legend-item"><div class="legend-dot skipped"></div> SKIPPED (N/A)</div>
+                <div class="legend-item"><div class="legend-dot not-found"></div> NOT_FOUND (No data)</div>
                 <span style="margin-left: auto; color: var(--text-muted);">
                     Dots order: Basic DB → Parent DB → MinIO → Hash DB
                 </span>

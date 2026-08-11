@@ -461,11 +461,11 @@ public class DeletionController {
                     }
                 }
                 if (purgedBasic) {
-                    audit.setBasicStatus(DeletionAudit.PURGED);
-                    steps.put("Demographic Details (user_basic_details)", "SUCCESSFULLY_PURGED");
+                    audit.setBasicStatus(DeletionAudit.DELETED);
+                    steps.put("Demographic Details (user_basic_details)", "DELETED");
                 } else {
                     audit.setBasicStatus(DeletionAudit.NOT_FOUND);
-                    steps.put("Demographic Details (user_basic_details)", "NOT_FOUND_SKIPPED");
+                    steps.put("Demographic Details (user_basic_details)", "NOT_FOUND");
                 }
             } catch (Exception e) {
                 audit.setBasicStatus(DeletionAudit.FAILED);
@@ -484,11 +484,11 @@ public class DeletionController {
                     }
                 }
                 if (purgedParent) {
-                    audit.setParentStatus(DeletionAudit.PURGED);
-                    steps.put("Parent Details (user_parent_details)", "SUCCESSFULLY_PURGED");
+                    audit.setParentStatus(DeletionAudit.DELETED);
+                    steps.put("Parent Details (user_parent_details)", "DELETED");
                 } else {
                     audit.setParentStatus(DeletionAudit.NOT_FOUND);
-                    steps.put("Parent Details (user_parent_details)", "NOT_FOUND_SKIPPED");
+                    steps.put("Parent Details (user_parent_details)", "NOT_FOUND");
                 }
             } catch (Exception e) {
                 audit.setParentStatus(DeletionAudit.FAILED);
@@ -503,13 +503,14 @@ public class DeletionController {
                 for (String targetId : targetIds) {
                     purgedMinioPaths.addAll(minioStorageService.deleteAllUserImages(targetId));
                 }
-                audit.setMinioStatus(DeletionAudit.PURGED);
                 if (!purgedMinioPaths.isEmpty()) {
+                    audit.setMinioStatus(DeletionAudit.DELETED);
                     steps.put("User Images & Documents (MinIO object store)",
-                            "SUCCESSFULLY_PURGED (" + purgedMinioPaths.size() + " files)");
+                            "DELETED (" + purgedMinioPaths.size() + " files)");
                 } else {
+                    audit.setMinioStatus(DeletionAudit.NOT_FOUND);
                     steps.put("User Images & Documents (MinIO object store)",
-                            "SUCCESSFULLY_PURGED (No files found)");
+                            "NOT_FOUND");
                 }
             } catch (Exception e) {
                 audit.setMinioStatus(DeletionAudit.FAILED);
@@ -532,11 +533,11 @@ public class DeletionController {
                     purgedHash = true;
                 }
                 if (purgedHash) {
-                    audit.setHashStatus(DeletionAudit.PURGED);
-                    steps.put("Cryptographic Identity Hash (user_uin_hash)", "SUCCESSFULLY_PURGED");
+                    audit.setHashStatus(DeletionAudit.DELETED);
+                    steps.put("Cryptographic Identity Hash (user_uin_hash)", "DELETED");
                 } else {
                     audit.setHashStatus(DeletionAudit.NOT_FOUND);
-                    steps.put("Cryptographic Identity Hash (user_uin_hash)", "NOT_FOUND_SKIPPED");
+                    steps.put("Cryptographic Identity Hash (user_uin_hash)", "NOT_FOUND");
                 }
             } catch (Exception e) {
                 audit.setHashStatus(DeletionAudit.FAILED);
@@ -552,9 +553,9 @@ public class DeletionController {
                     mockPurged |= mockIdentityService.deleteIdentity(targetId);
                 }
                 if (mockPurged) {
-                    steps.put("Mock Identity Service (esignet-mock-services)", "SUCCESSFULLY_PURGED");
+                    steps.put("Mock Identity Service (esignet-mock-services)", "DELETED");
                 } else {
-                    steps.put("Mock Identity Service (esignet-mock-services)", "NOT_FOUND_SKIPPED");
+                    steps.put("Mock Identity Service (esignet-mock-services)", "NOT_FOUND");
                 }
             } catch (Exception e) {
                 steps.put("Mock Identity Service (esignet-mock-services)", "FAILED: " + e.getMessage());
@@ -562,26 +563,27 @@ public class DeletionController {
             }
 
             // Compute overall status
-            boolean anyDbPurged = DeletionAudit.PURGED.equals(audit.getBasicStatus())
-                    || DeletionAudit.PURGED.equals(audit.getParentStatus())
-                    || DeletionAudit.PURGED.equals(audit.getHashStatus())
+            boolean anyDbPurged = DeletionAudit.DELETED.equals(audit.getBasicStatus())
+                    || DeletionAudit.DELETED.equals(audit.getParentStatus())
+                    || DeletionAudit.DELETED.equals(audit.getHashStatus())
+                    || DeletionAudit.DELETED.equals(audit.getMinioStatus())
                     || mockPurged;
 
-            if (!anyFailed) {
-                audit.setOverallStatus(DeletionAudit.SUCCESS);
+            if (anyFailed) {
+                audit.setOverallStatus(anyDbPurged ? DeletionAudit.PARTIAL : DeletionAudit.FAILED);
             } else if (anyDbPurged) {
-                audit.setOverallStatus(DeletionAudit.PARTIAL);
+                audit.setOverallStatus(DeletionAudit.DELETED);
             } else {
-                audit.setOverallStatus(DeletionAudit.FAILED);
+                audit.setOverallStatus(DeletionAudit.NOT_FOUND);
             }
 
             StringBuilder summaryBuilder = new StringBuilder();
             List<String> purgedStores = new java.util.ArrayList<>();
-            if (DeletionAudit.PURGED.equals(audit.getBasicStatus()))
+            if (DeletionAudit.DELETED.equals(audit.getBasicStatus()))
                 purgedStores.add("user_basic_details (defaultdb)");
-            if (DeletionAudit.PURGED.equals(audit.getParentStatus()))
+            if (DeletionAudit.DELETED.equals(audit.getParentStatus()))
                 purgedStores.add("user_parent_details (user-parent-detail)");
-            if (DeletionAudit.PURGED.equals(audit.getHashStatus()))
+            if (DeletionAudit.DELETED.equals(audit.getHashStatus()))
                 purgedStores.add("user_uin_hash (uin-hashing)");
             if (mockPurged)
                 purgedStores.add("esignet-mock-services (mock_identity)");

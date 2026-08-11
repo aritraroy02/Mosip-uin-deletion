@@ -234,6 +234,24 @@ Once started, the application will be available at:
 
 ---
 
+## 🐳 Docker Deployment
+
+The `identity-data-deletion-service` is fully dockerized for consistent, zero-setup deployment across environments.
+
+### 1. Build Docker Image
+```bash
+docker build -t identity-data-deletion-service .
+```
+
+### 2. Run Container with Docker Compose
+To spin up the service along with all required infrastructure components:
+```bash
+docker compose up -d
+```
+The application will start on port `8081` with built-in container health checks.
+
+---
+
 ## 🗑️ Voluntary Data Deletion UI
 Residents can click on **"Delete my data"** located in the page footer (at any view).
 1. The link navigates to `/delete`.

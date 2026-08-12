@@ -90,25 +90,3 @@ services:
     depends_on:
       esignet:
         condition: service_healthy
-
-  identity-data-deletion-service:
-    build:
-      context: ../..
-      dockerfile: Dockerfile
-    container_name: identity-data-deletion-service
-    ports:
-      - "8081:8081"
-    environment:
-      - SPRING_PROFILES_ACTIVE=default
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8081/ || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
-    depends_on:
-      database:
-        condition: service_healthy
-      esignet:
-        condition: service_healthy
-

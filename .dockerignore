@@ -1,9 +1,0 @@
-target/
-.git/
-.github/
-.mvn/wrapper/maven-wrapper.jar
-.vscode/
-*.log
-*.tmp
-.DS_Store
-task 2/

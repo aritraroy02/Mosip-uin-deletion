@@ -3,43 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify OTP - MOSIP</title>
+    <title>Verify OTP - MOSIP Collab</title>
     <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" th:href="@{/css/collab-theme.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        body { font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--collab-bg); }
         .delete-page { max-width: 620px; }
         .delete-page .form-header { text-align: center; }
-        .delete-icon { width: 52px; height: 52px; margin: 0 auto 1rem; border-radius: 50%; display: grid; place-items: center; background: #fee2e2; color: #dc2626; font-size: 1.4rem; }
+        .delete-icon { width: 52px; height: 52px; margin: 0 auto 1rem; border-radius: 50%; display: grid; place-items: center; background: var(--collab-tint-esignet); color: #ca7322; font-size: 1.4rem; }
         .delete-page .form-body { padding-bottom: 1rem; }
         .input-with-icon { position: relative; }
         .input-with-icon .form-input { padding-left: 2.75rem; }
-        .input-with-icon i { position: absolute; top: 50%; left: 1rem; transform: translateY(-50%); color: var(--text-muted); }
-        .otp-note { display: flex; gap: .65rem; align-items: flex-start; margin: 1.25rem 0; padding: 1rem; border: 1px solid #bfdbfe; border-radius: var(--radius-md); background: #eff6ff; color: #1e3a8a; font-size: .875rem; }
+        .input-with-icon i { position: absolute; top: 50%; left: 1rem; transform: translateY(-50%); color: var(--collab-text-faint); }
+        .otp-note { display: flex; gap: .65rem; align-items: flex-start; margin: 1.25rem 0; padding: 1rem; border: 1px solid #bfdbfe; border-radius: 10px; background: #eff6ff; color: #1e3a8a; font-size: .875rem; }
         .otp-note code { padding: .1rem .35rem; border-radius: 4px; background: #dbeafe; font-weight: 700; }
-        .verification-message { margin-bottom: 1.25rem; padding: 1rem; border-radius: var(--radius-md); font-size: .9rem; }
+        .verification-message { margin-bottom: 1.25rem; padding: 1rem; border-radius: 10px; font-size: .9rem; }
         .verification-message.error { border: 1px solid #fecaca; background: #fef2f2; color: #991b1b; }
-        .verification-message.success { border: 1px solid #a7f3d0; background: #ecfdf5; color: #065f46; }
+        .verification-message.success { border: 1px solid var(--collab-success-border); background: var(--collab-success-bg); color: var(--collab-success-text); }
+        .form-container { border-radius: var(--collab-radius-card) !important; box-shadow: var(--collab-shadow-card) !important; }
+        .cta-button { background: #1763ac !important; border-radius: 9px !important; }
         @media (max-width: 580px) { .form-actions { flex-direction: column-reverse; padding: 1.25rem; } .form-actions a, .form-actions button { width: 100%; margin: 0 !important; } }
     </style>
 </head>
 <body>
-    <header class="app-header">
-        <div class="header-container">
-            <a href="/" class="brand-section">
-                <div class="brand-logo">M</div>
-                <div>
-                    <span class="brand-name">MOSIP</span>
-                    <span class="brand-tagline">UIN Management</span>
-                </div>
-            </a>
-            <nav>
-                <ul class="nav-links">
-                    <li><a href="/" class="nav-link">Home</a></li>
-                    <li><a href="/register" class="nav-link">Register</a></li>
-                    <li><a href="/audit-logs" class="nav-link">Audit Logs</a></li>
-                </ul>
-            </nav>
-        </div>
+    <header class="collab-simple-header">
+        <a href="/" class="collab-nav-brand">
+            <img th:src="@{/images/collab/mark-header.png}" alt="MOSIP">
+            <span>MOSIP Collab</span>
+        </a>
     </header>
 
     <main class="main-content">
@@ -82,8 +74,8 @@
         </section>
     </main>
 
-    <footer class="app-footer">
-        <p>&copy; 2024 MOSIP. All rights reserved.</p>
+    <footer class="collab-footer">
+        &copy; 2026 All Rights Reserved &middot; MOSIP
     </footer>
 </body>
 </html>

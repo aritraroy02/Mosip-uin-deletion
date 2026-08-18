@@ -3,93 +3,350 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOSIP - UIN Management Portal</title>
-    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <title>MOSIP Collab</title>
+    <link rel="stylesheet" th:href="@{/css/collab-theme.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
+<body class="collab-page">
 
-    <!-- Header Section -->
-    <header class="app-header">
-        <div class="header-container">
-            <a href="/" class="brand-section">
-                <div class="brand-logo">M</div>
-                <div>
-                    <span class="brand-name">MOSIP</span>
-                    <span class="brand-tagline">UIN Management</span>
-                </div>
+    <header class="collab-header">
+        <nav class="collab-nav">
+            <a href="/" class="collab-nav-brand">
+                <img th:src="@{/images/collab/mark-header.png}" alt="MOSIP">
+                <span>MOSIP Collab</span>
             </a>
-            <nav>
-                <ul class="nav-links">
-                    <li><a href="/" class="nav-link active">Home</a></li>
-                    <li><a href="/register" class="nav-link">Register</a></li>
-                    <li><a href="/audit-logs" class="nav-link">Audit Logs</a></li>
-                </ul>
-            </nav>
-            <div class="profile-container" onclick="location.href='/register'">
-                <div class="profile-avatar" title="User Profile">
-                    <i class="fa-solid fa-user"></i>
-                </div>
-            </div>
+            <ul class="collab-nav-links" style="list-style:none; display:flex; align-items:center; gap:30px;">
+                <li><a href="#" class="collab-nav-link">About MOSIP</a></li>
+                <li><a href="#" class="collab-nav-link">Contact Us</a></li>
+                <li><a href="#" class="collab-nav-link">APIs</a></li>
+                <li><a href="/register" class="collab-nav-cta">Get UIN</a></li>
+                <li>
+                    <a href="/delete" class="collab-nav-cta-danger">
+                        Delete my UIN
+                        <i class="fa-regular fa-circle-question" style="font-size: 13px; opacity: 0.8;"></i>
+                        <span class="collab-tooltip">
+                            <strong>Delete your test identity data</strong>
+                            <p>Permanently delete your UIN and all associated data from the MOSIP Collab environment.</p>
+                            <p>You'll first verify your identity using an OTP through eSignet. Your data will only be deleted after successful authentication.</p>
+                        </span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="collab-hero">
+            <h1>Welcome to the MOSIP Collab environment</h1>
+            <p>
+                Dive into our dynamic sandbox — built for testing, collaboration and seamless integration
+                of your solutions with our bleeding-edge offerings. <strong>Learn more about Collab</strong>, or pick an
+                app below to get started.
+            </p>
+        </div>
+
+        <div class="collab-tablist">
+            <div class="collab-tab active">Applications</div>
+            <div class="collab-tab">Use Cases</div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <section class="hero-card">
-            <h1 class="hero-title">Secure Identity Management</h1>
-            <p class="hero-subtitle">
-                Welcome to the official MOSIP UIN management portal. Easily register your identity profile, review security consent, and prepare your credentials for local registry verification.
-            </p>
-            <div class="hero-actions">
-                <a href="/register" class="cta-button">
-                    <i class="fa-solid fa-user-plus" style="margin-right: 8px;"></i> Start Registration
-                </a>
-                <a href="#" class="cta-button-secondary">Learn More</a>
+    <main class="collab-main">
+        <div class="collab-toolbar">
+            <div>
+                <h2>Try out the MOSIP applications</h2>
+                <p class="collab-toolbar-sub">11 products &middot; families grouped into stacked cards — open one to see every offering.</p>
             </div>
-        </section>
+            <div class="app-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="app-search-input" placeholder="Search applications…" autocomplete="off">
+            </div>
+        </div>
 
-        <!-- Features Section -->
-        <section class="features-grid">
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fa-solid fa-shield-halved"></i>
+        <div class="app-filters">
+            <button class="app-filter-btn active" data-category="all" type="button">All apps <span class="count">11</span></button>
+            <button class="app-filter-btn" data-category="mosip" type="button"><span class="dot"></span> MOSIP <span class="count">6</span></button>
+            <button class="app-filter-btn" data-category="esignet" type="button"><span class="dot"></span> eSignet <span class="count">2</span></button>
+            <button class="app-filter-btn" data-category="inji" type="button"><span class="dot"></span> Inji <span class="count">3</span></button>
+        </div>
+
+        <div class="app-grid" id="app-grid">
+
+            <!-- MOSIP: Pre-registration -->
+            <article class="app-card" data-category="mosip" data-name="pre-registration">
+                <div class="app-card-head">
+                    <div class="app-card-icon mosip"><img th:src="@{/images/collab/icon-ring-mark.png}" alt=""></div>
+                    <div>
+                        <div class="app-card-eyebrow mosip"><span class="dot"></span>MOSIP</div>
+                        <div class="app-card-title">Pre-registration</div>
+                    </div>
                 </div>
-                <h3 class="feature-title">Data Privacy & Security</h3>
-                <p class="feature-description">Your data security is our top priority. We use industry-standard encryption protocols and explicit user consent forms to process information.</p>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fa-solid fa-id-card"></i>
+                <p class="app-card-desc">Book appointments and pre-enter resident data ahead of enrolment.</p>
+                <div class="app-card-meta">
+                    <span class="app-card-pill">v1.2.0.1-B1</span>
+                    <span class="app-card-date"><span class="dot"></span>May 2026</span>
                 </div>
-                <h3 class="feature-title">UIN Deletion & Management</h3>
-                <p class="feature-description">Easily request identity updates, verify attributes, and process deletion logs across multiple synchronized data networks.</p>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fa-solid fa-circle-check"></i>
+                <div class="app-card-actions">
+                    <a href="#" class="app-card-cta">Try It Out! <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i></a>
+                    <span class="app-card-icon-btn" title="User Guide"><i class="fa-solid fa-book"></i></span>
+                    <span class="app-card-icon-btn" title="Docs"><i class="fa-solid fa-file-lines"></i></span>
+                    <span class="app-card-icon-btn" title="Watch Demo"><i class="fa-solid fa-play"></i></span>
                 </div>
-                <h3 class="feature-title">Instant Verification</h3>
-                <p class="feature-description">Experience lightning-fast profile mapping with a modern web interface that ensures all compliance checks are resolved in real-time.</p>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fa-solid fa-clipboard-list"></i>
+            </article>
+
+            <!-- MOSIP: Android Registration Client -->
+            <article class="app-card" data-category="mosip" data-name="android registration client">
+                <div class="app-card-head">
+                    <div class="app-card-icon mosip"><img th:src="@{/images/collab/icon-ring-mark.png}" alt=""></div>
+                    <div>
+                        <div class="app-card-eyebrow mosip"><span class="dot"></span>MOSIP</div>
+                        <div class="app-card-title">Android Registration Client</div>
+                    </div>
                 </div>
-                <h3 class="feature-title">Audit Trail & Logs</h3>
-                <p class="feature-description">Complete traceability of every deletion operation. Track which databases held user data and whether each purge succeeded or failed.</p>
-                <a href="/audit-logs" style="display:inline-flex;align-items:center;gap:0.4rem;margin-top:0.75rem;font-size:0.875rem;font-weight:600;color:var(--primary);text-decoration:none;">View Audit Logs <i class="fa-solid fa-arrow-right" style="font-size:0.75rem;"></i></a>
-            </div>
-        </section>
+                <p class="app-card-desc">Field enrolment of residents on Android tablets and devices.</p>
+                <div class="app-card-meta">
+                    <span class="app-card-pill">v1.0.0</span>
+                    <span class="app-card-date"><span class="dot"></span>Apr 2026</span>
+                </div>
+                <div class="app-card-actions">
+                    <a href="#" class="app-card-cta">Try It Out! <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i></a>
+                    <span class="app-card-icon-btn" title="User Guide"><i class="fa-solid fa-book"></i></span>
+                    <span class="app-card-icon-btn" title="Docs"><i class="fa-solid fa-file-lines"></i></span>
+                    <span class="app-card-icon-btn" title="Watch Demo"><i class="fa-solid fa-play"></i></span>
+                </div>
+            </article>
+
+            <!-- MOSIP: Desktop Registration Client -->
+            <article class="app-card" data-category="mosip" data-name="desktop registration client">
+                <div class="app-card-head">
+                    <div class="app-card-icon mosip"><img th:src="@{/images/collab/icon-ring-mark.png}" alt=""></div>
+                    <div>
+                        <div class="app-card-eyebrow mosip"><span class="dot"></span>MOSIP</div>
+                        <div class="app-card-title">Desktop Registration Client</div>
+                    </div>
+                </div>
+                <p class="app-card-desc">Operator-led resident enrolment on desktop workstations.</p>
+                <div class="app-card-meta">
+                    <span class="app-card-pill">v1.2.0.1-B1</span>
+                    <span class="app-card-date"><span class="dot"></span>May 2026</span>
+                </div>
+                <div class="app-card-actions">
+                    <a href="#" class="app-card-cta">Try It Out! <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i></a>
+                    <span class="app-card-icon-btn" title="User Guide"><i class="fa-solid fa-book"></i></span>
+                    <span class="app-card-icon-btn" title="Docs"><i class="fa-solid fa-file-lines"></i></span>
+                    <span class="app-card-icon-btn" title="Watch Demo"><i class="fa-solid fa-play"></i></span>
+                </div>
+            </article>
+
+            <!-- MOSIP: Resident Portal -->
+            <article class="app-card" data-category="mosip" data-name="resident portal">
+                <div class="app-card-head">
+                    <div class="app-card-icon mosip"><img th:src="@{/images/collab/icon-ring-mark.png}" alt=""></div>
+                    <div>
+                        <div class="app-card-eyebrow mosip"><span class="dot"></span>MOSIP</div>
+                        <div class="app-card-title">Resident Portal</div>
+                    </div>
+                </div>
+                <p class="app-card-desc">Self-service portal where residents manage their digital ID.</p>
+                <div class="app-card-meta">
+                    <span class="app-card-pill">v0.9.1</span>
+                    <span class="app-card-date"><span class="dot"></span>Mar 2026</span>
+                </div>
+                <div class="app-card-actions">
+                    <a href="#" class="app-card-cta">Try It Out! <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i></a>
+                    <span class="app-card-icon-btn" title="User Guide"><i class="fa-solid fa-book"></i></span>
+                    <span class="app-card-icon-btn" title="Docs"><i class="fa-solid fa-file-lines"></i></span>
+                    <span class="app-card-icon-btn" title="Watch Demo"><i class="fa-solid fa-play"></i></span>
+                </div>
+            </article>
+
+            <!-- eSignet bundle -->
+            <article class="app-card app-card--bundle" data-category="esignet" data-name="esignet 3 applications">
+                <div class="app-card-head">
+                    <div class="app-card-icon esignet"><img th:src="@{/images/collab/icon-ring-mark.png}" alt=""></div>
+                    <div>
+                        <div class="app-card-eyebrow esignet"><span class="dot"></span>eSignet</div>
+                        <div class="app-card-title">eSignet</div>
+                    </div>
+                </div>
+                <p class="app-card-desc">Plug-and-play authentication &amp; consented identity verification.</p>
+                <div class="app-card-meta">
+                    <span class="app-card-pill tint-esignet"><i class="fa-solid fa-layer-group" style="font-size:11px;"></i> 3 applications</span>
+                    <span class="app-card-pill">v1.6.2</span>
+                </div>
+                <a href="#" class="app-card-bundle-row">
+                    <span><i class="fa-solid fa-layer-group" style="margin-right:9px;"></i>View all 3 applications</span>
+                    <i class="fa-solid fa-chevron-right" style="font-size:12px; color: var(--collab-text-faint);"></i>
+                </a>
+            </article>
+
+            <!-- Inji Wallet bundle -->
+            <article class="app-card app-card--bundle" data-category="inji" data-name="inji wallet 3 platforms">
+                <div class="app-card-head">
+                    <div class="app-card-icon inji"><img th:src="@{/images/collab/icon-ring-mark.png}" alt=""></div>
+                    <div>
+                        <div class="app-card-eyebrow inji"><span class="dot"></span>Inji</div>
+                        <div class="app-card-title">Inji Wallet</div>
+                    </div>
+                </div>
+                <p class="app-card-desc">Store and present verifiable credentials, on any device.</p>
+                <div class="app-card-meta">
+                    <span class="app-card-pill tint-inji"><i class="fa-solid fa-layer-group" style="font-size:11px;"></i> 3 platforms</span>
+                    <span class="app-card-pill">2 versions</span>
+                </div>
+                <a href="#" class="app-card-bundle-row">
+                    <span><i class="fa-solid fa-layer-group" style="margin-right:9px;"></i>View all 3 platforms</span>
+                    <i class="fa-solid fa-chevron-right" style="font-size:12px; color: var(--collab-text-faint);"></i>
+                </a>
+            </article>
+
+            <!-- MOSIP: Admin Portal -->
+            <article class="app-card" data-category="mosip" data-name="admin portal">
+                <div class="app-card-head">
+                    <div class="app-card-icon mosip"><img th:src="@{/images/collab/icon-ring-mark.png}" alt=""></div>
+                    <div>
+                        <div class="app-card-eyebrow mosip"><span class="dot"></span>MOSIP</div>
+                        <div class="app-card-title">Admin Portal</div>
+                    </div>
+                </div>
+                <p class="app-card-desc">Configure and operate the identity platform end to end.</p>
+                <div class="app-card-meta">
+                    <span class="app-card-pill">v1.2.0.1</span>
+                    <span class="app-card-date"><span class="dot"></span>Feb 2026</span>
+                </div>
+                <div class="app-card-actions">
+                    <a href="#" class="app-card-cta">Try It Out! <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i></a>
+                    <span class="app-card-icon-btn" title="User Guide"><i class="fa-solid fa-book"></i></span>
+                    <span class="app-card-icon-btn" title="Docs"><i class="fa-solid fa-file-lines"></i></span>
+                    <span class="app-card-icon-btn" title="Watch Demo"><i class="fa-solid fa-play"></i></span>
+                </div>
+            </article>
+
+            <!-- Inji Verify -->
+            <article class="app-card" data-category="inji" data-name="inji verify">
+                <div class="app-card-head">
+                    <div class="app-card-icon inji"><img th:src="@{/images/collab/icon-ring-mark.png}" alt=""></div>
+                    <div>
+                        <div class="app-card-eyebrow inji"><span class="dot"></span>Inji</div>
+                        <div class="app-card-title">Inji Verify</div>
+                    </div>
+                </div>
+                <p class="app-card-desc">Scan and validate verifiable credentials, online or offline.</p>
+                <div class="app-card-meta">
+                    <span class="app-card-pill">v0.17.0</span>
+                    <span class="app-card-date"><span class="dot"></span>Apr 2026</span>
+                </div>
+                <div class="app-card-actions">
+                    <a href="#" class="app-card-cta">Try It Out! <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i></a>
+                    <span class="app-card-icon-btn" title="User Guide"><i class="fa-solid fa-book"></i></span>
+                    <span class="app-card-icon-btn" title="Docs"><i class="fa-solid fa-file-lines"></i></span>
+                    <span class="app-card-icon-btn" title="Watch Demo"><i class="fa-solid fa-play"></i></span>
+                </div>
+            </article>
+
+            <!-- MOSIP: Partner Management System -->
+            <article class="app-card" data-category="mosip" data-name="partner management system">
+                <div class="app-card-head">
+                    <div class="app-card-icon mosip"><img th:src="@{/images/collab/icon-ring-mark.png}" alt=""></div>
+                    <div>
+                        <div class="app-card-eyebrow mosip"><span class="dot"></span>MOSIP</div>
+                        <div class="app-card-title">Partner Management System</div>
+                    </div>
+                </div>
+                <p class="app-card-desc">Onboard, credential and manage ecosystem partners.</p>
+                <div class="app-card-meta">
+                    <span class="app-card-pill">v1.2.1.0</span>
+                    <span class="app-card-date"><span class="dot"></span>Feb 2026</span>
+                </div>
+                <div class="app-card-actions">
+                    <a href="#" class="app-card-cta">Try It Out! <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:11px;"></i></a>
+                    <span class="app-card-icon-btn" title="User Guide"><i class="fa-solid fa-book"></i></span>
+                    <span class="app-card-icon-btn" title="Docs"><i class="fa-solid fa-file-lines"></i></span>
+                    <span class="app-card-icon-btn" title="Watch Demo"><i class="fa-solid fa-play"></i></span>
+                </div>
+            </article>
+
+            <!-- eSignet Client SDKs bundle -->
+            <article class="app-card app-card--bundle" data-category="esignet" data-name="esignet client sdks">
+                <div class="app-card-head">
+                    <div class="app-card-icon esignet"><img th:src="@{/images/collab/icon-ring-mark.png}" alt=""></div>
+                    <div>
+                        <div class="app-card-eyebrow esignet"><span class="dot"></span>eSignet</div>
+                        <div class="app-card-title">eSignet Client SDKs</div>
+                    </div>
+                </div>
+                <p class="app-card-desc">Drop-in SDKs to call eSignet from your stack — 4 languages.</p>
+                <div class="app-card-meta">
+                    <span class="app-card-pill tint-esignet"><i class="fa-solid fa-layer-group" style="font-size:11px;"></i> 4 SDKs</span>
+                    <span class="app-card-pill">2 versions</span>
+                </div>
+                <a href="#" class="app-card-bundle-row">
+                    <span><i class="fa-solid fa-layer-group" style="margin-right:9px;"></i>View all 4 SDKs</span>
+                    <i class="fa-solid fa-chevron-right" style="font-size:12px; color: var(--collab-text-faint);"></i>
+                </a>
+            </article>
+
+            <!-- Inji Verify SDKs bundle -->
+            <article class="app-card app-card--bundle" data-category="inji" data-name="inji verify sdks">
+                <div class="app-card-head">
+                    <div class="app-card-icon inji"><img th:src="@{/images/collab/icon-ring-mark.png}" alt=""></div>
+                    <div>
+                        <div class="app-card-eyebrow inji"><span class="dot"></span>Inji</div>
+                        <div class="app-card-title">Inji Verify SDKs</div>
+                    </div>
+                </div>
+                <p class="app-card-desc">Embed credential verification anywhere — 7 framework builds.</p>
+                <div class="app-card-meta">
+                    <span class="app-card-pill tint-inji"><i class="fa-solid fa-layer-group" style="font-size:11px;"></i> 7 SDKs</span>
+                    <span class="app-card-pill">3 versions</span>
+                </div>
+                <a href="#" class="app-card-bundle-row">
+                    <span><i class="fa-solid fa-layer-group" style="margin-right:9px;"></i>View all 7 SDKs</span>
+                    <i class="fa-solid fa-chevron-right" style="font-size:12px; color: var(--collab-text-faint);"></i>
+                </a>
+            </article>
+
+        </div>
+
+        <p id="app-empty-state" style="display:none; text-align:center; color: var(--collab-text-muted); padding: 3rem 0;">
+            No applications match your search.
+        </p>
     </main>
 
-    <!-- Footer -->
-    <footer class="app-footer">
-        <p>&copy; 2024 All Rights Reserved MOSIP</p>
-        <div class="footer-links">
-            <a href="/delete" class="footer-link" style="text-decoration: underline;">Delete my data</a>
-        </div>
+    <footer class="collab-footer">
+        &copy; 2026 All Rights Reserved &middot; MOSIP
     </footer>
 
+    <script th:inline="javascript">
+        (function () {
+            var searchInput = document.getElementById('app-search-input');
+            var filterButtons = document.querySelectorAll('.app-filter-btn');
+            var cards = document.querySelectorAll('.app-card');
+            var emptyState = document.getElementById('app-empty-state');
+            var activeCategory = 'all';
+
+            function applyFilters() {
+                var query = searchInput.value.trim().toLowerCase();
+                var visibleCount = 0;
+                cards.forEach(function (card) {
+                    var matchesCategory = activeCategory === 'all' || card.dataset.category === activeCategory;
+                    var matchesQuery = !query || card.dataset.name.indexOf(query) !== -1;
+                    var visible = matchesCategory && matchesQuery;
+                    card.hidden = !visible;
+                    if (visible) visibleCount++;
+                });
+                emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+            }
+
+            filterButtons.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    filterButtons.forEach(function (b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+                    activeCategory = btn.dataset.category;
+                    applyFilters();
+                });
+            });
+
+            searchInput.addEventListener('input', applyFilters);
+        })();
+    </script>
 </body>
 </html>

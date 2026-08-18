@@ -135,143 +135,149 @@
                 </h2>
 
                 <div class="timeline">
-                    <!-- Step 1: Basic details -->
+                    <!-- Step 1: Registration -->
                     <div class="timeline-item">
-                        <div th:classappend="${steps['Demographic Details (user_basic_details)'] == 'DELETED' || steps['Demographic Details (user_basic_details)'] == 'SUCCESSFULLY_PURGED'} ? 'deleted'
-                                           : (${steps['Demographic Details (user_basic_details)'] != null && steps['Demographic Details (user_basic_details)'].startsWith('FAILED')} ? 'failed'
-                                           : (${steps['Demographic Details (user_basic_details)'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
+                        <div th:classappend="${steps['Registration'] == 'DELETED'} ? 'deleted'
+                                           : (${steps['Registration'] != null && steps['Registration'].startsWith('FAILED')} ? 'failed'
+                                           : (${steps['Registration'] == 'PARTIAL'} ? 'partial'
+                                           : (${steps['Registration'] == 'NOT_FOUND'} ? 'not-found' : 'skipped')))"
                              class="timeline-marker">
-                            <i th:classappend="${steps['Demographic Details (user_basic_details)'] != null && steps['Demographic Details (user_basic_details)'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
-                                             : (${steps['Demographic Details (user_basic_details)'] == 'NOT_FOUND'} ? 'fa-solid fa-magnifying-glass'
-                                             : (${steps['Demographic Details (user_basic_details)'] == 'SKIPPED'} ? 'fa-solid fa-forward' : 'fa-solid fa-user-xmark'))"
+                            <i th:classappend="${steps['Registration'] != null && steps['Registration'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
+                                             : (${steps['Registration'] == 'NOT_FOUND'} ? 'fa-solid fa-magnifying-glass'
+                                             : (${steps['Registration'] == 'SKIPPED'} ? 'fa-solid fa-forward' : 'fa-solid fa-user-xmark'))"
                                class=""></i>
                         </div>
                         <div class="timeline-content">
                             <div class="timeline-header">
-                                <span class="timeline-title">1. Demographic Records</span>
-                                <span th:classappend="${steps['Demographic Details (user_basic_details)'] == 'DELETED' || steps['Demographic Details (user_basic_details)'] == 'SUCCESSFULLY_PURGED'} ? 'deleted'
-                                                    : (${steps['Demographic Details (user_basic_details)'] != null && steps['Demographic Details (user_basic_details)'].startsWith('FAILED')} ? 'failed'
-                                                    : (${steps['Demographic Details (user_basic_details)'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
+                                <span class="timeline-title">1. Registration</span>
+                                <span th:classappend="${steps['Registration'] == 'DELETED'} ? 'deleted'
+                                                    : (${steps['Registration'] != null && steps['Registration'].startsWith('FAILED')} ? 'failed'
+                                                    : (${steps['Registration'] == 'PARTIAL'} ? 'partial'
+                                                    : (${steps['Registration'] == 'NOT_FOUND'} ? 'not-found' : 'skipped')))"
                                       class="timeline-status"
-                                      th:text="${steps['Demographic Details (user_basic_details)'] == 'DELETED' || steps['Demographic Details (user_basic_details)'] == 'SUCCESSFULLY_PURGED'} ? 'DELETED'
-                                            : (${steps['Demographic Details (user_basic_details)'] != null && steps['Demographic Details (user_basic_details)'].startsWith('FAILED')} ? 'FAILED'
-                                            : (${steps['Demographic Details (user_basic_details)'] == 'NOT_FOUND'} ? 'NOT_FOUND' : 'SKIPPED'))">
+                                      th:text="${steps['Registration'] == 'DELETED'} ? 'DELETED'
+                                            : (${steps['Registration'] != null && steps['Registration'].startsWith('FAILED')} ? 'FAILED'
+                                            : (${steps['Registration'] == 'PARTIAL'} ? 'PARTIAL'
+                                            : (${steps['Registration'] == 'NOT_FOUND'} ? 'NOT_FOUND' : 'SKIPPED')))">
                                     DELETED
                                 </span>
                             </div>
-                            <p class="timeline-desc">Demographic fields (Name, Phone) — primary Database 1 (user_basic_details).</p>
+                            <p class="timeline-desc">Demographic capture data — Database 1 (user_basic_details) &amp; Database 3 (user_parent_details).</p>
                         </div>
                     </div>
 
-                    <!-- Step 2: Parent details -->
+                    <!-- Step 2: ID Repository -->
                     <div class="timeline-item">
-                        <div th:classappend="${steps['Parent Details (user_parent_details)'] == 'DELETED' || steps['Parent Details (user_parent_details)'] == 'SUCCESSFULLY_PURGED'} ? 'deleted'
-                                           : (${steps['Parent Details (user_parent_details)'] != null && steps['Parent Details (user_parent_details)'].startsWith('FAILED')} ? 'failed'
-                                           : (${steps['Parent Details (user_parent_details)'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
+                        <div th:classappend="${steps['ID Repository'] == 'DELETED'} ? 'deleted'
+                                           : (${steps['ID Repository'] != null && steps['ID Repository'].startsWith('FAILED')} ? 'failed'
+                                           : (${steps['ID Repository'] == 'PARTIAL'} ? 'partial'
+                                           : (${steps['ID Repository'] == 'NOT_FOUND'} ? 'not-found' : 'skipped')))"
                              class="timeline-marker">
-                            <i th:classappend="${steps['Parent Details (user_parent_details)'] != null && steps['Parent Details (user_parent_details)'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
-                                             : (${steps['Parent Details (user_parent_details)'] == 'NOT_FOUND'} ? 'fa-solid fa-magnifying-glass'
-                                             : (${steps['Parent Details (user_parent_details)'] == 'SKIPPED'} ? 'fa-solid fa-forward' : 'fa-solid fa-users-slash'))"
+                            <i th:classappend="${steps['ID Repository'] != null && steps['ID Repository'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
+                                             : (${steps['ID Repository'] == 'NOT_FOUND'} ? 'fa-solid fa-magnifying-glass'
+                                             : (${steps['ID Repository'] == 'SKIPPED'} ? 'fa-solid fa-forward' : 'fa-solid fa-key'))"
                                class=""></i>
                         </div>
                         <div class="timeline-content">
                             <div class="timeline-header">
-                                <span class="timeline-title">2. Parent Relationships</span>
-                                <span th:classappend="${steps['Parent Details (user_parent_details)'] == 'DELETED' || steps['Parent Details (user_parent_details)'] == 'SUCCESSFULLY_PURGED'} ? 'deleted'
-                                                    : (${steps['Parent Details (user_parent_details)'] != null && steps['Parent Details (user_parent_details)'].startsWith('FAILED')} ? 'failed'
-                                                    : (${steps['Parent Details (user_parent_details)'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
+                                <span class="timeline-title">2. ID Repository</span>
+                                <span th:classappend="${steps['ID Repository'] == 'DELETED'} ? 'deleted'
+                                                    : (${steps['ID Repository'] != null && steps['ID Repository'].startsWith('FAILED')} ? 'failed'
+                                                    : (${steps['ID Repository'] == 'PARTIAL'} ? 'partial'
+                                                    : (${steps['ID Repository'] == 'NOT_FOUND'} ? 'not-found' : 'skipped')))"
                                       class="timeline-status"
-                                      th:text="${steps['Parent Details (user_parent_details)'] == 'DELETED' || steps['Parent Details (user_parent_details)'] == 'SUCCESSFULLY_PURGED'} ? 'DELETED'
-                                            : (${steps['Parent Details (user_parent_details)'] != null && steps['Parent Details (user_parent_details)'].startsWith('FAILED')} ? 'FAILED'
-                                            : (${steps['Parent Details (user_parent_details)'] == 'NOT_FOUND'} ? 'NOT_FOUND' : 'SKIPPED'))">
+                                      th:text="${steps['ID Repository'] == 'DELETED'} ? 'DELETED'
+                                            : (${steps['ID Repository'] != null && steps['ID Repository'].startsWith('FAILED')} ? 'FAILED'
+                                            : (${steps['ID Repository'] == 'PARTIAL'} ? 'PARTIAL'
+                                            : (${steps['ID Repository'] == 'NOT_FOUND'} ? 'NOT_FOUND' : 'SKIPPED')))">
                                     DELETED
                                 </span>
                             </div>
-                            <p class="timeline-desc">Father's and Mother's name associations — Database 3 (user_parent_details).</p>
+                            <p class="timeline-desc">UIN cryptographic hash &amp; biometric/document object store — Database 2 (user_uin_hash) &amp; MinIO.</p>
                         </div>
                     </div>
 
-                    <!-- Step 3: Images & Documents Store -->
+                    <!-- Step 3: ID Authentication -->
                     <div class="timeline-item">
-                        <div th:classappend="${steps['User Images & Documents (MinIO object store)'] != null && (steps['User Images & Documents (MinIO object store)'].startsWith('DELETED') || steps['User Images & Documents (MinIO object store)'].startsWith('SUCCESSFULLY_PURGED'))} ? 'deleted'
-                                           : (${steps['User Images & Documents (MinIO object store)'] != null && steps['User Images & Documents (MinIO object store)'].startsWith('FAILED')} ? 'failed'
-                                           : (${steps['User Images & Documents (MinIO object store)'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
+                        <div th:classappend="${steps['ID Authentication'] == 'DELETED'} ? 'deleted'
+                                           : (${steps['ID Authentication'] != null && steps['ID Authentication'].startsWith('FAILED')} ? 'failed'
+                                           : (${steps['ID Authentication'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
                              class="timeline-marker">
-                            <i th:classappend="${steps['User Images & Documents (MinIO object store)'] != null && steps['User Images & Documents (MinIO object store)'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
-                                             : (${steps['User Images & Documents (MinIO object store)'] == 'NOT_FOUND'} ? 'fa-solid fa-magnifying-glass'
-                                             : (${steps['User Images & Documents (MinIO object store)'] == 'SKIPPED'} ? 'fa-solid fa-forward' : 'fa-solid fa-images'))"
+                            <i th:classappend="${steps['ID Authentication'] != null && steps['ID Authentication'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
+                                             : (${steps['ID Authentication'] == 'NOT_FOUND'} ? 'fa-solid fa-magnifying-glass'
+                                             : (${steps['ID Authentication'] == 'SKIPPED'} ? 'fa-solid fa-forward' : 'fa-solid fa-shield-halved'))"
                                class=""></i>
                         </div>
                         <div class="timeline-content">
                             <div class="timeline-header">
-                                <span class="timeline-title">3. Multi-Image & Document Store</span>
-                                <span th:classappend="${steps['User Images & Documents (MinIO object store)'] != null && (steps['User Images & Documents (MinIO object store)'].startsWith('DELETED') || steps['User Images & Documents (MinIO object store)'].startsWith('SUCCESSFULLY_PURGED'))} ? 'deleted'
-                                                    : (${steps['User Images & Documents (MinIO object store)'] != null && steps['User Images & Documents (MinIO object store)'].startsWith('FAILED')} ? 'failed'
-                                                    : (${steps['User Images & Documents (MinIO object store)'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
+                                <span class="timeline-title">3. ID Authentication</span>
+                                <span th:classappend="${steps['ID Authentication'] == 'DELETED'} ? 'deleted'
+                                                    : (${steps['ID Authentication'] != null && steps['ID Authentication'].startsWith('FAILED')} ? 'failed'
+                                                    : (${steps['ID Authentication'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
                                       class="timeline-status"
-                                      th:text="${steps['User Images & Documents (MinIO object store)'] != null && (steps['User Images & Documents (MinIO object store)'].startsWith('DELETED') || steps['User Images & Documents (MinIO object store)'].startsWith('SUCCESSFULLY_PURGED'))} ? 'DELETED'
-                                            : (${steps['User Images & Documents (MinIO object store)'] != null && steps['User Images & Documents (MinIO object store)'].startsWith('FAILED')} ? 'FAILED'
-                                            : (${steps['User Images & Documents (MinIO object store)'] == 'NOT_FOUND'} ? 'NOT_FOUND' : 'SKIPPED'))">
+                                      th:text="${steps['ID Authentication'] == 'DELETED'} ? 'DELETED'
+                                            : (${steps['ID Authentication'] != null && steps['ID Authentication'].startsWith('FAILED')} ? 'FAILED'
+                                            : (${steps['ID Authentication'] == 'NOT_FOUND'} ? 'NOT_FOUND' : 'SKIPPED'))">
                                     DELETED
                                 </span>
                             </div>
-                            <p class="timeline-desc">Profile photos, Aadhar cards, & identity documents — MinIO bucket (/profile-pictures/, /aadhar-cards/, /documents/).</p>
+                            <p class="timeline-desc">Identity/auth profile — mock-identity-system (stands in for IDA in this prototype).</p>
                         </div>
                     </div>
 
-                    <!-- Step 4: Cryptographic key hash -->
+                    <!-- Step 4: Resident Portal -->
                     <div class="timeline-item">
-                        <div th:classappend="${steps['Cryptographic Identity Hash (user_uin_hash)'] == 'DELETED' || steps['Cryptographic Identity Hash (user_uin_hash)'] == 'SUCCESSFULLY_PURGED'} ? 'deleted'
-                                           : (${steps['Cryptographic Identity Hash (user_uin_hash)'] != null && steps['Cryptographic Identity Hash (user_uin_hash)'].startsWith('FAILED')} ? 'failed'
-                                           : (${steps['Cryptographic Identity Hash (user_uin_hash)'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
+                        <div th:classappend="${steps['Resident Portal'] == 'DELETED'} ? 'deleted'
+                                           : (${steps['Resident Portal'] != null && steps['Resident Portal'].startsWith('FAILED')} ? 'failed'
+                                           : (${steps['Resident Portal'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
                              class="timeline-marker">
-                            <i th:classappend="${steps['Cryptographic Identity Hash (user_uin_hash)'] != null && steps['Cryptographic Identity Hash (user_uin_hash)'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
-                                             : (${steps['Cryptographic Identity Hash (user_uin_hash)'] == 'NOT_FOUND'} ? 'fa-solid fa-magnifying-glass'
-                                             : (${steps['Cryptographic Identity Hash (user_uin_hash)'] == 'SKIPPED'} ? 'fa-solid fa-forward' : 'fa-solid fa-key'))"
+                            <i th:classappend="${steps['Resident Portal'] != null && steps['Resident Portal'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
+                                             : (${steps['Resident Portal'] == 'NOT_FOUND'} ? 'fa-solid fa-magnifying-glass'
+                                             : (${steps['Resident Portal'] == 'SKIPPED'} ? 'fa-solid fa-forward' : 'fa-solid fa-address-card'))"
                                class=""></i>
                         </div>
                         <div class="timeline-content">
                             <div class="timeline-header">
-                                <span class="timeline-title">4. Cryptographic UIN Key Hash</span>
-                                <span th:classappend="${steps['Cryptographic Identity Hash (user_uin_hash)'] == 'DELETED' || steps['Cryptographic Identity Hash (user_uin_hash)'] == 'SUCCESSFULLY_PURGED'} ? 'deleted'
-                                                    : (${steps['Cryptographic Identity Hash (user_uin_hash)'] != null && steps['Cryptographic Identity Hash (user_uin_hash)'].startsWith('FAILED')} ? 'failed'
-                                                    : (${steps['Cryptographic Identity Hash (user_uin_hash)'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
+                                <span class="timeline-title">4. Resident Portal</span>
+                                <span th:classappend="${steps['Resident Portal'] == 'DELETED'} ? 'deleted'
+                                                    : (${steps['Resident Portal'] != null && steps['Resident Portal'].startsWith('FAILED')} ? 'failed'
+                                                    : (${steps['Resident Portal'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
                                       class="timeline-status"
-                                      th:text="${steps['Cryptographic Identity Hash (user_uin_hash)'] == 'DELETED' || steps['Cryptographic Identity Hash (user_uin_hash)'] == 'SUCCESSFULLY_PURGED'} ? 'DELETED'
-                                            : (${steps['Cryptographic Identity Hash (user_uin_hash)'] != null && steps['Cryptographic Identity Hash (user_uin_hash)'].startsWith('FAILED')} ? 'FAILED'
-                                            : (${steps['Cryptographic Identity Hash (user_uin_hash)'] == 'NOT_FOUND'} ? 'NOT_FOUND' : 'SKIPPED'))">
-                                    DELETED
+                                      th:text="${steps['Resident Portal'] == 'DELETED'} ? 'DELETED'
+                                            : (${steps['Resident Portal'] != null && steps['Resident Portal'].startsWith('FAILED')} ? 'FAILED'
+                                            : (${steps['Resident Portal'] == 'NOT_FOUND'} ? 'NOT_FOUND' : 'SKIPPED'))">
+                                    SKIPPED
                                 </span>
                             </div>
-                            <p class="timeline-desc">Deterministic salt-modulo hash references — security Database 2 (user_uin_hash).</p>
+                            <p class="timeline-desc">VID card download transactions — not yet integrated in this prototype.</p>
                         </div>
                     </div>
 
-                    <!-- Step 5: Mock Identity System (eSignet) -->
+                    <!-- Step 5: Self-Registration -->
                     <div class="timeline-item">
-                        <div th:classappend="${steps['Mock Identity Service (esignet-mock-services)'] == 'DELETED' || steps['Mock Identity Service (esignet-mock-services)'] == 'SUCCESSFULLY_PURGED'} ? 'deleted'
-                                           : (${steps['Mock Identity Service (esignet-mock-services)'] != null && steps['Mock Identity Service (esignet-mock-services)'].startsWith('FAILED')} ? 'failed'
-                                           : (${steps['Mock Identity Service (esignet-mock-services)'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
+                        <div th:classappend="${steps['Self-Registration'] == 'DELETED'} ? 'deleted'
+                                           : (${steps['Self-Registration'] != null && steps['Self-Registration'].startsWith('FAILED')} ? 'failed'
+                                           : (${steps['Self-Registration'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
                              class="timeline-marker">
-                            <i th:classappend="${steps['Mock Identity Service (esignet-mock-services)'] != null && steps['Mock Identity Service (esignet-mock-services)'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
-                                             : (${steps['Mock Identity Service (esignet-mock-services)'] == 'NOT_FOUND'} ? 'fa-solid fa-magnifying-glass'
-                                             : (${steps['Mock Identity Service (esignet-mock-services)'] == 'SKIPPED'} ? 'fa-solid fa-forward' : 'fa-solid fa-shield-halved'))"
+                            <i th:classappend="${steps['Self-Registration'] != null && steps['Self-Registration'].startsWith('FAILED')} ? 'fa-solid fa-xmark'
+                                             : (${steps['Self-Registration'] == 'NOT_FOUND'} ? 'fa-solid fa-magnifying-glass'
+                                             : (${steps['Self-Registration'] == 'SKIPPED'} ? 'fa-solid fa-forward' : 'fa-solid fa-file-circle-plus'))"
                                class=""></i>
                         </div>
                         <div class="timeline-content">
                             <div class="timeline-header">
-                                <span class="timeline-title">5. Mock Identity System (eSignet)</span>
-                                <span th:classappend="${steps['Mock Identity Service (esignet-mock-services)'] == 'DELETED' || steps['Mock Identity Service (esignet-mock-services)'] == 'SUCCESSFULLY_PURGED'} ? 'deleted'
-                                                    : (${steps['Mock Identity Service (esignet-mock-services)'] != null && steps['Mock Identity Service (esignet-mock-services)'].startsWith('FAILED')} ? 'failed'
-                                                    : (${steps['Mock Identity Service (esignet-mock-services)'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
+                                <span class="timeline-title">5. Self-Registration <em style="font-weight:400;opacity:0.7;">(optional)</em></span>
+                                <span th:classappend="${steps['Self-Registration'] == 'DELETED'} ? 'deleted'
+                                                    : (${steps['Self-Registration'] != null && steps['Self-Registration'].startsWith('FAILED')} ? 'failed'
+                                                    : (${steps['Self-Registration'] == 'NOT_FOUND'} ? 'not-found' : 'skipped'))"
                                       class="timeline-status"
-                                      th:text="${steps['Mock Identity Service (esignet-mock-services)'] == 'DELETED' || steps['Mock Identity Service (esignet-mock-services)'] == 'SUCCESSFULLY_PURGED'} ? 'DELETED'
-                                            : (${steps['Mock Identity Service (esignet-mock-services)'] != null && steps['Mock Identity Service (esignet-mock-services)'].startsWith('FAILED')} ? 'FAILED'
-                                            : (${steps['Mock Identity Service (esignet-mock-services)'] == 'NOT_FOUND'} ? 'NOT_FOUND' : 'SKIPPED'))">
-                                    DELETED
+                                      th:text="${steps['Self-Registration'] == 'DELETED'} ? 'DELETED'
+                                            : (${steps['Self-Registration'] != null && steps['Self-Registration'].startsWith('FAILED')} ? 'FAILED'
+                                            : (${steps['Self-Registration'] == 'NOT_FOUND'} ? 'NOT_FOUND' : 'SKIPPED'))">
+                                    SKIPPED
                                 </span>
                             </div>
-                            <p class="timeline-desc">Mock eSignet identity profile & verified claims — Docker PostgreSQL (mockidentitysystem).</p>
+                            <p class="timeline-desc">Optional self-registration portal cleanup — not yet integrated in this prototype.</p>
                         </div>
                     </div>
                 </div>

@@ -60,6 +60,10 @@ public class DeletionAudit {
     @Column(name = "minio_status")
     private String minioStatus;
 
+    /** ID Authentication (IDA stand-in / mock-identity-system) module status. */
+    @Column(name = "id_auth_status")
+    private String idAuthStatus;
+
     /** Free-text detail (failure reasons, notes). */
     @Column(name = "detail", length = 2000)
     private String detail;
@@ -138,6 +142,14 @@ public class DeletionAudit {
 
     public void setMinioStatus(String minioStatus) {
         this.minioStatus = minioStatus;
+    }
+
+    public String getIdAuthStatus() {
+        return idAuthStatus;
+    }
+
+    public void setIdAuthStatus(String idAuthStatus) {
+        this.idAuthStatus = idAuthStatus;
     }
 
     public String getDetail() {

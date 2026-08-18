@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deleting your identity data - MOSIP Collab</title>
+    <link rel="stylesheet" th:href="@{/css/collab-theme.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="collab-page">
+
+    <header class="collab-simple-header">
+        <a href="/" class="collab-nav-brand">
+            <img th:src="@{/images/collab/mark-header.png}" alt="MOSIP">
+            <span>MOSIP Collab</span>
+        </a>
+    </header>
+
+    <main class="progress-shell">
+
+        <div class="progress-eyebrow">
+            <i class="fa-solid fa-circle-check"></i>
+            eSignet authentication successful — deletion initiated.
+        </div>
+
+        <div class="progress-title-row">
+            <h1 id="progress-heading">Deleting your identity data</h1>
+            <span class="uin-badge">UIN <span th:text="${maskedUin}">•••• •••• 9134</span></span>
+        </div>
+        <p class="progress-subtitle" id="progress-subtitle">
+            Keep this page open while your data is permanently removed from the MOSIP Collab environment. Each stage is processed in order.
+        </p>
+
+        <div class="progress-panel">
+            <div class="progress-summary">
+                <div class="progress-percent" id="progress-percent">0%</div>
+                <div class="progress-summary-text">
+                    <div class="progress-stage-label" id="progress-stage-label">Stage 1 of <span th:text="${#lists.size(stages)}">5</span></div>
+                    <div class="progress-stage-name" id="progress-stage-name" th:text="${stages[0].name}">Registration Data Deletion</div>
+                    <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-bar-fill"></div></div>
+                </div>
+            </div>
+
+            <div class="stage-list" id="stage-list">
+                <div class="stage-item" th:each="stage,iter : ${stages}" th:id="'stage-item-' + ${iter.index}"
+                     th:attr="data-status=${stage.status}, data-name=${stage.name}, data-desc=${stage.desc}">
+                    <div class="stage-marker"><i class="fa-solid fa-check"></i></div>
+                    <div class="stage-text">
+                        <div class="stage-name" th:text="${stage.name} + ' Data Deletion'">Registration Data Deletion</div>
+                        <div class="stage-desc" th:text="${stage.desc}">Removing enrolment records and appointment history</div>
+                    </div>
+                    <div class="stage-status queued">Queued</div>
+                </div>
+            </div>
+
+            <!-- Success outcome (shown once the reveal finishes if no stage failed) -->
+            <div class="outcome-callout success" id="outcome-success" style="display:none;">
+                <div class="outcome-icon"><i class="fa-solid fa-check"></i></div>
+                <div>
+                    <div class="outcome-title">Your data has been deleted from the MOSIP Collab environment.</div>
+                    <div class="outcome-desc">This UIN can no longer be used.</div>
+                    <div class="outcome-actions">
+                        <a href="/" class="outcome-btn">Back to MOSIP Collab</a>
+                        <a th:if="${audit != null and audit.id != null}" th:href="@{'/delete/report/' + ${audit.id}}" class="detail-report-link">View detailed module report</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paused / failed outcome with retry -->
+            <div class="outcome-callout warn" id="outcome-paused" style="display:none;">
+                <div class="outcome-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div style="flex:1;">
+                    <div class="outcome-title" id="outcome-paused-title">Resident Portal Data Deletion could not be completed</div>
+                    <div class="outcome-desc">The process was interrupted before this stage finished. Retry to resume from where it stopped — stages already completed stay deleted.</div>
+                    <div class="outcome-actions">
+                        <form th:action="@{/delete/confirm}" method="post" style="display:inline;">
+                            <input type="hidden" name="uin" th:value="${uin}">
+                            <input type="hidden" name="consent" value="true">
+                            <button type="submit" class="outcome-btn">Retry deletion</button>
+                        </form>
+                        <span class="outcome-timer" id="retry-timer">Retry window closes in <strong id="retry-timer-value">15:00</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Retry window expired -->
+            <div class="outcome-callout warn" id="outcome-expired" style="display:none;">
+                <div class="outcome-icon"><i class="fa-solid fa-clock"></i></div>
+                <div>
+                    <div class="outcome-title">The retry window has expired.</div>
+                    <div class="outcome-desc">Please click "Delete My Data" again and complete the authentication process to continue with the deletion.</div>
+                    <div class="outcome-actions">
+                        <a href="/" class="outcome-btn">Go to MOSIP Collab landing page</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="progress-footnote">
+            Deletion is permanent and applies only to the MOSIP Collab sandbox environment. Stages are processed in order; if the
+            process is interrupted, you can resume it from this page within the retry window.
+        </p>
+    </main>
+
+    <footer class="collab-footer">
+        &copy; 2026 All Rights Reserved &middot; MOSIP
+    </footer>
+
+    <script th:inline="javascript">
+        (function () {
+            /*<![CDATA[*/
+            var uin = /*[[${uin}]]*/ '';
+            /*]]>*/
+            var stageItems = Array.prototype.slice.call(document.querySelectorAll('.stage-item'));
+            var total = stageItems.length;
+            var barFill = document.getElementById('progress-bar-fill');
+            var percentEl = document.getElementById('progress-percent');
+            var stageLabelEl = document.getElementById('progress-stage-label');
+            var stageNameEl = document.getElementById('progress-stage-name');
+            var heading = document.getElementById('progress-heading');
+            var subtitle = document.getElementById('progress-subtitle');
+
+            var firstFailedIndex = -1;
+            stageItems.forEach(function (item, idx) {
+                var status = item.dataset.status || '';
+                if ((status.indexOf('FAILED') === 0 || status === 'PARTIAL') && firstFailedIndex === -1) {
+                    firstFailedIndex = idx;
+                }
+            });
+            // A stage the backend never ran (SKIPPED / NOT_FOUND) still counts as "done" for the reveal.
+            var stopIndex = firstFailedIndex === -1 ? total - 1 : firstFailedIndex;
+
+            var STEP_MS = 550;
+            var current = 0;
+
+            function renderStage(idx, markCompleted) {
+                var item = stageItems[idx];
+                var marker = item.querySelector('.stage-status');
+                item.classList.remove('active', 'completed', 'failed');
+                if (markCompleted === 'failed') {
+                    item.classList.add('failed');
+                    marker.textContent = 'Failed — retry available';
+                    marker.className = 'stage-status failed';
+                } else if (markCompleted) {
+                    item.classList.add('completed');
+                    marker.textContent = 'Completed';
+                    marker.className = 'stage-status completed';
+                } else {
+                    item.classList.add('active');
+                    marker.textContent = 'In progress…';
+                    marker.className = 'stage-status';
+                }
+            }
+
+            function tick() {
+                if (current > 0) {
+                    renderStage(current - 1, current - 1 === firstFailedIndex ? 'failed' : true);
+                }
+
+                var pct = Math.round(((current) / total) * 100);
+                percentEl.textContent = pct + '%';
+                barFill.style.width = pct + '%';
+
+                if (current >= stopIndex + 1) {
+                    finish();
+                    return;
+                }
+
+                renderStage(current, false);
+                stageLabelEl.textContent = 'Stage ' + (current + 1) + ' of ' + total;
+                stageNameEl.textContent = stageItems[current].dataset.name + ' Data Deletion';
+
+                current++;
+                setTimeout(tick, STEP_MS);
+            }
+
+            function finish() {
+                if (firstFailedIndex === -1) {
+                    percentEl.textContent = '100%';
+                    barFill.style.width = '100%';
+                    heading.textContent = 'Deletion complete';
+                    subtitle.textContent = 'Your request has been processed. A record of this deletion has been logged in the Collab environment.';
+                    document.getElementById('outcome-success').style.display = 'flex';
+                } else {
+                    barFill.classList.add('warn');
+                    heading.textContent = 'Deletion paused';
+                    subtitle.textContent = 'A stage could not be completed. Retry to resume the process from where it stopped.';
+                    stageLabelEl.textContent = 'Paused at stage ' + (firstFailedIndex + 1) + ' of ' + total;
+                    var failedStage = stageItems[firstFailedIndex];
+                    stageNameEl.textContent = failedStage.dataset.name + ' Data Deletion';
+                    document.getElementById('outcome-paused-title').textContent = failedStage.dataset.name + ' Data Deletion could not be completed';
+                    document.getElementById('outcome-paused').style.display = 'flex';
+                    startRetryCountdown();
+                }
+            }
+
+            function startRetryCountdown() {
+                var deadline = Date.now() + 15 * 60 * 1000;
+                var timerValue = document.getElementById('retry-timer-value');
+                var pausedPanel = document.getElementById('outcome-paused');
+                var expiredPanel = document.getElementById('outcome-expired');
+
+                var interval = setInterval(function () {
+                    var remainingMs = deadline - Date.now();
+                    if (remainingMs <= 0) {
+                        clearInterval(interval);
+                        pausedPanel.style.display = 'none';
+                        expiredPanel.style.display = 'flex';
+                        return;
+                    }
+                    var totalSeconds = Math.floor(remainingMs / 1000);
+                    var mm = Math.floor(totalSeconds / 60);
+                    var ss = totalSeconds % 60;
+                    timerValue.textContent = mm + ':' + (ss < 10 ? '0' : '') + ss;
+                }, 1000);
+            }
+
+            tick();
+        })();
+    </script>
+</body>
+</html>

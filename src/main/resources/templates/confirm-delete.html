@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirm Deletion - MOSIP</title>
+    <title>Confirm Deletion - MOSIP Collab</title>
     <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" th:href="@{/css/collab-theme.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        body { font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--collab-bg); }
         .confirm-page { max-width: 650px; }
         .confirm-page .form-header { text-align: center; }
-        .warning-icon { width: 52px; height: 52px; margin: 0 auto 1rem; border-radius: 50%; display: grid; place-items: center; background: #fee2e2; color: #dc2626; font-size: 1.4rem; }
+        .warning-icon { width: 52px; height: 52px; margin: 0 auto 1rem; border-radius: 50%; display: grid; place-items: center; background: var(--collab-tint-esignet); color: #ca7322; font-size: 1.4rem; }
+        .form-container { border-radius: var(--collab-radius-card) !important; box-shadow: var(--collab-shadow-card) !important; }
         .profile-card { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow-sm); }
         .profile-summary-header { display: flex; gap: 1.25rem; align-items: center; margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); }
         .profile-photo { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--primary); }
@@ -58,23 +61,11 @@
     </style>
 </head>
 <body>
-    <header class="app-header">
-        <div class="header-container">
-            <a href="/" class="brand-section">
-                <div class="brand-logo">M</div>
-                <div>
-                    <span class="brand-name">MOSIP</span>
-                    <span class="brand-tagline">UIN Management</span>
-                </div>
-            </a>
-            <nav>
-                <ul class="nav-links">
-                    <li><a href="/" class="nav-link">Home</a></li>
-                    <li><a href="/register" class="nav-link">Register</a></li>
-                    <li><a href="/audit-logs" class="nav-link">Audit Logs</a></li>
-                </ul>
-            </nav>
-        </div>
+    <header class="collab-simple-header">
+        <a href="/" class="collab-nav-brand">
+            <img th:src="@{/images/collab/mark-header.png}" alt="MOSIP">
+            <span>MOSIP Collab</span>
+        </a>
     </header>
 
     <main class="main-content">
@@ -206,8 +197,8 @@
         </section>
     </main>
 
-    <footer class="app-footer">
-        <p>&copy; 2024 MOSIP. All rights reserved.</p>
+    <footer class="collab-footer">
+        &copy; 2026 All Rights Reserved &middot; MOSIP
     </footer>
 
     <script>

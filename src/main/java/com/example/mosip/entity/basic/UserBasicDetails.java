@@ -19,6 +19,12 @@ public class UserBasicDetails {
     @Column(name = "phone", nullable = false)
     private String phone;
 
+    // Pairwise eSignet subject (base64url SHA3-256 of individualId + relying
+    // party id) computed at registration time, so a later eSignet login can be
+    // matched back to this user without the mock IDA disclosing individual_id.
+    @Column(name = "pairwise_sub")
+    private String pairwiseSub;
+
     // Default constructor
     public UserBasicDetails() {
     }
@@ -53,6 +59,14 @@ public class UserBasicDetails {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getPairwiseSub() {
+        return pairwiseSub;
+    }
+
+    public void setPairwiseSub(String pairwiseSub) {
+        this.pairwiseSub = pairwiseSub;
     }
 
     @Override

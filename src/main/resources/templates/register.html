@@ -27,6 +27,20 @@
         <div th:if="${errorMessage}" class="consent-box" style="border-color:#dc2626;color:#991b1b;margin:1rem;">
             <i class="fa-solid fa-circle-exclamation"></i>&nbsp;<span th:text="${errorMessage}">Registration failed.</span>
         </div>
+        <div th:if="${infoMessage}" class="consent-box" style="border-color:#1763ac;color:#0f4c81;margin:1rem;">
+            <i class="fa-solid fa-circle-info"></i>&nbsp;<span th:text="${infoMessage}">Info</span>
+        </div>
+
+        <div th:if="${esignetVerified}" class="consent-box" style="border-color:#16a34a;color:#166534;margin:1rem;">
+            <i class="fa-solid fa-circle-check"></i>&nbsp;Signed in with eSignet. Enter the same Individual ID you used to sign in below to link your profile.
+        </div>
+        <div th:unless="${esignetVerified}" style="margin:1rem;padding:1.25rem;border:1px solid var(--border,#e2e8f0);border-radius:10px;text-align:center;background:#f4f8fa;">
+            <p style="margin:0 0 0.75rem;font-size:0.9rem;color:var(--text-secondary,#475569);">Already have a MOSIP identity? Use unified login instead of filling this form.</p>
+            <a href="/register/esignet-login" style="display:inline-flex;align-items:center;gap:0.5rem;background:#1763ac;color:#fff;padding:0.6rem 1.25rem;border-radius:8px;font-weight:600;text-decoration:none;">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign up with eSignet
+            </a>
+        </div>
+
         <form th:action="@{/register}" th:object="${registration}" method="POST" enctype="multipart/form-data">
             <div class="form-body">
                 <div class="form-group">

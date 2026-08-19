@@ -223,7 +223,12 @@ public class MockIdentityService {
     }
 
     private List<Map<String, String>> languageValue(String value) {
-        return List.of(Map.of("language", "en", "value", value));
+        // MOSIP's mock-identity-system matches claim locales against this
+        // language tag using ISO 639-2/T (3-letter) codes, e.g. "eng" - not the
+        // 2-letter "en" eSignet callers pass as claims_locales/preferredLang.
+        // A mismatch here silently empties every language-tagged claim
+        // (name/gender/address/etc.) in the KYC exchange response.
+        return List.of(Map.of("language", "eng", "value", value));
     }
 
     private String encodePhoto(UserRegistrationDto registration) {

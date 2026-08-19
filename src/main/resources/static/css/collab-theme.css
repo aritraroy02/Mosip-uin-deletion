@@ -41,6 +41,13 @@
 .collab-page {
     font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: var(--collab-bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.collab-page > main {
+    flex: 1 0 auto;
 }
 
 /* ---------------------------------------------------------------------- */

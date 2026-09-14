@@ -1,249 +1,135 @@
-# MOSIP UIN Registration & Voluntary Deletion Portal
+# MOSIP Collab — Self-Service UIN Deletion
 
-This project is a Spring Boot web application designed as a light-themed MOSIP-style identity portal. It uses a **three-database architecture** to isolate demographic records, parent details, and cryptographic identity keys (UIN hashes), stores user profile photos in a **MinIO (S3-compatible) object store**, and protects UINs with **MOSIP-style salt-modulo hashing**. It exposes both REST APIs and an interactive web interface for user registration and voluntary data purging.
+An end-to-end local environment for the *Collab Self-Service UIN and Personal
+Data Deletion Process*: a resident authenticates with eSignet (UIN → OTP →
+consent), and their data is permanently deleted across every MOSIP module and
+the object store. Authentication and deletion are separate, secured backends —
+the UIN travels between them only inside a short-lived signed token.
 
----
-
-## 🏗️ Architecture & Data Flow
-
-To ensure data security, user records are divided across **three separate cloud-hosted PostgreSQL databases**, with profile images kept in a separate object store:
-
-1. **Basic Details Database** (`defaultdb` on host `:20760`): Public-facing demographic info (`user_id`, `name`, `phone`).
-2. **Hashing Database** (`defaultdb` on host `:24845`): Security data — the salted UIN/ID hashes (`user_uin_hash`) and the salt store (`uin_hash_salt`).
-3. **Parent Details Database** (`defaultdb` on host `:12810`): Father's and mother's names (`user_id`, `father_name`, `mother_name`).
-4. **MinIO Object Storage** (S3 API on `:9000`, console `:9001`): Profile photos in the `userprofilepic` bucket.
-
-> **Single API ownership:** the parent-details write is owned solely by `RegistrationApiController`. The web form does **not** write parent data directly — it routes through that controller so all parent data passes through one API entry point.
-
-```mermaid
-flowchart TD
-    subgraph Frontend [Web Interface]
-        Home["Homepage (/)"] --> Register["Registration (/register)"]
-        Home --> DeletePortal["Data Purge (/delete)"]
-    end
-
-    subgraph ControllerLayer [Controllers]
-        MVC[RegistrationController]
-        API[RegistrationApiController]
-    end
-
-    subgraph Services [Services]
-        SALT[SaltModuloHashService]
-        MINIO[MinioStorageService]
-    end
-
-    subgraph Databases [Data Repositories]
-        DB_Basic[("Basic DB (Name, Phone)")]
-        DB_Hash[("Hashing DB (ID/UIN hashes + salts)")]
-        DB_Parent[("Parent DB (Father, Mother)")]
-        OBJ[("MinIO bucket: userprofilepic")]
-    end
-
-    Register -->|Web POST multipart| MVC
-    DeletePortal -->|Web POST| MVC
-
-    MVC -->|Persist Basic Details| DB_Basic
-    MVC -->|Salt-modulo hashes| SALT --> DB_Hash
-    MVC -->|saveParentDetails| API
-    MVC -->|Upload photo| MINIO --> OBJ
-
-    API -->|POST /api/register| DB_Basic
-    API -->|Salt-modulo hashes| SALT
-    API -->|Persist parent details| DB_Parent
-    API -->|DELETE /api/user/{id}| DB_Basic
-    API -->|DELETE /api/user/{id}| DB_Hash
-```
-
----
-
-## 🔐 Salt-Modulo UIN Hashing (MOSIP-style)
-
-Instead of a plain SHA-256 digest, UINs and individual IDs are protected with **salt-modulo hashing**:
+## The flow
 
 ```
-salt  = uin_hash_salt[ id mod 1000 ]
-hash  = SHA-256( id + salt )      // lowercase hex
+ delete-uin page (static, :5501)
+    │  "Delete my UIN" → OIDC redirect
+    ▼
+ eSignet (:3000 UI, :8088 API) ── OTP + consent ──► back to page with ?code
+    │
+    ▼  page POSTs the code (never a token)
+ auth-gateway (:8095)                         ← eSignet relying party
+    │  token-exchange (private_key_jwt) + GET /userinfo → UIN
+    │  mint 5-minute RS256 JWT { uin }
+    ▼  POST /api/deletion/execute  (Bearer JWT)
+ deletion-service (:8096)                      ← JWT-secured, no consent flag
+    │  verify JWT (sig, exp, iss, aud) → UIN
+    ▼  delete across all modules, write audit, return per-module status
+ 7 PostgreSQL DBs (:5442-5448) + MinIO (:9000)
 ```
 
-- On first startup the app seeds the `uin_hash_salt` table with **1000 random salt buckets** (bucket `0..999`).
-- The bucket for an identifier is `id mod 1000`, so the same ID always produces the same hash — it stays **deterministic and queryable**, while each bucket having its own random salt defeats precomputed rainbow-table attacks.
-- The **raw UIN is never stored** — only its hash. UINs can be *verified* by re-hashing, but cannot be recovered/displayed later.
+The mock eSignet resolves logins against **mock-identity-system** (:8082),
+loaded with the same seeded UINs that have deletable data.
 
-Two target columns are written in the `user_uin_hash` table:
+## Components
 
-| Column | Contents |
-|--------|----------|
-| `individual_id_hash` | salt-modulo hash of the individual ID (`USR-XXXXXXXX`) |
-| `uin_salted_hash` | salt-modulo hash of the UIN |
+| Directory | What it is | Port |
+|---|---|---|
+| [`docker/`](docker/) | 7 MOSIP module DBs + a deletion-audit DB + MinIO | 5442-5448, 9000 |
+| [`seed/`](seed/) | Synthetic identities with **known** plaintext UINs; loader for mock eSignet | — |
+| [`admin/`](admin/) | Read-only browser for all DBs + MinIO (no SQL) | 8090 |
+| [`auth-gateway/`](auth-gateway/) | eSignet RP: code → userinfo → 5-min JWT → deletion service | 8095 |
+| [`deletion-service/`](deletion-service/) | JWT-secured cross-module deletion + audit | 8096 |
+| [`esignet/`](esignet/) | eSignet stack (docker-compose): eSignet, oidc-ui, mock-identity-system | 8088, 3000, 8082 |
+| [`charts/`](charts/) | Helm charts + local-dev harness for the landing / delete-uin pages | 5500, 5501 |
 
-The number of salt buckets is configurable via `mosip.ida.salt.modulo` (default `1000`).
+Design decisions are in [decision.md](decision.md); the file/layout map is in
+[structure.md](structure.md).
 
----
+## Bring it all up
 
-## 📂 File Structure & Descriptions
+All commands are PowerShell from the repo root. The `.ps1` scripts need
+PowerShell; docker/python commands run in any shell.
 
-```
-src/main/java/com/example/mosip/
-│
-├── config/
-│   ├── BasicDbConfig.java     # Primary Datasource (Database 1) — scans basic packages.
-│   ├── HashingDbConfig.java   # Datasource (Database 2) — scans hashing packages (hashes + salts).
-│   ├── ParentDbConfig.java    # Datasource (Database 3) — scans parent packages.
-│   └── MinioConfig.java       # Builds the MinioClient bean from application.properties.
-│
-├── controller/
-│   ├── RegistrationController.java    # Web views & forms (/, /register, /delete). Uploads photo,
-│   │                                  #   computes salt-modulo hashes, routes parent data via the API.
-│   └── api/
-│       └── RegistrationApiController.java  # Single/bulk registration & deletion REST APIs.
-│                                           #   Sole owner of the parent-details DB write.
-│
-├── dto/
-│   └── UserRegistrationDto.java   # Registration form payload (incl. fatherName, motherName, profileImage).
-│
-├── entity/
-│   ├── basic/
-│   │   └── UserBasicDetails.java   # Table 'user_basic_details' in Database 1.
-│   ├── hashing/
-│   │   ├── UserUinHash.java        # Table 'user_uin_hash' (individual_id_hash, uin_salted_hash) in DB 2.
-│   │   └── UinHashSalt.java        # Table 'uin_hash_salt' (salt buckets) in Database 2.
-│   └── parent/
-│       └── UserParentDetails.java  # Table 'user_parent_details' in Database 3.
-│
-├── repository/
-│   ├── basic/
-│   │   └── UserBasicDetailsRepository.java  # JPA repository for Database 1.
-│   ├── hashing/
-│   │   ├── UserUinHashRepository.java       # JPA repository for the hash table.
-│   │   └── UinHashSaltRepository.java       # JPA repository for the salt table.
-│   └── parent/
-│       └── UserParentDetailsRepository.java # JPA repository for Database 3.
-│
-└── service/
-    ├── SaltModuloHashService.java  # Seeds 1000 salt buckets; computes SHA-256(id + salt[id mod N]).
-    └── MinioStorageService.java    # Auto-creates the bucket; uploads photos; builds presigned URLs.
+### 1. Deletion databases + MinIO
+```powershell
+cd docker
+docker compose up -d          # wait until all 8 containers are healthy
+cd ..
 ```
 
----
-
-## 🚀 Running the Application
-
-### Prerequisites
-- **JDK 17 or newer** (built and verified with Temurin/Oracle JDK 20). Set `JAVA_HOME` to point at it.
-- **MinIO** running locally with a bucket named `userprofilepic`. The S3 API must be reachable on `http://127.0.0.1:9000` (the `:9001` port is only the web console). The app auto-creates the bucket on startup if it does not exist.
-- Network access to the three Aiven-hosted PostgreSQL databases.
-
-### Configuration (`src/main/resources/application.properties`)
-The three datasources, the MinIO connection, and the salt modulo are configured here:
-
-```properties
-# MinIO / S3-compatible object storage (use the API port 9000, not the console 9001)
-minio.endpoint=http://127.0.0.1:9000
-minio.access-key=minioadmin
-minio.secret-key=minioadmin
-minio.bucket=userprofilepic
-minio.url-expiry-seconds=604800
-
-# MOSIP-style salt-modulo hashing — number of salt buckets
-mosip.ida.salt.modulo=1000
+### 2. Seed identities with known UINs
+```powershell
+cd seed
+pip install -r requirements.txt
+python seed.py                # 50 identities -> manifest.json
+cd ..
 ```
 
-> `application.properties` is git-ignored because it holds DB credentials and MinIO keys.
-
-### Start the Server
-Run from the project root:
-
-```bash
-# Point at a JDK 17+ install (example: Windows Git Bash)
-export JAVA_HOME="/c/Program Files/Java/jdk-20"
-
-# Compile and start Tomcat
-./mvnw spring-boot:run
+### 3. eSignet stack + register the RP client + load residents
+```powershell
+docker compose -f esignet\docker-compose\docker-compose.yml up -d
+# wait for the esignet container to be healthy, then:
+Get-Content charts\local-dev\register-client.sql | docker compose -f esignet\docker-compose\docker-compose.yml exec -T database psql -U postgres -d mosip_esignet
+python seed\load_mock_identities.py     # loads the 50 seeded UINs into mock eSignet
 ```
 
-Or on PowerShell:
+### 4. The two backends
+```powershell
+cd deletion-service; .\run.ps1     # :8096, JWT-secured   (leave running)
+cd ..\auth-gateway;  .\run.ps1     # :8095, eSignet RP    (leave running)
+```
+
+### 5. The pages (optional, for the browser flow)
+```powershell
+cd charts\local-dev
+python render.py                   # substitutes values-local.json into the pages
+.\serve.ps1                        # serves landing :5500 and delete-uin :5501
+```
+
+Open **http://localhost:5501/**, click **Delete my UIN**, log in with a seeded
+UIN (e.g. `6743558386`) and OTP **111111**, approve consent, and the page shows
+the module-wise deletion status.
+
+## Testing without a browser
+
+The eSignet OTP step needs a browser, but the secured deletion path can be
+driven directly. Mint a gateway-signed JWT and call the deletion service:
 
 ```powershell
-$env:JAVA_HOME = "C:\Program Files\Java\jdk-20"
-.\mvnw spring-boot:run
+# deletion-service must be running on :8096
+$jwt = "<RS256 JWT signed with auth-gateway/.../gateway-signing-private.pem,
+         claims: iss=mosip-collab-auth-gateway, aud=identity-data-deletion-service,
+         uin=<seeded uin>, exp=now+300>"
+curl.exe -s -X POST http://127.0.0.1:8096/api/deletion/execute `
+  -H "Authorization: Bearer $jwt"
 ```
 
-Once started, the application will be available at:
-* **Web UI Portal**: [http://localhost:8080](http://localhost:8080)
-* **REST APIs**: `http://localhost:8080/api/...`
-* **MinIO Console**: [http://127.0.0.1:9001](http://127.0.0.1:9001)
+Or use the interactive CLI (no JWT, local only): `cd deletion-service; .\run-cli.ps1`.
 
----
+## Admin browser
 
-## 📡 REST API Documentation
+```powershell
+cd admin; pip install -r requirements.txt; python server.py   # http://127.0.0.1:8090
+```
+Search a seeded UIN's RID or `synthetic-seed` to see an identity's footprint
+across every database and bucket. See [admin/README.md](admin/README.md).
 
-### 1. Register User (Single)
-* **Endpoint**: `POST /api/register`
-* **Content-Type**: `application/json`
-* **Request Body**:
-  ```json
-  {
-    "name": "Aritraditya Roy",
-    "phone": "+919999988888",
-    "email": "aritr@example.com",
-    "dob": "2000-01-01",
-    "nationality": "Indian",
-    "consent": true,
-    "uin": "1234567890",
-    "fatherName": "Richard Roy",
-    "motherName": "Jane Roy"
-  }
-  ```
-* **Response**:
-  ```json
-  {
-    "userId": "USR-AC0A0B7C",
-    "name": "Aritraditya Roy",
-    "phone": "+919999988888",
-    "email": "aritr@example.com",
-    "dob": "2000-01-01",
-    "nationality": "Indian",
-    "consent": true,
-    "fatherName": "Richard Roy",
-    "motherName": "Jane Roy",
-    "uin": "1234567890",
-    "individualIdHash": "3fc2b206f34316af1d5d2dab8ab44efc4b5acd3fa9b724f2f8ab2dc0830938d0",
-    "uinSaltedHash": "cf1ea746536e570ba0b3c1fda2568c599aa5fb5e0469a7af9c6a98ca33d5846a",
-    "status": "SUCCESS"
-  }
-  ```
-  > `name` and `phone` are required. If `uin` is omitted, a random 10-digit UIN is generated. The raw UIN is returned once but only its salted hash is persisted.
+## Resetting test data
 
-### 2. Register Users (Bulk)
-* **Endpoint**: `POST /api/register/bulk`
-* **Content-Type**: `application/json`
-* **Request Body**: A JSON array of single registration payloads.
+Deleting a UIN removes its rows/objects and writes a permanent audit record (so
+it then reports "already deleted"). To start clean:
 
-### 3. Delete User Data (Unified Purge)
-* **Endpoint**: `DELETE /api/user/{userId}`
-* **Description**: Purges demographic details from Database 1 and the UIN hash key from Database 2.
-* **Response (Success)**:
-  ```json
-  {
-    "message": "User details and UIN hash successfully deleted from all databases.",
-    "userId": "USR-AC0A0B7C",
-    "status": "DELETED"
-  }
-  ```
-* **Response (Not Found)**: Returns `404 Not Found` if the User ID does not exist in any database.
+```powershell
+cd seed
+python teardown.py                          # remove remaining synthetic rows/objects
+# clear the audit (psql on :5447):  TRUNCATE deletion.uin_deletion_audit;
+python seed.py                              # re-create 50 identities
+python load_mock_identities.py             # re-register them in mock eSignet
+```
 
----
+## Security notes
 
-## 🗑️ Voluntary Data Deletion UI
-Residents can click on **"Delete my data"** located in the page footer (at any view).
-1. The link navigates to `/delete`.
-2. The resident inputs their unique **User ID** (`USR-XXXXXXXX`).
-3. Upon confirming consent and submitting the form, the controller runs a unified delete, removing files/records from both cloud databases simultaneously and displaying a success notification.
-
----
-
-## 🖼️ Profile Image Storage (MinIO)
-During registration the uploaded profile photo is streamed to the MinIO `userprofilepic` bucket:
-1. On startup `MinioStorageService` verifies the bucket exists and creates it if missing.
-2. Each photo is stored under the key `profiles/<userId>-<uuid>.<ext>`.
-3. The success page displays the image via a temporary **presigned URL** (validity set by `minio.url-expiry-seconds`), so the bucket does not need to be made public.
+- The deletion service accepts **only** requests bearing a valid, unexpired
+  gateway JWT (RS256, 5-minute life, checked issuer/audience). No token, no
+  deletion. Consent is proven upstream at eSignet.
+- The plaintext UIN never reaches the browser; the page sees only a masked UIN.
+- The keys under `*/src/main/resources/*.pem` and `charts/local-dev/` are
+  **local-development keys**. Generate fresh keys for any real deployment.

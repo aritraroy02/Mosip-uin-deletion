@@ -1,0 +1,168 @@
+# MOSIP Collab data-deletion analysis environment.
+#
+# One PostgreSQL container per MOSIP database (as chosen), plus MinIO for the
+# object-store buckets. Host ports are shifted into the 544x range because
+# 5432 is already taken by a local PostgreSQL install; the MinIO console is on
+# 9011 because 9001 is also in use.
+#
+# The dump directory is bind-mounted read-only at /dumps in every PG container
+# so restores run with the container's own psql -- no host psql required.
+
+name: mosip-collab
+
+x-pg-env: &pg-env
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  PGDATA: /var/lib/postgresql/data/pgdata
+
+x-pg-base: &pg-base
+  image: postgres:15
+  restart: unless-stopped
+  shm_size: 256mb
+  volumes:
+    - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U postgres"]
+    interval: 10s
+    timeout: 5s
+    retries: 30
+
+# Bulk-load tuning. synchronous_commit=off and a large max_wal_size cut restore
+# time substantially; this is a disposable analysis copy that can be rebuilt
+# from the dumps, so the reduced crash-durability is an acceptable trade.
+x-pg-tuning: &pg-tuning >
+  postgres
+  -c shared_buffers=128MB
+  -c maintenance_work_mem=256MB
+  -c work_mem=32MB
+  -c max_wal_size=4GB
+  -c checkpoint_timeout=30min
+  -c synchronous_commit=off
+
+services:
+  pg-idmap:
+    <<: *pg-base
+    container_name: mosip-pg-idmap
+    command: *pg-tuning
+    environment:
+      <<: *pg-env
+      POSTGRES_DB: mosip_idmap
+    ports: ["5442:5432"]
+    volumes:
+      - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+      - pg-idmap-data:/var/lib/postgresql/data
+
+  pg-regprc:
+    <<: *pg-base
+    container_name: mosip-pg-regprc
+    command: *pg-tuning
+    environment:
+      <<: *pg-env
+      POSTGRES_DB: mosip_regprc
+    ports: ["5443:5432"]
+    volumes:
+      - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+      - pg-regprc-data:/var/lib/postgresql/data
+
+  pg-resident:
+    <<: *pg-base
+    container_name: mosip-pg-resident
+    command: *pg-tuning
+    environment:
+      <<: *pg-env
+      POSTGRES_DB: mosip_resident
+    ports: ["5444:5432"]
+    volumes:
+      - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+      - pg-resident-data:/var/lib/postgresql/data
+
+  pg-credential:
+    <<: *pg-base
+    container_name: mosip-pg-credential
+    command: *pg-tuning
+    environment:
+      <<: *pg-env
+      POSTGRES_DB: mosip_credential
+    ports: ["5445:5432"]
+    volumes:
+      - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+      - pg-credential-data:/var/lib/postgresql/data
+
+  # IDA is the 36.8 GB dump -- more shared_buffers and a much larger
+  # maintenance_work_mem so the post-load index builds do not spill to disk.
+  pg-ida:
+    <<: *pg-base
+    container_name: mosip-pg-ida
+    command: >
+      postgres
+      -c shared_buffers=512MB
+      -c maintenance_work_mem=1GB
+      -c work_mem=64MB
+      -c max_wal_size=8GB
+      -c checkpoint_timeout=30min
+      -c synchronous_commit=off
+    environment:
+      <<: *pg-env
+      POSTGRES_DB: mosip_ida
+    ports: ["5446:5432"]
+    volumes:
+      - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+      - pg-ida-data:/var/lib/postgresql/data
+
+  # ID Repository -- the entry point for the whole deletion flow: idrepo.uin
+  # carries both uin_hash and reg_id, which is the only UIN -> RID link in the
+  # estate (design sections 8.1 and 9).
+  pg-idrepo:
+    <<: *pg-base
+    container_name: mosip-pg-idrepo
+    command: *pg-tuning
+    environment:
+      <<: *pg-env
+      POSTGRES_DB: mosip_idrepo
+    ports: ["5448:5432"]
+    volumes:
+      - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+      - pg-idrepo-data:/var/lib/postgresql/data
+
+  # Audit store for the deletion service itself (design doc section 13).
+  # Created empty -- no dump exists for it.
+  pg-audit:
+    <<: *pg-base
+    container_name: mosip-pg-audit
+    command: *pg-tuning
+    environment:
+      <<: *pg-env
+      POSTGRES_DB: mosip_deletion_audit
+    ports: ["5447:5432"]
+    volumes:
+      - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+      - pg-audit-data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:latest
+    container_name: mosip-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9011"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9011:9011"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  pg-idmap-data:
+  pg-regprc-data:
+  pg-resident-data:
+  pg-credential-data:
+  pg-ida-data:
+  pg-idrepo-data:
+  pg-audit-data:
+  minio-data:

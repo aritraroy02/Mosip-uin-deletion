@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MOSIP Collab — Data Admin</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark"></span>
+    <div>
+      <h1>MOSIP Collab Data Admin</h1>
+      <p class="brand-sub">Read-only browser for the restored deletion-environment databases</p>
+    </div>
+  </div>
+  <form class="global-search" id="global-search-form" autocomplete="off">
+    <input type="search" id="global-search" placeholder="Search every table in every database…"
+           aria-label="Global search">
+    <select id="mode" aria-label="Search mode" title="Exact matches a whole column value and uses indexes (fast). Contains finds a substring anywhere and must read every row (slow).">
+      <option value="auto" selected>Auto</option>
+      <option value="exact">Exact</option>
+      <option value="contains">Contains</option>
+    </select>
+    <label class="deep" title="Contains mode only: also scan unbounded text columns such as JWS signatures. Thorough, but several times slower.">
+      <input type="checkbox" id="deep"> deep
+    </label>
+    <button type="submit">Search all</button>
+  </form>
+  <button class="ghost" id="refresh" title="Re-read database list">Refresh</button>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <input type="search" id="table-filter" placeholder="Filter tables…" aria-label="Filter tables">
+    </div>
+    <nav id="db-list" class="db-list"><p class="muted pad">Loading…</p></nav>
+  </aside>
+
+  <main class="main" id="main">
+    <section id="welcome" class="placeholder">
+      <h2>Pick a table to browse</h2>
+      <p>Every column of every table is shown — no SQL required. Large binary
+         columns are summarised as a size plus a hex preview; click any
+         truncated cell to see its full value.</p>
+      <p class="muted">Restores still in progress will show as offline or
+         partially populated until they finish.</p>
+    </section>
+
+    <section id="table-view" hidden>
+      <div class="view-head">
+        <div>
+          <h2 id="table-title"></h2>
+          <p class="muted" id="table-meta"></p>
+        </div>
+        <div class="view-tools">
+          <input type="search" id="row-search" placeholder="Search in this table…"
+                 aria-label="Search in this table">
+          <select id="page-size" aria-label="Rows per page">
+            <option>25</option><option selected>50</option>
+            <option>100</option><option>200</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-wrap"><table class="grid" id="grid"></table></div>
+      <div class="pager">
+        <button id="prev" class="ghost">Previous</button>
+        <span id="page-info" class="muted"></span>
+        <button id="next" class="ghost">Next</button>
+      </div>
+    </section>
+
+    <section id="search-view" hidden>
+      <div class="view-head">
+        <div>
+          <h2 id="search-title"></h2>
+          <p class="muted" id="search-meta"></p>
+        </div>
+      </div>
+      <div id="search-results" class="results"></div>
+    </section>
+
+    <section id="bucket-view" hidden>
+      <div class="view-head">
+        <div>
+          <h2 id="bucket-title"></h2>
+          <p class="muted" id="bucket-meta"></p>
+        </div>
+        <div class="view-tools">
+          <input type="search" id="object-search" placeholder="Filter object keys…"
+                 aria-label="Filter object keys">
+          <select id="object-page-size" aria-label="Objects per page">
+            <option>25</option><option selected>50</option>
+            <option>100</option><option>200</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-wrap"><table class="grid" id="object-grid"></table></div>
+      <div class="pager">
+        <button id="obj-prev" class="ghost">Previous</button>
+        <span id="obj-page-info" class="muted"></span>
+        <button id="obj-next" class="ghost">Next</button>
+      </div>
+    </section>
+
+    <section id="error-view" hidden class="placeholder error">
+      <h2>Could not load</h2>
+      <p id="error-text"></p>
+    </section>
+  </main>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3 id="modal-title"></h3>
+      <button class="ghost" id="modal-close">Close</button>
+    </div>
+    <pre id="modal-body"></pre>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

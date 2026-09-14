@@ -1,0 +1,90 @@
+{
+  "info": {
+    "name": "MOSIP Deletion Service + Gateway",
+    "description": "The JWT-secured deletion service (8096) and the auth-gateway front door (8095). The deletion service takes the UIN from a signed JWT, not the body. Get a JWT with: python postman/mint_jwt.py <uin>  and paste it into the collection variable `jwt`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "gateway", "value": "http://localhost:8095" },
+    { "key": "deletion", "value": "http://localhost:8096" },
+    { "key": "jwt", "value": "PASTE_FROM_mint_jwt.py" },
+    { "key": "code", "value": "PASTE_ESIGNET_AUTH_CODE" },
+    { "key": "transactionId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Deletion service (8096) — JWT-secured",
+      "item": [
+        {
+          "name": "check  (availability for the JWT's UIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{deletion}}/api/deletion/check", "host": ["{{deletion}}"], "path": ["api","deletion","check"] },
+            "description": "Returns AVAILABLE / NO_DATA_AVAILABLE / ALREADY_DELETED for the UIN inside the JWT. No body — the UIN comes from the token."
+          }
+        },
+        {
+          "name": "execute  (delete the JWT's UIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{jwt}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": { "raw": "{{deletion}}/api/deletion/execute", "host": ["{{deletion}}"], "path": ["api","deletion","execute"] },
+            "description": "Deletes across all modules and returns the per-module status. No consent flag — a valid JWT IS the authorisation. Permanent."
+          }
+        },
+        {
+          "name": "execute WITHOUT token  (expect 401)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{deletion}}/api/deletion/execute", "host": ["{{deletion}}"], "path": ["api","deletion","execute"] },
+            "description": "Shows the service rejects any request without a valid gateway JWT."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth-gateway (8095) — front door",
+      "item": [
+        {
+          "name": "start  (hand eSignet code -> runs whole deletion)",
+          "event": [
+            { "listen": "test", "script": { "exec": [
+              "try { var j = pm.response.json(); if (j.transactionId) pm.collectionVariables.set('transactionId', j.transactionId); } catch(e){}"
+            ], "type": "text/javascript" } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{gateway}}/v1/delete-uin/start", "host": ["{{gateway}}"], "path": ["v1","delete-uin","start"] },
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"{{code}}\",\n  \"state\": \"x\",\n  \"redirectUri\": \"http://localhost:5501/\",\n  \"codeVerifier\": null\n}" },
+            "description": "The page's real call. Paste a fresh eSignet authorization code into `code`. The gateway does token-exchange + userinfo, resolves the UIN, mints the 5-min JWT, and calls the deletion service. Returns {transactionId, status, maskedUin, retryExpiresAt}. Codes are single-use."
+          }
+        },
+        {
+          "name": "status  (?transactionId=...)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{gateway}}/v1/delete-uin/status?transactionId={{transactionId}}", "host": ["{{gateway}}"], "path": ["v1","delete-uin","status"], "query": [ { "key": "transactionId", "value": "{{transactionId}}" } ] }
+          }
+        },
+        {
+          "name": "retry  (transactionId)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{gateway}}/v1/delete-uin/retry", "host": ["{{gateway}}"], "path": ["v1","delete-uin","retry"] },
+            "body": { "mode": "raw", "raw": "{ \"transactionId\": \"{{transactionId}}\" }" }
+          }
+        }
+      ]
+    }
+  ]
+}

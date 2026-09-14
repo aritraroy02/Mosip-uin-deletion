@@ -1,0 +1,70 @@
+server:
+  # 8095 is taken by the auth-gateway (the delete-uin page's front-facing API).
+  # The deletion service sits behind it, reachable only with a valid gateway JWT.
+  port: 8096
+
+spring:
+  application:
+    name: identity-data-deletion-service
+
+# All environment-specific values are configurable (design doc section 16).
+# Ports 5442-5448 are the per-database containers from ../docker/docker-compose.yml.
+app:
+  datasources:
+    idmap:      { url: "jdbc:postgresql://127.0.0.1:5442/mosip_idmap",           username: postgres, password: postgres }
+    idrepo:     { url: "jdbc:postgresql://127.0.0.1:5448/mosip_idrepo",          username: postgres, password: postgres }
+    regprc:     { url: "jdbc:postgresql://127.0.0.1:5443/mosip_regprc",          username: postgres, password: postgres }
+    credential: { url: "jdbc:postgresql://127.0.0.1:5445/mosip_credential",      username: postgres, password: postgres }
+    ida:        { url: "jdbc:postgresql://127.0.0.1:5446/mosip_ida",             username: postgres, password: postgres }
+    resident:   { url: "jdbc:postgresql://127.0.0.1:5444/mosip_resident",        username: postgres, password: postgres }
+    audit:      { url: "jdbc:postgresql://127.0.0.1:5447/mosip_deletion_audit",  username: postgres, password: postgres }
+    # The eSignet stack's Postgres (esignet/docker-compose), both databases on
+    # host port 5455. Used by the eSignet identity-erasure step so a deleted UIN
+    # can no longer authenticate. mockidentity keys on the plaintext UIN;
+    # esignet keys on the partner_specific_user_token resolved from kyc_auth.
+    mockidentity: { url: "jdbc:postgresql://127.0.0.1:5455/mosip_mockidentitysystem", username: postgres, password: postgres }
+    esignet:      { url: "jdbc:postgresql://127.0.0.1:5455/mosip_esignet",            username: postgres, password: postgres }
+
+  minio:
+    endpoint: "http://127.0.0.1:9000"
+    access-key: minioadmin
+    secret-key: minioadmin
+
+  # The service only accepts requests bearing a JWT signed by the auth-gateway
+  # (RS256). Consent is proven upstream at eSignet, so no consent flag is needed
+  # here -- a valid, unexpired token IS the authorisation to delete.
+  security:
+    jwt:
+      public-key: "classpath:gateway-signing-public.pem"
+      issuer: "mosip-collab-auth-gateway"
+      audience: "identity-data-deletion-service"
+
+  deletion:
+    # MOSIP salt-modulo: salt bucket for an identifier is int(id) % salt-modulo.
+    salt-modulo: 1000
+    # Partner used to resolve auth token / datashare (design sections 9, 11).
+    auth-partner-id: mpartner-default-auth
+    # Object-store bucket names for RID-keyed artifacts (design sections 8.3, 8.4).
+    packet-manager-bucket: packet-manager
+    landing-zone-bucket: landing-zone
+    # Modules absent from this Collab environment -> reported SKIPPED.
+    digital-card-enabled: false
+    self-registration-enabled: false
+
+    # After removing a UIN from the 7 deletion databases, also erase the identity
+    # from the eSignet stack (mock-identity + eSignet consent/wallet-binding) so
+    # the resident can no longer authenticate. Set false to leave eSignet
+    # untouched, in which case the module reports SKIPPED.
+    esignet-cleanup-enabled: true
+
+    # Terminal audit trail printed by the running service: the UIN asked for,
+    # every table and bucket the request plans to touch, and whether each one
+    # actually gave up any data.
+    #
+    # show-plain-uin prints the submitted UIN verbatim. This environment runs on
+    # synthetic seed data with known UINs, so that is deliberate and useful. It
+    # is the only place the system writes a plaintext UIN outside memory -- set
+    # it to false anywhere real identities are held.
+    console-audit:
+      enabled: true
+      show-plain-uin: true

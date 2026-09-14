@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>MOSIP Collab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" type="image/x-icon"
+    href="https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/mosip-favicon.png">
+  <link rel="stylesheet" href="https://fonts.google.com/specimen/Montserrat">
+</head>
+<style>
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Montserrat', 'Inter', sans-serif;
+  }
+
+  .border-bottom-center {
+    position: relative;
+    display: inline-block;
+  }
+
+  .border-bottom-center::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 100%;
+    height: 1px;
+    background-color: #F4F8FA;
+    transform: translateX(-50%) scaleX(0);
+    transition: transform 0.3s ease;
+  }
+
+  .border-bottom-center:hover::after {
+    transform: translateX(-50%) scaleX(1);
+  }
+
+  .active-btn {
+    background-color: #ffffff;
+    color: #01315F;
+    border: 1px solid #ffffff;
+  }
+
+  .inactive-btn {
+    background-color: #013464;
+    color: #ffffff;
+    border: 1px solid #ffffff;
+  }
+
+  .active-dropdown-btn {
+    rotate: 180deg;
+  }
+
+  .inactive-dropdown-btn {
+    rotate: 0deg;
+  }
+</style>
+
+<body>
+  <!-- Header -->
+  <header id="header"
+    class="bg-[url('https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/header_background.png')] px-[80px] pt-[38px] max-[730px]:pt-[20px] bg-cover max-[870px]:px-[20px]">
+    <!-- Nav -->
+    <nav class="flex justify-between items-center">
+      <div class="flex items-center max-[740px]:space-x-5">
+        <span id="hamburgerIcon" class="hidden max-[740px]:block cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+            <rect y="4" width="24" height="2" fill="white" />
+            <rect y="11" width="24" height="2" fill="white" />
+            <rect y="18" width="24" height="2" fill="white" />
+          </svg>
+        </span>
+        <img id="mosipLogo" alt="mosip logo"
+          class="h-[68px] w-[169px] cursor-pointer max-[460px]:h-[48px] max-[460px]:w-[109px]"
+          src="https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/new_Mosip_logo.png" />
+      </div>
+      <div class="flex space-x-6 items-center max-[870px]:space-x-3">
+        <div class="flex items-center space-x-6 max-[740px]:hidden">
+          <div class="group text-[#ffffff] text-[16px] flex items-center cursor-pointer">
+            <span class="group-hover:border-b mr-2">About MOSIP</span>
+            <span
+              class="w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-white -rotate-180 group-hover:rotate-0 duration-300"></span>
+            <div id="dropdownCard"
+              class="absolute top-20 mt-[6px] w-[174px] -ml-14 bg-white rounded-md shadow-lg hidden  z-50 group-hover:block">
+              <div class="p-2">
+                <a href="https://mosip.io/" target="_blank"
+                  class="block hover:bg-gray-200 px-2 py-2 text-[#3E3E3E] border-b border-[#C4D6E6] text-[14px] flex items-center space-x-1">
+                  <span>MOSIP Website</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14.529" height="13.827" viewBox="0 0 14.529 13.827">
+                    <g id="Group_58201" data-name="Group 58201" transform="translate(-1106.75 -63.402)">
+                      <path id="north_east_FILL0_wght400_GRAD0_opsz48"
+                        d="M160.606-751.343l-.606-.606,7.185-7.185h-4.242V-760h5.713v5.713h-.866v-4.242Z"
+                        transform="translate(952.372 823.652)" fill="#3e3e3e" stroke="#3e3e3e" stroke-linecap="round"
+                        stroke-linejoin="round" stroke-width="0.5" />
+                      <line id="Line_3" data-name="Line 3" y2="10.827" transform="translate(1107.5 65.653)" fill="none"
+                        stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                      <line id="Line_4" data-name="Line 4" x1="10.827" transform="translate(1107.5 76.48)" fill="none"
+                        stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                      <line id="Line_5" data-name="Line 5" x2="5.414" transform="translate(1107.5 65.653)" fill="none"
+                        stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                      <line id="Line_6" data-name="Line 6" y1="5.414" transform="translate(1118.327 71.066)" fill="none"
+                        stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                    </g>
+                  </svg>
+                </a>
+                <div id="docLinkCard"
+                  class="px-2 py-2 text-[#3E3E3E] border-b border-[#C4D6E6] text-[14px] flex items-center hover:bg-gray-200">
+                  <span>Documentation</span>
+
+                  <!-- Docs version card -->
+                  <div id="docVersiondropDown"
+                    class="absolute mt-32 w-[174px] ml-36 bg-white rounded-md shadow-lg hidden z-50">
+                    <div class="p-2">
+                      <a href="https://docs.mosip.io/1.1.5" target="_blank"
+                        class="block px-2 py-2 text-[#3E3E3E] hover:bg-gray-200 border-b border-[#C4D6E6] text-[14px] flex items-center space-x-1">
+                        <span>Docs 1.1.5</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14.529" height="13.827"
+                          viewBox="0 0 14.529 13.827">
+                          <g id="Group_58201" data-name="Group 58201" transform="translate(-1106.75 -63.402)">
+                            <path id="north_east_FILL0_wght400_GRAD0_opsz48"
+                              d="M160.606-751.343l-.606-.606,7.185-7.185h-4.242V-760h5.713v5.713h-.866v-4.242Z"
+                              transform="translate(952.372 823.652)" fill="#3e3e3e" stroke="#3e3e3e"
+                              stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" />
+                            <line id="Line_3" data-name="Line 3" y2="10.827" transform="translate(1107.5 65.653)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                            <line id="Line_4" data-name="Line 4" x1="10.827" transform="translate(1107.5 76.48)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                            <line id="Line_5" data-name="Line 5" x2="5.414" transform="translate(1107.5 65.653)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                            <line id="Line_6" data-name="Line 6" y1="5.414" transform="translate(1118.327 71.066)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                          </g>
+                        </svg>
+                      </a>
+                      <a href="https://docs.mosip.io/1.2.0" target="_blank"
+                        class="block px-2 py-2 text-[#3E3E3E] hover:bg-gray-200 border-b border-[#C4D6E6] text-[14px] flex items-center space-x-1">
+                        <span>Docs 1.2.0</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14.529" height="13.827"
+                          viewBox="0 0 14.529 13.827">
+                          <g id="Group_58201" data-name="Group 58201" transform="translate(-1106.75 -63.402)">
+                            <path id="north_east_FILL0_wght400_GRAD0_opsz48"
+                              d="M160.606-751.343l-.606-.606,7.185-7.185h-4.242V-760h5.713v5.713h-.866v-4.242Z"
+                              transform="translate(952.372 823.652)" fill="#3e3e3e" stroke="#3e3e3e"
+                              stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" />
+                            <line id="Line_3" data-name="Line 3" y2="10.827" transform="translate(1107.5 65.653)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                            <line id="Line_4" data-name="Line 4" x1="10.827" transform="translate(1107.5 76.48)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                            <line id="Line_5" data-name="Line 5" x2="5.414" transform="translate(1107.5 65.653)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                            <line id="Line_6" data-name="Line 6" y1="5.414" transform="translate(1118.327 71.066)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                          </g>
+                        </svg>
+                      </a>
+                      <a href="https://docs.inji.io/" target="_blank"
+                        class="block px-2 py-2 text-[#3E3E3E] hover:bg-gray-200 border-b border-[#C4D6E6] text-[14px] flex items-center space-x-1">
+                        <span>Inji</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14.529" height="13.827"
+                          viewBox="0 0 14.529 13.827">
+                          <g id="Group_58201" data-name="Group 58201" transform="translate(-1106.75 -63.402)">
+                            <path id="north_east_FILL0_wght400_GRAD0_opsz48"
+                              d="M160.606-751.343l-.606-.606,7.185-7.185h-4.242V-760h5.713v5.713h-.866v-4.242Z"
+                              transform="translate(952.372 823.652)" fill="#3e3e3e" stroke="#3e3e3e"
+                              stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" />
+                            <line id="Line_3" data-name="Line 3" y2="10.827" transform="translate(1107.5 65.653)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                            <line id="Line_4" data-name="Line 4" x1="10.827" transform="translate(1107.5 76.48)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                            <line id="Line_5" data-name="Line 5" x2="5.414" transform="translate(1107.5 65.653)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                            <line id="Line_6" data-name="Line 6" y1="5.414" transform="translate(1118.327 71.066)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                          </g>
+                        </svg>
+                      </a>
+                      <a href="https://docs.esignet.io/" target="_blank"
+                        class="block px-2 py-2 text-[#3E3E3E] hover:bg-gray-200 text-[14px] flex items-center space-x-1">
+                        <span>eSignet</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14.529" height="13.827"
+                          viewBox="0 0 14.529 13.827">
+                          <g id="Group_58201" data-name="Group 58201" transform="translate(-1106.75 -63.402)">
+                            <path id="north_east_FILL0_wght400_GRAD0_opsz48"
+                              d="M160.606-751.343l-.606-.606,7.185-7.185h-4.242V-760h5.713v5.713h-.866v-4.242Z"
+                              transform="translate(952.372 823.652)" fill="#3e3e3e" stroke="#3e3e3e"
+                              stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" />
+                            <line id="Line_3" data-name="Line 3" y2="10.827" transform="translate(1107.5 65.653)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                            <line id="Line_4" data-name="Line 4" x1="10.827" transform="translate(1107.5 76.48)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                            <line id="Line_5" data-name="Line 5" x2="5.414" transform="translate(1107.5 65.653)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                            <line id="Line_6" data-name="Line 6" y1="5.414" transform="translate(1118.327 71.066)"
+                              fill="none" stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                          </g>
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
+
+                </div>
+                <a href="https://www.youtube.com/@mosip16" target="_blank"
+                  class="block px-2 py-2 hover:bg-gray-200 text-[#3E3E3E] text-[14px] flex items-center space-x-1">
+                  <span>YouTube Videos</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14.529" height="13.827" viewBox="0 0 14.529 13.827">
+                    <g id="Group_58201" data-name="Group 58201" transform="translate(-1106.75 -63.402)">
+                      <path id="north_east_FILL0_wght400_GRAD0_opsz48"
+                        d="M160.606-751.343l-.606-.606,7.185-7.185h-4.242V-760h5.713v5.713h-.866v-4.242Z"
+                        transform="translate(952.372 823.652)" fill="#3e3e3e" stroke="#3e3e3e" stroke-linecap="round"
+                        stroke-linejoin="round" stroke-width="0.5" />
+                      <line id="Line_3" data-name="Line 3" y2="10.827" transform="translate(1107.5 65.653)" fill="none"
+                        stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                      <line id="Line_4" data-name="Line 4" x1="10.827" transform="translate(1107.5 76.48)" fill="none"
+                        stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                      <line id="Line_5" data-name="Line 5" x2="5.414" transform="translate(1107.5 65.653)" fill="none"
+                        stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                      <line id="Line_6" data-name="Line 6" y1="5.414" transform="translate(1118.327 71.066)" fill="none"
+                        stroke="#3e3e3e" stroke-linecap="round" stroke-width="1.5" />
+                    </g>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+          <a href="https://community.mosip.io/" target="_blank"
+            class="group text-[#ffffff] text-[16px] flex items-center space-x-1 border-bottom-center cursor-pointer pb-1 border-bottom-center">
+            <span>Contact Us</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12.529" height="11.827" viewBox="0 0 14.529 13.827">
+              <g id="Group_57562" data-name="Group 57562" transform="translate(-1106.75 -63.402)">
+                <path id="north_east_FILL0_wght400_GRAD0_opsz48"
+                  d="M160.606-751.343l-.606-.606,7.185-7.185h-4.242V-760h5.713v5.713h-.866v-4.242Z"
+                  transform="translate(952.372 823.652)" fill="#fff" stroke="#fff" stroke-linecap="round"
+                  stroke-linejoin="round" stroke-width="0.5" />
+                <line id="Line_3" data-name="Line 3" y2="10.827" transform="translate(1107.5 65.653)" fill="none"
+                  stroke="#fff" stroke-linecap="round" stroke-width="1.5" />
+                <line id="Line_4" data-name="Line 4" x1="10.827" transform="translate(1107.5 76.48)" fill="none"
+                  stroke="#fff" stroke-linecap="round" stroke-width="1.5" />
+                <line id="Line_5" data-name="Line 5" x2="5.414" transform="translate(1107.5 65.653)" fill="none"
+                  stroke="#fff" stroke-linecap="round" stroke-width="1.5" />
+                <line id="Line_6" data-name="Line 6" y1="5.414" transform="translate(1118.327 71.066)" fill="none"
+                  stroke="#fff" stroke-linecap="round" stroke-width="1.5" />
+              </g>
+            </svg>
+          </a>
+          <span class="text-[#ffffff] text-[16px] cursor-pointer border-bottom-center"><a target="_blank"
+              href="https://mosip.stoplight.io/">APIs</a></span>
+        </div>
+        <a class="flex align-center justify-center items-center text-[#ffffff] text-[16px] border-solid border-[1px] h-[43px] w-[86px] rounded-[10px] hover:bg-[#ffffff] hover:text-[#1763AC]"
+          href="https://self-register.collab.mosip.net/" target="_blank">Get UIN</a>
+        <div class="relative group max-[740px]:hidden">
+          <a id="deleteUinBtn"
+            class="flex items-center space-x-[7px] text-[#ffffff] text-[16px] border-solid border-[1px] border-[#ffffff66] h-[43px] pl-[19px] pr-[15px] rounded-[10px] hover:bg-[#ffffff1a] hover:border-[#ffffff] duration-200"
+            href="{{ .Values.collab.deleteUinUrl }}" aria-describedby="deleteUinTip">
+            <span>Delete my UIN</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
+            </svg>
+          </a>
+          <div id="deleteUinTip" role="tooltip"
+            class="pointer-events-none invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100 duration-200 absolute right-0 top-[52px] z-50 w-[332px] rounded-[12px] border border-[#D8E2EE] bg-[#ffffff] px-[16px] py-[14px] text-left shadow-[0_12px_16px_rgba(2,29,54,0.22)]">
+            <span
+              class="absolute -top-[6px] right-[24px] h-[10px] w-[10px] rotate-45 border-l border-t border-[#D8E2EE] bg-[#ffffff]"></span>
+            <p class="text-[12px] font-bold leading-[18px] text-[#01315F]">Delete your test identity data</p>
+            <p class="mt-[5px] text-[12px] leading-[18px] text-[#5B6776]">Permanently delete your UIN and all
+              associated data from the MOSIP Collab environment. You'll first verify your identity using an OTP
+              through eSignet. Your data will only be deleted after successful authentication.</p>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hamburger for Mobile view -->
+
+    <div id="hamburgerDetails" class="hidden bg-[#012F5A] -mx-5 p-5 absolute w-full text-[#ffffff] mt-3 z-50">
+      <div class="mb-2">
+        <span class="flex items-center space-x-1 pb-2">
+          <span class="font-bold text-1 border-b border-[#ffffff] cursor-default">About MOSIP</span>
+          <svg id="aboutDropdownIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="cursor-pointer">
+            <path d="M8 10l4 4 4-4" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </span>
+        <div id="aboutDropdownOptions">
+          <a href="https://mosip.io/" target="_blank"
+            class="block pl-5 py-1 text-[#ffffff] text-[14px] flex items-center space-x-2">
+            <span class="border-b border-[#ffffff]">MOSIP Website</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14.529" height="13.827" viewBox="0 0 14.529 13.827">
+              <g id="Group_58201" data-name="Group 58201" transform="translate(-1106.75 -63.402)">
+                <path id="north_east_FILL0_wght400_GRAD0_opsz48"
+                  d="M160.606-751.343l-.606-.606,7.185-7.185h-4.242V-760h5.713v5.713h-.866v-4.242Z"
+                  transform="translate(952.372 823.652)" fill="#ffffff" stroke="#ffffff" stroke-linecap="round"
+                  stroke-linejoin="round" stroke-width="0.5" />
+                <line id="Line_3" data-name="Line 3" y2="10.827" transform="translate(1107.5 65.653)" fill="none"
+                  stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                <line id="Line_4" data-name="Line 4" x1="10.827" transform="translate(1107.5 76.48)" fill="none"
+                  stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                <line id="Line_5" data-name="Line 5" x2="5.414" transform="translate(1107.5 65.653)" fill="none"
+                  stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                <line id="Line_6" data-name="Line 6" y1="5.414" transform="translate(1118.327 71.066)" fill="none"
+                  stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+              </g>
+            </svg>
+          </a>
+
+          <div class="block pl-5 py-1 text-[#ffffff] text-[14px]">
+            <span class="flex items-center space-x-1 pb-2">
+              <span class="border-b border-[#ffffff] cursor-default">Documentation</span>
+              <svg id="documentationDropdownIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                viewBox="0 0 24 24" class="cursor-pointer">
+                <path d="M8 10l4 4 4-4" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+            </span>
+            <div id="documentationDropdownOptions">
+              <a href="https://docs.mosip.io/1.1.5" target="_blank"
+                class="block pl-5 py-1 text-[#ffffff] text-[14px] flex items-center space-x-2">
+                <span class="border-b border-[#ffffff]">Docs 1.1.5</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14.529" height="13.827" viewBox="0 0 14.529 13.827">
+                  <g id="Group_58201" data-name="Group 58201" transform="translate(-1106.75 -63.402)">
+                    <path id="north_east_FILL0_wght400_GRAD0_opsz48"
+                      d="M160.606-751.343l-.606-.606,7.185-7.185h-4.242V-760h5.713v5.713h-.866v-4.242Z"
+                      transform="translate(952.372 823.652)" fill="#ffffff" stroke="#ffffff" stroke-linecap="round"
+                      stroke-linejoin="round" stroke-width="0.5" />
+                    <line id="Line_3" data-name="Line 3" y2="10.827" transform="translate(1107.5 65.653)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                    <line id="Line_4" data-name="Line 4" x1="10.827" transform="translate(1107.5 76.48)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                    <line id="Line_5" data-name="Line 5" x2="5.414" transform="translate(1107.5 65.653)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                    <line id="Line_6" data-name="Line 6" y1="5.414" transform="translate(1118.327 71.066)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                  </g>
+                </svg>
+              </a>
+              <a href="https://docs.mosip.io/1.2.0" target="_blank"
+                class="block pl-5 py-1 text-[#ffffff] text-[14px] flex items-center space-x-2">
+                <span class="border-b border-[#ffffff]">Docs 1.2.0</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14.529" height="13.827" viewBox="0 0 14.529 13.827">
+                  <g id="Group_58201" data-name="Group 58201" transform="translate(-1106.75 -63.402)">
+                    <path id="north_east_FILL0_wght400_GRAD0_opsz48"
+                      d="M160.606-751.343l-.606-.606,7.185-7.185h-4.242V-760h5.713v5.713h-.866v-4.242Z"
+                      transform="translate(952.372 823.652)" fill="#ffffff" stroke="#ffffff" stroke-linecap="round"
+                      stroke-linejoin="round" stroke-width="0.5" />
+                    <line id="Line_3" data-name="Line 3" y2="10.827" transform="translate(1107.5 65.653)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                    <line id="Line_4" data-name="Line 4" x1="10.827" transform="translate(1107.5 76.48)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                    <line id="Line_5" data-name="Line 5" x2="5.414" transform="translate(1107.5 65.653)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                    <line id="Line_6" data-name="Line 6" y1="5.414" transform="translate(1118.327 71.066)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                  </g>
+                </svg>
+              </a>
+              <a href="https://docs.inji.io/" target="_blank"
+                class="block pl-5 py-1 text-[#ffffff] text-[14px] flex items-center space-x-2">
+                <span class="border-b border-[#ffffff]">Inji</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14.529" height="13.827" viewBox="0 0 14.529 13.827">
+                  <g id="Group_58201" data-name="Group 58201" transform="translate(-1106.75 -63.402)">
+                    <path id="north_east_FILL0_wght400_GRAD0_opsz48"
+                      d="M160.606-751.343l-.606-.606,7.185-7.185h-4.242V-760h5.713v5.713h-.866v-4.242Z"
+                      transform="translate(952.372 823.652)" fill="#ffffff" stroke="#ffffff" stroke-linecap="round"
+                      stroke-linejoin="round" stroke-width="0.5" />
+                    <line id="Line_3" data-name="Line 3" y2="10.827" transform="translate(1107.5 65.653)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                    <line id="Line_4" data-name="Line 4" x1="10.827" transform="translate(1107.5 76.48)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                    <line id="Line_5" data-name="Line 5" x2="5.414" transform="translate(1107.5 65.653)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                    <line id="Line_6" data-name="Line 6" y1="5.414" transform="translate(1118.327 71.066)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                  </g>
+                </svg>
+              </a>
+              <a href="https://docs.esignet.io/" target="_blank"
+                class="block pl-5 py-1 text-[#ffffff] text-[14px] flex items-center space-x-2">
+                <span class="border-b border-[#ffffff]">eSignet</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14.529" height="13.827" viewBox="0 0 14.529 13.827">
+                  <g id="Group_58201" data-name="Group 58201" transform="translate(-1106.75 -63.402)">
+                    <path id="north_east_FILL0_wght400_GRAD0_opsz48"
+                      d="M160.606-751.343l-.606-.606,7.185-7.185h-4.242V-760h5.713v5.713h-.866v-4.242Z"
+                      transform="translate(952.372 823.652)" fill="#ffffff" stroke="#ffffff" stroke-linecap="round"
+                      stroke-linejoin="round" stroke-width="0.5" />
+                    <line id="Line_3" data-name="Line 3" y2="10.827" transform="translate(1107.5 65.653)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                    <line id="Line_4" data-name="Line 4" x1="10.827" transform="translate(1107.5 76.48)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                    <line id="Line_5" data-name="Line 5" x2="5.414" transform="translate(1107.5 65.653)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                    <line id="Line_6" data-name="Line 6" y1="5.414" transform="translate(1118.327 71.066)" fill="none"
+                      stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                  </g>
+                </svg>
+              </a>
+            </div>
+          </div>
+          <a href="https://www.youtube.com/@mosip16" target="_blank"
+            class="block pl-5 py-1 text-[#ffffff] text-[14px] flex items-center space-x-2">
+            <span class="border-b border-[#ffffff]">YouTube Videos</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14.529" height="13.827" viewBox="0 0 14.529 13.827">
+              <g id="Group_58201" data-name="Group 58201" transform="translate(-1106.75 -63.402)">
+                <path id="north_east_FILL0_wght400_GRAD0_opsz48"
+                  d="M160.606-751.343l-.606-.606,7.185-7.185h-4.242V-760h5.713v5.713h-.866v-4.242Z"
+                  transform="translate(952.372 823.652)" fill="#ffffff" stroke="#ffffff" stroke-linecap="round"
+                  stroke-linejoin="round" stroke-width="0.5" />
+                <line id="Line_3" data-name="Line 3" y2="10.827" transform="translate(1107.5 65.653)" fill="none"
+                  stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                <line id="Line_4" data-name="Line 4" x1="10.827" transform="translate(1107.5 76.48)" fill="none"
+                  stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                <line id="Line_5" data-name="Line 5" x2="5.414" transform="translate(1107.5 65.653)" fill="none"
+                  stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+                <line id="Line_6" data-name="Line 6" y1="5.414" transform="translate(1118.327 71.066)" fill="none"
+                  stroke="#ffffff" stroke-linecap="round" stroke-width="1.5" />
+              </g>
+            </svg>
+          </a>
+        </div>
+      </div>
+      <a href="https://community.mosip.io/" target="_blank"
+        class="block py-1 text-[#ffffff] text-[16px] flex items-center space-x-2 font-bold mb-2">
+        <span class="border-b border-[#ffffff]">Contact Us</span>
+      </a>
+      <a href="https://mosip.stoplight.io/" target="_blank"
+        class="block py-1 text-[#ffffff] text-[16px] flex items-center space-x-2 font-bold mb-2">
+        <span class="border-b border-[#ffffff]">APIs</span>
+      </a>
+      <a href="{{ .Values.collab.deleteUinUrl }}" class="block py-1 mb-2">
+        <span class="text-[#ffffff] text-[16px] flex items-center space-x-2 font-bold">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4" />
+            <path d="M12 8h.01" />
+          </svg>
+          <span class="border-b border-[#ffffff]">Delete my UIN</span>
+        </span>
+        <span class="block mt-1 text-[#C4D6E6] text-[12px] leading-[18px] font-normal">Permanently delete your UIN and
+          all associated data. You'll verify your identity with an OTP through eSignet first.</span>
+      </a>
+    </div>
+    <!-- Hamburger for Mobile view end -->
+
+    <!-- Apps header Part -->
+    <div id="appsTitlePart">
+      <!-- title card -->
+      <div id="titleCard"
+        class="text-center px-[30px] pt-[30px] flex justify-center flex-col max-[930px]:px-0 max-[500px]:mb-8">
+        <h2
+          class="text-[50px] max-[1800px]:text-[34px] font-[700] text-[#ffffff] max-[520px]:text-[26px] max-[400px]:font-[600]">
+          Welcome to the MOSIP Collab environment!</h2>
+        <p class="text-[#C4D6E6] text-[14px]">Dive into our dynamic sandbox, designed for testing, collaboration, and
+          seamless integration of your solutions with our bleeding-edge offerings.<br />
+          Learn more about Collab <a target="_blank" href="https://docs.mosip.io/1.2.0/collab-getting-started-guide"
+            class="underline font-bold">here</a>, or head below to get started!</p>
+      </div>
+
+      <!-- Filter -->
+      <div id="filterCard" class="transition-opacity duration-300 opacity-100 pointer-events-auto flex justify-end max-[750px]:justify-center mt-7 max-[675px]:mt-2">
+        <div id="filterContainer"
+          class="absolute h-[40px] w-[162px] min-[500px]:-mt-3 rounded-[18px] text-[14px] bg-[#FFFFFF33] py-[10px] z-40">
+          <div id="filterButton"
+            class="flex rounded-[28px] items-center justify-evenly cursor-pointer text-[#ffffff] px-3">
+            <span class="flex items-center space-x-1">
+              <span>Sort by: </span>
+              <span id="selectedSortType">Default</span>
+            </span>
+            <span id="arrowIcon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
+                <path id="arrowIconPath" d="M8 10l4 4 4-4" fill="none" stroke="#ffffff" stroke-width="4"
+                  stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
+          </div>
+
+          <div id="filterOptionsCard" class="hidden mt-1">
+            <p id="defaultOrder"
+              class="py-2 px-3 flex items-center justify-between bg-[#EFF7FF] text-[#1763AC] text-[14px] cursor-pointer">
+              <span>Default </span>
+              <span id="defaultTickIcon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none"
+                  stroke="#1763AC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12l5 5L20 7" />
+                </svg>
+              </span>
+            </p>
+            <p id="ascOrder"
+              class="py-2 px-3 flex items-center justify-between text-[#313131] text-[14px] cursor-pointer">
+              <span>Ascending Order</span>
+              <span id="ascTickIcon" class="hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none"
+                  stroke="#1763AC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12l5 5L20 7" />
+                </svg>
+              </span>
+            </p>
+            <p id="descOrder"
+              class="py-2 px-3 pb-3 flex items-center justify-between text-[#313131] text-[14px] rounded-b-[20px] cursor-pointer">
+              <span>Descending Order</span>
+              <span id="descTickIcon" class="hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="none"
+                  stroke="#1763AC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12l5 5L20 7" />
+                </svg>
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mb-0 mt-14 min-[500px]:mt-10 max-[500px]:mt-20">
+        <button id="applicationCardBtn"
+          class="w-[140px] min-[330px]:w-[165px] min-[500px]:w-[254px] h-[40px] min-[500px]:h-[46px] border-b-0 rounded-t-[10px] text-[13px] min-[500px]:text-[16px] font-bold -mr-1 active-btn">Applications</button>
+        <button id="useCasesCars"
+          class="w-[140px] min-[330px]:w-[165px] min-[500px]:w-[254px] h-[40px] min-[500px]:h-[46px] border-b-0 rounded-t-[10px] text-[13px] min-[500px]:text-[16px] font-bold inactive-btn">Use
+          Cases</button>
+      </div>
+    </div>
+
+    <!-- App Details Header part -->
+    <div id="appDetailsTitlePart"
+      class="flex flex-row justify-between mt-[120px] min-[750px]:mt-[110px] min-[900px]:mt-[95px]">
+    </div>
+
+  </header>
+
+  <div id="mainContainer" class="p-[30px]">
+    <div id="applicationsCard">
+      <p class="text-center px-[60px] pb-[30px] max-[750px]:px-[3px]">Try out the various MOSIP Applications below</p>
+      <div id="appDetails" class="flex items-center justify-center">
+        <div class="flex justify-center w-full mx-auto max-[870px]:px-[20px]">
+          <div id="appsContainer"
+            class="flex flex-wrap justify-start w-[1350px] max-[1350px]:w-[1000px] max-[1040px]:w-[695px] max-[675px]:justify-center">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- App Details part -->
+    <div id="appDetailsContainer" class="flex flex-col mt-[7%] mx-10 space-y-12">
+      <div class="space-y-3">
+        <h1 class="text-[1.8rem] font-bold text-[#3B3B3B]">What is ActiveMQ?</h1>
+        <p class="text-[0.92rem] text-[#3B3B3B]">Apache ActiveMQ® is the most popular open source,
+          multi-protocol, Java-based message broker. It supports
+          industry standard protocols so users get the benefits of client choices across a broad range of languages
+          and
+          platforms. Connect from clients written in JavaScript, C, C++, Python, .Net, and more. Integrate your
+          multi-platform applications using the ubiquitous AMQP protocol. Exchange messages between your web
+          applications using STOMP over websockets. Manage your IoT devices using MQTT. Support your existing JMS
+          infrastructure and beyond. ActiveMQ offers the power and flexibility to support any messaging use-case.
+        </p>
+      </div>
+      <div class="space-y-3">
+        <h1 class="text-[1.6rem] font-bold">ActiveMQ Classic</h1>
+        <p class="text-[0.92rem] text-[#3B3B3B]">Long established, endlessly pluggable architecture serving
+          many
+          generations of applications.
+          <br class="mb-3" />
+          Jakarta 3.1, JMS 2.0, and JMS 1.1 with full client implementation including
+          JNDI <br />
+          High availability using shared storage Familiar JMS-based addressing model <br />
+          Network of brokers for
+          distributing
+          load <br />
+          KahaDB & JDBC options for persistence
+        </p>
+        <h1 class="text-[1.6rem] font-bold"></h1>
+        <p></p>
+      </div>
+      <div class="space-y-3 mb-6">
+        <h1 class="text-[1.8rem] font-bold text-[#3B3B3B]">ActiveMQ Artemis</h1>
+        <p class="text-[0.92rem] text-[#3B3B3B]">High-performance, non-blocking architecture for the next
+          generation of messaging applications.
+          <br class="mb-3" />
+          JMS 1.1 & 2.0 + Jakarta Messaging 2.0 & 3.0 with full client
+          implementations including JNDI
+          <br />High availability using shared storage or network replication
+          <br />Simple & powerful
+          protocol agnostic addressing model
+          <br />Flexible clustering for distributing load
+          <br />Advanced journal implementations
+          for low-latency persistence as well as JDBC
+          <br /> High feature parity with ActiveMQ Classic to ease migration
+          <br />Asynchronous mirroring for disaster recovery
+          <br />Data Driven Load Balance
+        </p>
+      </div>
+      <div class="flex flex-col justify-between items-center min-[500px]:flex-row">
+        <button id="openBtnbottom"
+          class=" flex items-center justify-center bg-transparent text-[18px] border-2 text-[#1763AC] border-[#1763AC] w-[11%] h-[2.2rem] rounded-md">
+          <p class="text-[0.9rem] font-[500] m-1.5">Open</p>
+          <a><svg xmlns="http://www.w3.org/2000/svg" width="15.957" height="15" viewBox="0 0 19.957 19">
+              <g id="Group_57577" data-name="Group 57577" transform="translate(-1106.5 -63.152)">
+                <path id="north_east_FILL0_wght400_GRAD0_opsz48"
+                  d="M160.827-748.19l-.827-.827,9.8-9.8h-5.787V-760h7.794v7.795h-1.181v-5.787Z"
+                  transform="translate(954.147 823.653)" fill="#1763AC" stroke="#1763AC" stroke-linecap="round"
+                  stroke-linejoin="round" stroke-width="1" />
+                <line id="Line_3" data-name="Line 3" y2="14.771" transform="translate(1107.5 66.381)" fill="none"
+                  stroke="#1763AC" stroke-linecap="round" stroke-width="2" />
+                <line id="Line_4" data-name="Line 4" x1="14.771" transform="translate(1107.5 81.152)" fill="none"
+                  stroke="#1763AC" stroke-linecap="round" stroke-width="2" />
+                <line id="Line_5" data-name="Line 5" x2="7.386" transform="translate(1107.5 66.381)" fill="none"
+                  stroke="#1763AC" stroke-linecap="round" stroke-width="2" />
+                <line id="Line_6" data-name="Line 6" y1="7.386" transform="translate(1122.271 73.767)" fill="none"
+                  stroke="#1763AC" stroke-linecap="round" stroke-width="2" />
+              </g>
+            </svg>
+          </a>
+        </button>
+        <button id="backBtn"
+          class=" flex items-center justify-center bg-transparent text-[18px] border-2 text-[#1763AC] border-[#1763AC] w-[11%] h-[2.2rem] rounded-md">
+          <p class="text-[0.9rem] font-[500] m-1.5">Back</p>
+        </button>
+      </div>
+    </div>
+
+    <!-- Module List -->
+    <div id="useCases" class="hidden">
+      <p class="text-center px-[60px] pb-[30px] max-[750px]:px-[3px]">Try out the various MOSIP Use Cases below</p>
+       <div class="flex justify-center w-full mx-auto max-[870px]:px-[20px]">
+          <div id="useCasesList"
+            class="flex flex-wrap justify-start w-[1350px] max-[1350px]:w-[1000px] max-[1040px]:w-[695px] max-[675px]:justify-center">
+          </div>
+        </div>
+    </div>
+  </div>
+
+  <div class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#E5E7EB] h-[64px] flex items-center justify-center">
+    <p class="text-[#727272] text-[14px]">© 2024 All Rights Reserved MOSIP</p>
+  </div>
+  <div class="h-[64px]"></div>
+
+  <!-- Java Script -->
+  <script>
+    // list of All Applications
+
+    let listOfMosipApps = [
+      {id: "preReg",appName: "Pre-registration",logo: "https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/pre-reg.png",version: "Version 1.3.0",userGuide:"https://docs.mosip.io/1.2.0/collab-getting-started-guide/collab-pre-registration-guide",tryIt: "https://prereg.collab.mosip.net/pre-registration-ui/#/eng",docs: "https://docs.mosip.io/1.2.0/id-lifecycle-management/identity-issuance/pre-registration/overview", disabled:false},
+      {id: "androidRegClient", appName: "Android Registration Client", logo: "https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/android-reg.png", version: "Version 1.0.0", userGuide: "https://docs.mosip.io/1.2.0/collab-getting-started-guide/collab-android-reg-client", tryIt: "https://mosip.atlassian.net/wiki/external/NGJlMDZlNGFiM2RlNDI0MzlkMWExZmU0NjY4ZTFjOGU", docs: "https://docs.mosip.io/1.2.0/id-lifecycle-management/identity-issuance/android-registration-client/overview", disabled:false},
+      {id: "desktopRegClient", appName: "Desktop Registration Client", logo: "https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/desktop-reg.png", version: "Version 1.2.0.2", userGuide: "https://docs.mosip.io/1.2.0/collab-getting-started-guide/collab-reg-client-setup-guide", tryIt: "https://regclient.collab.mosip.net/", docs: "https://docs.mosip.io/1.2.0/id-lifecycle-management/identity-issuance/registration-client/overview", disabled:false},
+      {id: "resident", appName: "Resident Portal", logo: "https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/RP_logo.png", version: "Version 0.9.1", userGuide:"https://docs.mosip.io/1.2.0/collab-getting-started-guide/collab-resident-portal-guide", tryIt: "https://resident.collab.mosip.net", docs: "https://docs.mosip.io/1.2.0/id-lifecycle-management/identity-management/resident-services/overview", disabled:false},
+      {id: "integratedEsignet", appName: "Integrate with eSignet", logo: "https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/eSignet.png", version: "Version 1.6.2", userGuide: "https://docs.esignet.io/esignet-authentication/develop/integration/relying-party/relying-party-onboarding",tryIt: "https://docs.esignet.io/esignet-authentication/develop/integration/relying-party/integration-options-and-discovery-endpoints",docs: "https://docs.esignet.io/", disabled:false},
+      {id: "healthPortalUsingMockId",appName: "Health Portal using Mock ID",logo: "https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/eSignet.png",version: "Version 1.6.2",userGuide: "https://docs.esignet.io/test/try-it-out/using-mock-data",tryIt: "https://healthservices-esignet-mock.collab.mosip.net/", docs: "https://docs.esignet.io/", disabled:false},
+      {id: "healthPortalUsingMosipId",appName: "Health Portal using Your MOSIP ID",logo: "https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/eSignet.png",version: "Version 1.6.2",userGuide: "https://docs.esignet.io/test/try-it-out/register-yourself",tryIt: "https://healthservices-mosipid.collab.mosip.net/",docs: "https://docs.esignet.io/", disabled:false},
+      {id: "injiWalletAndroid", appName: "Inji Wallet - Mobile | Android",logo: "https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/inji-wallet.png",version: "Version 0.22.1",userGuide:"https://docs.inji.io/inji-wallet/inji-mobile/functional-overview/sandbox-details/inji-setup-guide",tryIt:"https://drive.google.com/drive/folders/1gBjFSdpjxU4bsZi7-xS59W1-EIFKrkS8",docs: "https://docs.inji.io/inji-wallet/inji-mobile/overview", disabled:false},
+      {id: "injiWalletIos",appName: "Inji Wallet - Mobile | IOS", logo: "https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/inji-wallet.png", version: "Version 0.22.1", userGuide:"https://docs.inji.io/inji-wallet/inji-mobile/functional-overview/sandbox-details/inji-setup-guide", tryIt: "https://testflight.apple.com/join/7FTAdjLe", docs: "https://docs.inji.io/inji-wallet/inji-mobile/overview", disabled:false},
+      {id: "injiWeb", appName: "Inji Wallet - Web",logo: "https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/inji-wallet.png",version: "Version 0.15.0",userGuide:"https://docs.mosip.io/inji/inji-wallet/inji-web/try-it-out/inji-web-setup-guide",tryIt: "https://injiweb.collab.mosip.net/",docs: "https://docs.inji.io/inji-wallet/inji-web/overview", disabled:false},
+      {id: "injiVerify",appName: "Inji Verify", logo: "https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/inji-verify.png",version: "Version 0.17.0",userGuide:"https://docs.inji.io/inji-verify/functional-overview/releases-1/inji-verify-collab-guide", tryIt: "https://injiverify.collab.mosip.net/",docs: "https://docs.mosip.io/inji/inji-verify/overview", disabled:false},
+      {id: "AdminPortal",appName: "Admin Portal",logo: "https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/Admin_logo.png",version: "Version 1.3.0",userGuide:"https://docs.mosip.io/1.2.0/collab-getting-started-guide/admin-portal",tryIt: "https://admin.collab.mosip.net",docs: "https://docs.mosip.io/1.2.0/modules/administration", disabled:false},
+      {id: "pms",appName: "Partner Management System",logo: "https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/PMS_logo.png",version: "Version 1.2.2.2",userGuide:"https://docs.mosip.io/1.2.0/collab-getting-started-guide/collab-pmp-guide",tryIt: "https://pmp.collab.mosip.net/#/pmp/home", docs: "https://docs.mosip.io/1.2.0/modules/partner-management-services/pms-existing/partner-policies", disabled:false},
+    ];
+
+    const useCasesList = [
+      {id: 'Loan-application', title: 'Loan Application', name: 'Secure Loan Application Using National ID', guideUrl:'https://docs.mosip.io/1.2.0/general/collab-getting-started-guide/use-cases/loan-application', youtubeLink:"https://www.youtube.com/watch?v=3dO-mUXCZT8"},
+      {id: 'esim-issuance', title: 'eSIM Issuance With National ID', name: 'National ID Authentication via eSignet For eSIM Allocation', guideUrl: 'https://docs.esignet.io/esignet-authentication/test/end-user-guide/telecom-portal', tryItOut: 'https://esim-mosipid.collab.mosip.net/'},
+      {id: 'global-id-pass-issuance', title: 'Global ID Pass Issuance & Login for Republic of Utopia', name: 'Access Republic of Utopia Services with a Global ID Pass', guideUrl: 'https://docs.mosip.io/1.2.0/general/collab-getting-started-guide/use-cases/global-id-pass-issuance', youtubeLink:"https://www.youtube.com/watch?v=IGpQWpOnJn0&feature=youtu.be"}
+    ];
+
+
+    // Dom elements for interaction
+    const headerEl = document.getElementById('header');
+    const appsTitlePartEl = document.getElementById('appsTitlePart');
+    const appDetailsTitlePartEl = document.getElementById('appDetailsTitlePart');
+    const appsContainerEl = document.getElementById('appsContainer');
+    const docLinkCardEl = document.getElementById("docLinkCard");
+    const docVersiondropDownEl = document.getElementById("docVersiondropDown");
+    const filterButtonEl = document.getElementById("filterButton");
+    const arrowIconEl = document.getElementById("arrowIcon");
+    const filterContainerEl = document.getElementById("filterContainer");
+    const filterOptionsCardEl = document.getElementById("filterOptionsCard");
+    const defaultOrderEl = document.getElementById("defaultOrder");
+    const aboutDropdownIcon = document.getElementById("aboutDropdownIcon");
+    const aboutDropdownMenu = document.getElementById("aboutDropdownOptions");
+    const documentationDropdownIcon = document.getElementById("documentationDropdownIcon");
+    const documentationDropdownMenu = document.getElementById("documentationDropdownOptions");
+    const ascOrderEl = document.getElementById("ascOrder");
+    const descOrderEl = document.getElementById("descOrder");
+    const applicationCardBtnEl = document.getElementById("applicationCardBtn");
+    const useCasesBtnEl = document.getElementById("useCasesCars");
+    const filterCardEl = document.getElementById("filterCard");
+    const useCasesListEl = document.getElementById("useCasesList");
+
+    let isFilterDropdownOpen = false;
+    let isHamburgerOpen = false;
+    let isAboutDropdownMenuOpen = false;
+    let isDocumentationMenuOpen = false;
+    let selectedApp
+
+    const sortByAsc = () => {
+      const sortedAppData = listOfMosipApps.slice().sort((a, b) => a.appName.localeCompare(b.appName));
+      showListOfAppsData(sortedAppData);
+    }
+
+    const sortByDesc = () => {
+      const sortedAppData = listOfMosipApps.slice().sort((a, b) => b.appName.localeCompare(a.appName));
+      showListOfAppsData(sortedAppData);
+    }
+
+    function showListOfAppsData(sortedAppData) {
+      appsTitlePartEl.style.display = "block";
+      appDetailsTitlePartEl.style.display = "none";
+      document.getElementById("mainContainer").style.backgroundColor = "#EFF3F8";
+      document.getElementById("applicationsCard").classList.remove("hidden");
+      document.getElementById("appDetailsContainer").classList.add("hidden");
+      appsContainerEl.innerHTML = "";
+      sortedAppData.forEach(item => {
+        appsContainerEl.innerHTML += `
+            <div class="w-[312px] h-[332px] bg-[#ffffff] rounded-[20px] p-2 shadow-lg mb-[30px] mr-4 max-[675px]:mr-0">
+              <div id=${item.appName} class="w-[292px] h-[209px] bg-[#F4F8FA] rounded-[10px] flex justify-center items-center">
+                  <img alt=${item.id} src=${item.logo} name=${item.appName} />
+              </div>
+              <div class="mt-2">
+                <h4 class="text-[#01315F] font-bold text-[17px]">${item.appName}</h4>
+                <p class="text-[#777777] text-[0.87rem] font-[550] opacity-[70%]">${item.version}</p>
+                <div class="mt-2 flex justify-start space-x-2 mb-2">
+                  ${item.disabled
+                    ? `<button disabled class="w-[90px] h-[29px] bg-gray-400 rounded-[6px] text-[#ffffff] text-[14px]">Try It Out!</button>`
+                    : `<a target="_blank" href=${item.tryIt}><button class="w-[90px] h-[29px] bg-[#1763AC] rounded-[6px] text-[#ffffff] text-[14px]">Try It Out!</button></a>`
+                  }
+                  <button class="w-[90px] h-[29px] rounded-[6px] border border-[#1763AC] font-[600]"><a class="text-[#1763AC] text-[14px]" target="_blank" href=${item.userGuide}>User Guide</a></button>
+                  <button class="w-[74px] h-[29px] rounded-[6px] border border-[#1763AC] font-[600]"><a class="text-[#1763AC] text-[14px]" target="_blank" href=${item.docs}>Overview</a></button>
+                </div>
+              </div>
+            </div>
+          `
+      });
+    };
+
+    useCasesList.forEach(item =>{
+      useCasesListEl.innerHTML += `
+        <div class="w-[316px] h-[330px] bg-[#ffffff] rounded-[20px] p-2 shadow-lg mr-4 max-[675px]:mr-0 mb-[30px]">
+          <div id=${item.id}
+            class="w-[297px] h-[209px] bg-[#F4F8FA] rounded-[10px] flex justify-center items-center flex-col">
+            <img class="h-[80px] w-[80px] block"
+              src="https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/mosip-favicon.png" />
+            <h2 class="text-[18px] font-bold block text-center">${item.title}</h2>
+          </div>
+          <div class="mt-2 flex justify-between align-center flex-col h-[100px]">
+            <h4 class="text-[#01315F] font-bold text-[16px] h-18">${item.name}</h4>
+            <div class="mt-2 flex justify-start space-x-2 mb-2">
+              <button class="w-[90px] h-[29px] bg-[#1763AC] rounded-[6px] text-[#ffffff] text-[14px]"><a  target="_blank"
+                  href=${item.guideUrl}>User
+                  Guide</a></button>
+              ${item.youtubeLink ? `<button class="w-[100px] h-[29px] rounded-[6px] border border-[#1763AC] font-[600]"><a class="text-[#1763AC] text-[14px]" target="_blank" href=${item.youtubeLink}>Watch Demo</a></button>` : ''}
+            </div>
+          </div>
+        </div>
+      `
+    })
+
+    showListOfAppsData(listOfMosipApps);
+
+    function showAppDetails(selectedApp) {
+      appsTitlePartEl.style.display = "none";
+      appDetailsTitlePartEl.style.display = "block";
+      document.getElementById("mainContainer").style.backgroundColor = "#FFFFFF";
+      document.getElementById("applicationsCard").classList.add("hidden");
+      document.getElementById("appDetailsContainer").classList.remove("hidden");
+      header.style.height = '21rem'
+    };
+
+    document.addEventListener('click', (event) => {
+      if (event.target.alt) {
+        listOfMosipApps.forEach(item => {
+          if (item.id === event.target.alt) {
+            document.getElementById("appDetailsTitlePart").innerHTML = `
+            <div class="flex flex-row justify-between items-center">
+              <div class="flex flex-row gap-x-2 items-center">
+                <div id=${event.target.alt + 'details'}
+                  class="w-[180px] h-[150px] min-[750px]:w-[190px] min-[900px]:w-[207px] min-[750px]:h-[160px] min-[900px]:h-[200px] px-[1%] bg-[#F4F8FA] shadow rounded-[10px] flex justify-center items-center cursor-default pointer-events-none">
+                  <img alt=${item.alt} src=${item.logo} />
+                </div>
+                <div class="flex flex-col mx-6 -mt-[5%]">
+                  <h1 class="text-[1.1rem] min-[750px]:text-[1.3rem] min-[900px]:text-[1.8rem] font-bold text-white">${item.appName}</h1>
+                  <p class="text-[0.6rem] min-[750px]:text-[0.7rem] min-[900px]:text-[0.9rem] text-white opacity-[70%] w-[65%]">ActiveMQ is most commonly deployed as a standalone
+                    process. This option isolates
+                    ActiveMQ
+                    from any particular application and provides maximum flexibility.
+                  </p>
+                </div>
+              </div>
+                <button id="openBtnTop"
+                  class=" flex items-center justify-center bg-transparent text-[18px] text-[#FFFFFF] border border-[#ffffff] w-[23%] min-[750px]:w-[21%] min-[900px]:w-[13%] h-[2.2rem] rounded-md">
+                  <p class="text-[0.9rem] m-1.5">Open</p>
+                  <a><svg xmlns="http://www.w3.org/2000/svg" width="15.957" height="15" viewBox="0 0 19.957 19">
+                      <g id="Group_57577" data-name="Group 57577" transform="translate(-1106.5 -63.152)">
+                        <path id="north_east_FILL0_wght400_GRAD0_opsz48"
+                          d="M160.827-748.19l-.827-.827,9.8-9.8h-5.787V-760h7.794v7.795h-1.181v-5.787Z"
+                          transform="translate(954.147 823.653)" fill="#fff" stroke="#fff" stroke-linecap="round"
+                          stroke-linejoin="round" stroke-width="1" />
+                        <line id="Line_3" data-name="Line 3" y2="14.771" transform="translate(1107.5 66.381)" fill="none"
+                          stroke="#fff" stroke-linecap="round" stroke-width="2" />
+                        <line id="Line_4" data-name="Line 4" x1="14.771" transform="translate(1107.5 81.152)" fill="none"
+                          stroke="#fff" stroke-linecap="round" stroke-width="2" />
+                        <line id="Line_5" data-name="Line 5" x2="7.386" transform="translate(1107.5 66.381)" fill="none"
+                          stroke="#fff" stroke-linecap="round" stroke-width="2" />
+                        <line id="Line_6" data-name="Line 6" y1="7.386" transform="translate(1122.271 73.767)" fill="none"
+                          stroke="#fff" stroke-linecap="round" stroke-width="2" />
+                      </g>
+                    </svg>
+                  </a>
+                </button>
+              </div>
+            </div>
+            `
+          }
+          // showAppDetails(listOfMosipApps);
+        })
+      }
+    });
+
+    document.getElementById("backBtn").onclick = function () { window.location.reload(); };
+
+    docLinkCardEl.addEventListener('mouseover', () => {
+      docVersiondropDownEl.style.display = "block";
+      docLinkCardEl.style.backgroundColor = "";
+    });
+
+    docLinkCardEl.addEventListener('mouseout', () => {
+      docVersiondropDownEl.style.display = "none";
+      docLinkCardEl.style.backgroundColor = "#ffffff";
+    });
+
+    const openFilterDropdown = () => {
+      arrowIconEl.classList.remove("rotate-0");
+      arrowIconEl.classList.add("rotate-180", "transition-transform", "ease");
+      filterButtonEl.classList.remove("text-[#ffffff]", "font-[500]");
+      filterButtonEl.classList.add("text-[#313131]", "font-[600]");
+      document.getElementById("arrowIconPath").setAttribute('stroke', '#313131');
+      filterContainerEl.classList.remove("h-[40px]", "shadow-none", "bg-[#FFFFFF33]", "hidden");
+      filterContainerEl.classList.add("h-[155px]", "shadow-lg", "bg-[#ffffff]", "block");
+      filterOptionsCardEl.classList.remove("hidden");
+      filterOptionsCardEl.classList.add("block", "duration-700");
+      isFilterDropdownOpen = true;
+    }
+
+    const closeFilterDropdown = () => {
+      arrowIconEl.classList.remove("rotate-180")
+      arrowIconEl.classList.add("rotate-0", "transition-transform", "ease");
+      filterButtonEl.classList.remove("text-[#313131]", "font-[600]");
+      filterButtonEl.classList.add("text-[#ffffff]", "font-[500]");
+      document.getElementById("arrowIconPath").setAttribute('stroke', '#ffffff');
+      filterContainerEl.classList.remove("h-[155px]", "shadow-lg", "bg-[#ffffff]");
+      filterContainerEl.classList.add("h-[40px]", "shadow-none",  "bg-[#FFFFFF33]");
+      filterOptionsCardEl.classList.remove("block");
+      filterOptionsCardEl.classList.add("hidden");
+      isFilterDropdownOpen = false;
+    }
+
+    filterButtonEl.addEventListener('click', () => {
+      if (!isFilterDropdownOpen) {
+        openFilterDropdown();
+      } else {
+        closeFilterDropdown();
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!filterContainerEl.contains(event.target)) {
+        closeFilterDropdown();
+      }
+    })
+
+    defaultOrderEl.addEventListener("click", () => {
+      defaultOrderEl.style.backgroundColor = "#EFF7FF";
+      defaultOrderEl.style.color = "#1763AC";
+      descOrderEl.style.backgroundColor = "#ffffff";
+      descOrderEl.style.color = "#313131";
+      ascOrderEl.style.backgroundColor = "#ffffff";
+      ascOrderEl.style.color = "#313131";
+      document.getElementById("defaultTickIcon").style.display = "block";
+      document.getElementById("ascTickIcon").style.display = "none";
+      document.getElementById("descTickIcon").style.display = "none";
+      closeFilterDropdown();
+      document.getElementById("selectedSortType").innerText = "Default";
+      showListOfAppsData(listOfMosipApps);
+    })
+
+    ascOrderEl.addEventListener("click", () => {
+      defaultOrderEl.style.backgroundColor = "#ffffff";
+      defaultOrderEl.style.color = "#313131";
+      ascOrderEl.style.backgroundColor = "#EFF7FF";
+      ascOrderEl.style.color = "#1763AC";
+      descOrderEl.style.backgroundColor = "#ffffff";
+      descOrderEl.style.color = "#313131";
+      document.getElementById("defaultTickIcon").style.display = "none";
+      document.getElementById("ascTickIcon").style.display = "block";
+      document.getElementById("descTickIcon").style.display = "none";
+      closeFilterDropdown();
+      document.getElementById("selectedSortType").innerText = "Aa - Zz";
+      sortByAsc();
+    })
+
+    descOrderEl.addEventListener("click", () => {
+      defaultOrderEl.style.backgroundColor = "#ffffff";
+      defaultOrderEl.style.color = "#313131";
+      ascOrderEl.style.backgroundColor = "#ffffff";
+      ascOrderEl.style.color = "#313131";
+      descOrderEl.style.backgroundColor = "#EFF7FF";
+      descOrderEl.style.color = "#1763AC";
+      document.getElementById("defaultTickIcon").style.display = "none";
+      document.getElementById("ascTickIcon").style.display = "none";
+      document.getElementById("descTickIcon").style.display = "block";
+      closeFilterDropdown();
+      document.getElementById("selectedSortType").innerText = "Zz - Aa";
+      sortByDesc();
+    })
+
+    document.getElementById("hamburgerIcon").addEventListener("click", () => {
+      if (!isHamburgerOpen) {
+        document.getElementById("hamburgerDetails").classList.remove('hidden');
+        aboutDropdownMenu.classList.add('hidden');
+        documentationDropdownMenu.classList.add('hidden');
+        isHamburgerOpen = true;
+        isAboutDropdownMenuOpen = false;
+        isDocumentationMenuOpen = false;
+
+      } else {
+        document.getElementById("hamburgerDetails").classList.add('hidden');
+        isHamburgerOpen = false;
+      }
+    });
+
+    aboutDropdownIcon.addEventListener("click", () => {
+      if (!isAboutDropdownMenuOpen) {
+        aboutDropdownIcon.classList.add('active-dropdown-btn');
+        aboutDropdownMenu.classList.remove('hidden');
+        isAboutDropdownMenuOpen = true;
+      } else {
+        aboutDropdownIcon.classList.add('inactive-dropdown-btn');
+        aboutDropdownMenu.classList.add('hidden');
+        documentationDropdownMenu.classList.add('hidden');
+        isAboutDropdownMenuOpen = false;
+        isDocumentationMenuOpen = false;
+      }
+    });
+
+    documentationDropdownIcon.addEventListener("click", () => {
+      if (!isDocumentationMenuOpen) {
+        documentationDropdownIcon.classList.add('active-dropdown-btn');
+        documentationDropdownMenu.classList.remove('hidden');
+        isDocumentationMenuOpen = true;
+      } else {
+        documentationDropdownIcon.classList.add('inactive-dropdown-btn');
+        documentationDropdownMenu.classList.add('hidden');
+        isDocumentationMenuOpen = false;
+      }
+    });
+
+    applicationCardBtnEl.addEventListener("click", () => {
+      document.getElementById('useCases').classList.add("hidden");
+      document.getElementById('applicationsCard').classList.remove("hidden");
+      applicationCardBtnEl.classList.add("active-btn");
+      applicationCardBtnEl.classList.remove("inactive-btn");
+      useCasesBtnEl.classList.remove("active-btn");
+      useCasesBtnEl.classList.add("inactive-btn");
+      filterCardEl.classList.replace("opacity-0", "opacity-100");
+      filterCardEl.classList.remove("pointer-events-none");
+      filterButtonEl.classList.add("cursor-pointer");
+    })
+
+    useCasesBtnEl.addEventListener("click", () => {
+      document.getElementById('applicationsCard').classList.add("hidden");
+      document.getElementById('useCases').classList.remove("hidden");
+      useCasesBtnEl.classList.add("active-btn");
+      useCasesBtnEl.classList.remove("inactive-btn");
+      applicationCardBtnEl.classList.remove("active-btn");
+      applicationCardBtnEl.classList.add("inactive-btn");
+      filterCardEl.classList.replace("opacity-100", "opacity-0");
+      filterCardEl.classList.add("pointer-events-none");
+      filterButtonEl.classList.remove("cursor-pointer");
+    })
+
+  </script>
+</body>
+
+</html>

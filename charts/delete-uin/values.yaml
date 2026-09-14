@@ -1,0 +1,271 @@
+## Global Docker image parameters
+##
+# global:
+#   imageRegistry: myRegistryName
+#   imagePullSecrets:
+#     - myRegistryKeySecretName
+#   storageClass: myStorageClass
+
+## Add labels to all the deployed resources
+##
+commonLabels:
+  app.kubernetes.io/component: mosip
+
+## Add annotations to all the deployed resources
+##
+commonAnnotations: {}
+
+## Kubernetes Cluster Domain
+##
+clusterDomain: cluster.local
+
+## Extra objects to deploy (value evaluated as a template)
+##
+extraDeploy: []
+
+## Number of nodes
+##
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 80
+  nodePorts:
+    http: ""
+    https: ""
+  externalTrafficPolicy: Cluster
+
+image:
+  registry: docker.io
+  repository: nginx
+  tag: latest
+  pullPolicy: Always
+
+## Port on which this particular service module is running.
+containerPort: 80
+
+## Configure extra options for liveness and readiness probes
+##
+startupProbe:
+  enabled: true
+  httpGet:
+    path: "/"
+    port: 80
+  initialDelaySeconds: 0
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 10
+  successThreshold: 1
+
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: "/"
+    port: 80
+  initialDelaySeconds: 20
+  periodSeconds: 60
+  timeoutSeconds: 5
+  failureThreshold: 2
+  successThreshold: 1
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: "/"
+    port: 80
+  initialDelaySeconds: 0
+  periodSeconds: 60
+  timeoutSeconds: 5
+  failureThreshold: 2
+  successThreshold: 1
+
+command: []
+args: []
+
+hostAliases: []
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 512Mi
+
+additionalResources:
+  javaOpts: ""
+
+containerSecurityContext:
+  enabled: false
+  runAsUser: mosip
+  runAsNonRoot: true
+
+podSecurityContext:
+  enabled: false
+  fsGroup: 1001
+
+podAffinityPreset: ""
+podAntiAffinityPreset: soft
+
+nodeAffinityPreset:
+  type: ""
+  key: ""
+  values: []
+
+affinity: {}
+nodeSelector: {}
+tolerations: []
+podLabels: {}
+podAnnotations: {}
+lifecycleHooks: {}
+customLivenessProbe: {}
+customReadinessProbe: {}
+
+updateStrategy:
+  type: RollingUpdate
+
+extraEnvVars: []
+
+extraEnvVarsCM:
+  - global
+
+extraEnvVarsSecret: []
+extraVolumes: []
+extraVolumeMounts: []
+initContainers: {}
+sidecars: {}
+
+persistence:
+  enabled: false
+  storageClass:
+  accessModes:
+    - ReadWriteOnce
+  size: 10M
+  existingClaim:
+  mountDir:
+
+volumePermissions:
+  enabled: false
+  image:
+    registry: docker.io
+    repository: bitnami/bitnami-shell
+    tag: "10"
+    pullPolicy: Always
+    pullSecrets: []
+  resources:
+    limits: {}
+    requests: {}
+
+rbac:
+  create: true
+
+serviceAccount:
+  create: true
+  name:
+
+## Prometheus Metrics
+##
+metrics:
+  enabled: false
+  podAnnotations:
+    prometheus.io/scrape: "true"
+
+  endpointPath: /actuator/prometheus
+
+  serviceMonitor:
+    enabled: true
+    interval: 10s
+    honorLabels: false
+    additionalLabels: {}
+
+  prometheusRule:
+    enabled: false
+    additionalLabels: {}
+    namespace: ''
+    rules: []
+
+## Collab environment URLs used in the "Delete my UIN" page
+##
+collab:
+  ## Where the "Back to MOSIP Collab" buttons and the header logo point.
+  homepageUrl: https://collab.mosip.net
+
+## eSignet OIDC client configuration.
+##
+## The page never authenticates the resident itself: it hands them to
+## eSignet's /authorize endpoint, and eSignet redirects back to `redirectUri`
+## with an authorization `code`. That code is what the deletion service below
+## exchanges for a token.
+##
+## IMPORTANT: everything under this key is rendered into a ConfigMap and
+## served to the browser. Only public OIDC parameters belong here - the
+## eSignet client secret / private key must stay with the deletion service.
+esignet:
+  ## Full URL of the eSignet UI authorize page.
+  authorizeUrl: https://esignet.collab.mosip.net/authorize
+  ## OIDC client id registered in eSignet for this relying party.
+  clientId: mosip-collab-delete-uin-client
+  ## Must match a redirect URI registered on that client, exactly.
+  redirectUri: https://delete-uin.collab.mosip.net/
+  scope: openid profile
+  responseType: code
+  ## Authentication factors offered to the resident, most preferred first.
+  ## The design asks for a UIN/VID/Handle plus a one-time password, so the
+  ## OTP factor is listed first.
+  acrValues: mosip:idp:acr:generated-code mosip:idp:acr:biometrics mosip:idp:acr:static-code
+  ## OIDC `claims` request parameter. URL-encoded by the page before use.
+  claims: '{"userinfo":{"name":{"essential":true}},"id_token":{}}'
+  claimsLocales: en
+  display: page
+  prompt: consent
+  maxAge: 21
+  uiLocales: en
+  ## Use PKCE (S256). Recommended; the eSignet client must permit it.
+  usePkce: true
+
+## The deletion service - a different backend from eSignet. It receives the
+## authorization code, exchanges it for a token, resolves the subject and
+## runs the deletion as a resumable job that this page follows to completion.
+##
+deleteService:
+  ## POST { code, state, redirectUri, codeVerifier }
+  ##   -> { transactionId, maskedUin, status, progress, retryExpiresAt }
+  ## Starts the job. Called once, right after eSignet redirects back.
+  startEndpoint: https://api.collab.mosip.net/v1/delete-uin/start
+  ## GET ?transactionId=<id>
+  ##   -> { status, progress, retryExpiresAt, maskedUin }
+  ## Polled while the job is running so the progress ring can advance.
+  statusEndpoint: https://api.collab.mosip.net/v1/delete-uin/status
+  ## POST { transactionId } -> same shape as the status response.
+  ## Resumes a job that failed part-way, from where it stopped.
+  retryEndpoint: https://api.collab.mosip.net/v1/delete-uin/retry
+  ## How often to poll the status endpoint, in seconds.
+  pollIntervalSeconds: 2
+  ## Sent as the X-Request-Source header on every call.
+  requestSource: mosip-collab-delete-uin
+  ## Send cookies with the backend calls, for a deletion service that keeps
+  ## its own session after the code exchange.
+  withCredentials: false
+
+## UI behaviour
+##
+ui:
+  ## Show the backend's raw error payload beneath the status card.
+  showTechnicalErrors: true
+  ## Runs the whole flow without contacting eSignet or the deletion service,
+  ## so the UI can be reviewed before either backend exists. Append
+  ## ?preview=failed or ?preview=expired to see those two screens.
+  ## MUST be false in any real environment.
+  demoMode: false
+
+## Istio ingress configuration
+##
+istio:
+  enabled: true
+  ingressController:
+    name: ingressgateway-internal
+  host: delete-uin.collab.mosip.net
+  prefix: /
+
+# Specify the path to the primary index file.
+indexFile: "delete-uin-index.html"

@@ -1,0 +1,49 @@
+{
+  "_comment": [
+    "Local-development overrides for the two static-page charts.",
+    "",
+    "These are NOT Helm values. render.py substitutes them into the chart's",
+    "{{ .Values.* }} placeholders so the pages can be served from localhost",
+    "against the mock eSignet stack in esignet/docker-compose. Production",
+    "deployment still uses `helm install` with each chart's own values.yaml,",
+    "which is left untouched.",
+    "",
+    "Ports: 5500 landing page, 5501 delete-uin page, 3000 eSignet UI,",
+    "8088 eSignet service."
+  ],
+
+  "collab": {
+    "homepageUrl": "http://localhost:5500/",
+    "deleteUinUrl": "http://localhost:5501/"
+  },
+
+  "esignet": {
+    "authorizeUrl": "http://localhost:3000/authorize",
+    "clientId": "mosip-collab-delete-uin-client",
+    "redirectUri": "http://localhost:5501/",
+    "scope": "openid profile",
+    "responseType": "code",
+    "acrValues": "mosip:idp:acr:generated-code",
+    "claims": "{\"userinfo\":{\"individual_id\":{\"essential\":true},\"name\":{\"essential\":false}},\"id_token\":{}}",
+    "claimsLocales": "en",
+    "display": "page",
+    "prompt": "consent",
+    "maxAge": "",
+    "uiLocales": "en",
+    "usePkce": "false"
+  },
+
+  "deleteService": {
+    "startEndpoint": "http://localhost:8095/v1/delete-uin/start",
+    "statusEndpoint": "http://localhost:8095/v1/delete-uin/status",
+    "retryEndpoint": "http://localhost:8095/v1/delete-uin/retry",
+    "pollIntervalSeconds": "2",
+    "requestSource": "mosip-collab-delete-uin",
+    "withCredentials": "false"
+  },
+
+  "ui": {
+    "showTechnicalErrors": "true",
+    "demoMode": "false"
+  }
+}

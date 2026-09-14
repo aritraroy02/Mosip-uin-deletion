@@ -1,0 +1,163 @@
+{
+  "info": {
+    "name": "MOSIP eSignet (mock) — full OIDC flow",
+    "description": "Every eSignet API in the delete-uin flow, in order. Run 1->7 top to bottom; each step feeds the next via collection variables. OTP is 111111 (mock). Set `uin` to a seeded UIN. Only step 6 (/token) needs a signed client assertion Postman can't produce in-app — generate it with `python postman/mint_client_assertion.py` and paste into `clientAssertion` first.\n\nNote on CSRF: eSignet protects these POSTs with a CSRF cookie+token. Each POST's pre-request script fetches a fresh token; Postman must be allowed to store cookies for localhost (Cookies -> add localhost). If a POST returns 403, that cookie handling is the cause.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseEsignet", "value": "http://localhost:8088/v1/esignet" },
+    { "key": "clientId", "value": "mosip-collab-delete-uin-client" },
+    { "key": "redirectUri", "value": "http://localhost:5501/" },
+    { "key": "uin", "value": "8617031759" },
+    { "key": "csrf", "value": "" },
+    { "key": "txn", "value": "" },
+    { "key": "odHash", "value": "" },
+    { "key": "code", "value": "" },
+    { "key": "accessToken", "value": "" },
+    { "key": "clientAssertion", "value": "PASTE_FROM_mint_client_assertion.py" }
+  ],
+  "item": [
+    {
+      "name": "1. csrf token",
+      "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.collectionVariables.set('csrf', pm.response.json().token);",
+        "pm.test('got csrf token', () => pm.expect(pm.response.json().token).to.be.a('string'));"
+      ] } } ],
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseEsignet}}/csrf/token", "host": ["{{baseEsignet}}"], "path": ["csrf","token"] },
+        "description": "Fetches a CSRF token (and sets the XSRF-TOKEN cookie). Every POST below needs one."
+      }
+    },
+    {
+      "name": "2. oauth-details",
+      "event": [
+        { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+          "const done = () => {};",
+          "pm.sendRequest({url: pm.collectionVariables.get('baseEsignet')+'/csrf/token', method:'GET'}, (e,r)=>{ if(!e){ pm.collectionVariables.set('csrf', r.json().token);} });"
+        ] } },
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "const resp = pm.response.json().response;",
+          "pm.collectionVariables.set('txn', resp.transactionId);",
+          "const s = JSON.stringify(resp);",
+          "const h = CryptoJS.SHA256(s);",
+          "const b64 = CryptoJS.enc.Base64.stringify(h).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');",
+          "pm.collectionVariables.set('odHash', b64);",
+          "pm.test('transactionId set', () => pm.expect(resp.transactionId).to.be.a('string'));"
+        ] } }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-XSRF-TOKEN", "value": "{{csrf}}" },
+          { "key": "oauth-details-key", "value": "" }
+        ],
+        "url": { "raw": "{{baseEsignet}}/authorization/v3/oauth-details", "host": ["{{baseEsignet}}"], "path": ["authorization","v3","oauth-details"] },
+        "body": { "mode": "raw", "raw": "{\n  \"requestTime\": \"2026-01-01T00:00:00.000Z\",\n  \"request\": {\n    \"clientId\": \"{{clientId}}\",\n    \"redirectUri\": \"{{redirectUri}}\",\n    \"responseType\": \"code\",\n    \"scope\": \"openid profile\",\n    \"acrValues\": \"mosip:idp:acr:generated-code\",\n    \"nonce\": \"n-postman\",\n    \"state\": \"s-postman\",\n    \"claimsLocales\": \"en\",\n    \"claims\": { \"userinfo\": { \"individual_id\": { \"essential\": true }, \"name\": { \"essential\": false } }, \"id_token\": {} }\n  }\n}" },
+        "description": "Starts the transaction. Saves transactionId and the oauth-details-hash for the next calls."
+      }
+    },
+    {
+      "name": "3. send-otp",
+      "event": [ { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+        "pm.sendRequest({url: pm.collectionVariables.get('baseEsignet')+'/csrf/token', method:'GET'}, (e,r)=>{ if(!e){ pm.collectionVariables.set('csrf', r.json().token);} });"
+      ] } } ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-XSRF-TOKEN", "value": "{{csrf}}" },
+          { "key": "oauth-details-key", "value": "{{txn}}" },
+          { "key": "oauth-details-hash", "value": "{{odHash}}" }
+        ],
+        "url": { "raw": "{{baseEsignet}}/authorization/send-otp", "host": ["{{baseEsignet}}"], "path": ["authorization","send-otp"] },
+        "body": { "mode": "raw", "raw": "{\n  \"requestTime\": \"2026-01-01T00:00:00.000Z\",\n  \"request\": { \"transactionId\": \"{{txn}}\", \"individualId\": \"{{uin}}\", \"otpChannels\": [\"email\",\"phone\"] }\n}" },
+        "description": "Sends the OTP (mock delivers a fixed 111111)."
+      }
+    },
+    {
+      "name": "4. authenticate (OTP 111111)",
+      "event": [ { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+        "pm.sendRequest({url: pm.collectionVariables.get('baseEsignet')+'/csrf/token', method:'GET'}, (e,r)=>{ if(!e){ pm.collectionVariables.set('csrf', r.json().token);} });"
+      ] } } ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-XSRF-TOKEN", "value": "{{csrf}}" },
+          { "key": "oauth-details-key", "value": "{{txn}}" },
+          { "key": "oauth-details-hash", "value": "{{odHash}}" }
+        ],
+        "url": { "raw": "{{baseEsignet}}/authorization/v3/authenticate", "host": ["{{baseEsignet}}"], "path": ["authorization","v3","authenticate"] },
+        "body": { "mode": "raw", "raw": "{\n  \"requestTime\": \"2026-01-01T00:00:00.000Z\",\n  \"request\": { \"transactionId\": \"{{txn}}\", \"individualId\": \"{{uin}}\", \"challengeList\": [ { \"authFactorType\": \"OTP\", \"challenge\": \"111111\", \"format\": \"alpha-numeric\" } ] }\n}" },
+        "description": "Verifies the OTP. This is the actual authentication step."
+      }
+    },
+    {
+      "name": "5. auth-code (consent)",
+      "event": [
+        { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+          "pm.sendRequest({url: pm.collectionVariables.get('baseEsignet')+'/csrf/token', method:'GET'}, (e,r)=>{ if(!e){ pm.collectionVariables.set('csrf', r.json().token);} });"
+        ] } },
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "const c = pm.response.json().response.code;",
+          "pm.collectionVariables.set('code', c);",
+          "pm.test('got auth code', () => pm.expect(c).to.be.a('string'));"
+        ] } }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-XSRF-TOKEN", "value": "{{csrf}}" },
+          { "key": "oauth-details-key", "value": "{{txn}}" },
+          { "key": "oauth-details-hash", "value": "{{odHash}}" }
+        ],
+        "url": { "raw": "{{baseEsignet}}/authorization/auth-code", "host": ["{{baseEsignet}}"], "path": ["authorization","auth-code"] },
+        "body": { "mode": "raw", "raw": "{\n  \"requestTime\": \"2026-01-01T00:00:00.000Z\",\n  \"request\": { \"transactionId\": \"{{txn}}\", \"acceptedClaims\": [\"individual_id\",\"name\"], \"permittedAuthorizeScopes\": [] }\n}" },
+        "description": "Records consent and returns the authorization code. Copy `code` into the deletion-service collection's `code` variable to test the gateway."
+      }
+    },
+    {
+      "name": "6. token  (needs clientAssertion)",
+      "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "const at = pm.response.json().access_token;",
+        "pm.collectionVariables.set('accessToken', at);",
+        "pm.test('got access_token', () => pm.expect(at).to.be.a('string'));"
+      ] } } ],
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/x-www-form-urlencoded" } ],
+        "url": { "raw": "{{baseEsignet}}/oauth/v2/token", "host": ["{{baseEsignet}}"], "path": ["oauth","v2","token"] },
+        "body": { "mode": "urlencoded", "urlencoded": [
+          { "key": "grant_type", "value": "authorization_code" },
+          { "key": "code", "value": "{{code}}" },
+          { "key": "client_id", "value": "{{clientId}}" },
+          { "key": "redirect_uri", "value": "{{redirectUri}}" },
+          { "key": "client_assertion_type", "value": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" },
+          { "key": "client_assertion", "value": "{{clientAssertion}}" }
+        ] },
+        "description": "Exchanges the code for tokens. client_assertion must be freshly generated (5-min life): python postman/mint_client_assertion.py -> paste into clientAssertion."
+      }
+    },
+    {
+      "name": "7. userinfo",
+      "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "const jwt = pm.response.text().split('.');",
+        "if (jwt.length >= 2) {",
+        "  const pad = jwt[1] + '==='.slice((jwt[1].length + 3) % 4);",
+        "  const json = JSON.parse(atob(pad.replace(/-/g,'+').replace(/_/g,'/')));",
+        "  console.log('userinfo claims:', json);",
+        "  pm.test('userinfo decoded', () => pm.expect(json).to.be.an('object'));",
+        "}"
+      ] } } ],
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{accessToken}}" } ],
+        "url": { "raw": "{{baseEsignet}}/oidc/userinfo", "host": ["{{baseEsignet}}"], "path": ["oidc","userinfo"] },
+        "description": "Returns a signed JWT. The test script decodes and logs its claims to the Postman console (View -> Show Postman Console). Note: with the mock, this contains only `sub` (a pseudonym) + `name`, not the UIN."
+      }
+    }
+  ]
+}

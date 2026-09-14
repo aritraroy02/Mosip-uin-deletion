@@ -1,0 +1,25 @@
+## Config map to insert a landing index.html page in the docker.  This may be removed later if the same is done while building the docker.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "common.names.fullname" . }}-index
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+      {{- if .Values.commonLabels }}
+      {{- include "common.tplvalues.render" (dict "value" .Values.commonLabels "context" $) | nindent 4 }}
+      {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations:
+    {{- include "common.tplvalues.render" (dict "value" .Values.commonAnnotations "context" $) | nindent 4 }}
+  {{- end }}
+
+data:
+  index.html: |-
+    {{- if .Values.indexFile }}
+      {{- $fileContent := .Files.Get .Values.indexFile }}
+      {{- $renderedContent := tpl $fileContent . }}
+      {{- $renderedContent | nindent 4 }}
+    {{- else }}
+      {{- tpl .Values.customindexFile . | nindent 4 }}
+    {{- end }}

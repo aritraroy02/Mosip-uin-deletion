@@ -1,0 +1,22 @@
+apiVersion: v2
+name: delete-uin
+description: A Helm chart for the MOSIP Collab "Delete My UIN" self-service page (eSignet authenticated)
+type: application
+version: 0.0.1-develop
+appVersion: ""
+dependencies:
+  - name: common
+    repository: https://charts.bitnami.com/bitnami
+    tags:
+      - bitnami-common
+    version: 1.x.x
+home: https://mosip.io
+keywords:
+  - mosip
+  - delete-uin
+  - esignet
+  - collab
+  - landing-page
+maintainers:
+  - email: info@mosip.io
+    name: MOSIP

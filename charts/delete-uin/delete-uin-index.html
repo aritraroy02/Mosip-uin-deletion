@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Delete my UIN - MOSIP Collab</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="referrer" content="strict-origin" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" type="image/x-icon"
+    href="https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/mosip-favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap">
+</head>
+
+<style>
+  /* Tokens taken from the "Delete My UIN" page of the Collab revamp Figma. */
+  :root {
+    --azure-19: #02335f;
+    --azure-15: #01294d;
+    --azure-12: #021f3b;
+    --midnight: #01315f;
+    --primary: #1763ac;
+    --primary-700: #125089;
+    --shuttle: #5b6776;
+    --pale-sky: #6c7787;
+    --botticelli: #d8e2ee;
+    --zumthor: #ecf4ff;
+    --page: #eef3f8;
+    --ochre: #ca7322;
+    --observatory: #00926e;
+    --polar: #e6f9f1;
+    --jade: #53be70;
+    --ring-track: #e4ecf4;
+    --ink: #171717;
+  }
+
+  body {
+    font-family: 'Montserrat', 'Inter', sans-serif;
+    background-color: var(--page);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 84px header: linear navy gradient with the blue radial highlight on the right. */
+  .site-header {
+    background-image:
+      radial-gradient(1728px 490px at 1180px -25px, rgba(23, 99, 172, .55) 0%, rgba(23, 99, 172, 0) 55%),
+      linear-gradient(178deg, #02335f 0%, #01294d 55%, #021f3b 100%);
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid var(--botticelli);
+    border-radius: 18px;
+    box-shadow: 0 1px 2px 0 rgba(2, 29, 54, .05), 0 10px 30px 0 rgba(2, 29, 54, .04);
+    overflow: hidden;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 10px 18px;
+    border: 0;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background-color .18s ease, box-shadow .18s ease;
+  }
+
+  .btn:hover:not(:disabled) { background: var(--primary-700); }
+  .btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(23, 99, 172, .3); }
+  .btn:disabled { cursor: not-allowed; opacity: .65; }
+
+  /* Progress ring */
+  #ringTrack { stroke: var(--ring-track); }
+  #ringArc {
+    stroke: var(--ochre);
+    stroke-linecap: round;
+    transition: stroke-dashoffset .6s cubic-bezier(.4, 0, .2, 1), stroke .3s ease;
+  }
+  [data-tone="success"] #ringArc { stroke: var(--jade); }
+
+  /* Both spinners rotate a <g> wrapper, never the drawn <circle> itself: the
+     circle carries its own rotate(-90) attribute to start the arc at 12
+     o'clock, and animating the same element would clobber it. */
+  #redirectSpinner,
+  [data-spin="true"] #ringRotor {
+    transform-box: view-box;
+    animation: ringspin 1s linear infinite;
+  }
+
+  #redirectSpinner { transform-origin: 17px 17px; }
+  [data-spin="true"] #ringRotor { transform-origin: 46px 46px; animation-duration: 1.1s; }
+
+  @keyframes ringspin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .panel {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 21px;
+    border-radius: 12px;
+    border: 1px solid;
+  }
+
+  .panel-success { background: var(--polar); border-color: rgba(0, 146, 110, .25); }
+  .panel-warn { background: rgba(255, 165, 40, .1); border-color: rgba(202, 115, 34, .35); }
+
+  .panel-icon-success {
+    background: var(--jade);
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+  }
+
+  .panel-icon-warn {
+    background: #fff;
+    color: var(--ochre);
+    border: 1px solid var(--ochre);
+    width: 43px;
+    height: 43px;
+    border-radius: 21.5px;
+  }
+
+  .panel-icon-success,
+  .panel-icon-warn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .fade { animation: fade .3s ease both; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .001ms !important;
+    }
+  }
+</style>
+
+<body class="flex min-h-screen flex-col">
+
+  <!-- ============================ Header ============================ -->
+  <header class="site-header flex h-[84px] w-full items-center justify-center overflow-hidden px-[72px] max-[560px]:px-[20px]">
+    <div class="flex w-full max-w-[1280px] items-center justify-between">
+      <a href="{{ .Values.collab.homepageUrl }}" class="flex items-center gap-[11px]" aria-label="MOSIP Collab home">
+        <img src="https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/mosip-favicon.png"
+          alt="" width="40" height="40" class="h-[40px] w-[40px]" />
+        <span class="text-[22px] font-medium tracking-[0.2px] text-white max-[560px]:text-[18px]">MOSIP Collab</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ============================ Main ============================ -->
+  <main class="flex-1 px-[24px] pt-[36px] pb-[80px]">
+
+    <!-- Interstitial while we hand the resident over to eSignet -->
+    <section id="redirectView" class="card mx-auto mt-[52px] max-w-[440px] px-[28px] py-[26px] text-center">
+      <svg class="mx-auto" width="34" height="34" viewBox="0 0 34 34" role="img" aria-label="Loading">
+        <circle cx="17" cy="17" r="14" fill="none" stroke="#E4ECF4" stroke-width="3" />
+        <g id="redirectSpinner">
+          <circle cx="17" cy="17" r="14" fill="none" stroke="#1763AC" stroke-width="3" stroke-linecap="round"
+            stroke-dasharray="22 66" transform="rotate(-90 17 17)" />
+        </g>
+      </svg>
+      <p class="mt-[14px] text-[15px] font-bold text-[#01315F]">Redirecting to eSignet</p>
+      <p class="mt-[6px] text-[12.5px] leading-[19px] text-[#6C7787]">Authenticate with your UIN, VID or Handle and a
+        one-time password to confirm this deletion request.</p>
+      <p class="mt-[10px] text-[11.5px] leading-[17px] text-[#9AA6B4]">You will return to the deletion status page once
+        verified.</p>
+    </section>
+
+    <div id="statusView" class="mx-auto hidden w-full max-w-[720px] flex-col gap-[18px]">
+
+      <!-- Page heading -->
+      <div class="flex flex-col gap-[10px]">
+        <div class="flex flex-wrap items-center gap-[12px]">
+          <h1 id="pageTitle" tabindex="-1"
+            class="text-[24px] font-extrabold tracking-[-0.3px] text-[#01315F] max-[520px]:text-[20px]">
+            Verifying your identity</h1>
+          <span id="uinChip"
+            class="hidden rounded-[9px] bg-[#ECF4FF] px-[12px] py-[6px] text-[12px] font-semibold text-[#1763AC]"></span>
+        </div>
+        <p id="pageSubtitle" class="text-[13.5px] leading-[20px] text-[#6C7787]">
+          Taking you to eSignet to confirm this UIN belongs to you.
+        </p>
+      </div>
+
+      <!-- Status card -->
+      <section id="statusCard" class="card" data-tone="progress" data-spin="true" aria-live="polite" aria-busy="true">
+
+        <!-- Ring row -->
+        <div class="flex items-center gap-[26px] px-[28px] pt-[26px] pb-[22px] max-[520px]:gap-[18px] max-[520px]:px-[20px]">
+          <div class="flex h-[96px] w-[96px] shrink-0 items-center justify-center">
+            <svg width="92" height="92" viewBox="0 0 92 92" role="img" aria-labelledby="ringLabel">
+              <title id="ringLabel">Deletion progress</title>
+              <circle id="ringTrack" cx="46" cy="46" r="41.25" fill="none" stroke-width="8.5" />
+              <g id="ringRotor">
+                <circle id="ringArc" cx="46" cy="46" r="41.25" fill="none" stroke-width="8.5"
+                  stroke-dasharray="259.18" stroke-dashoffset="194.39"
+                  transform="rotate(-90 46 46)" />
+              </g>
+              <text id="ringPercent" x="46" y="46" text-anchor="middle" dominant-baseline="central"
+                font-family="Montserrat, sans-serif" font-size="20" font-weight="600" fill="#171717">0%</text>
+            </svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p id="ringTitle" class="text-[16.5px] font-extrabold tracking-[-0.2px] text-[#01315F]">Redirecting to
+              eSignet</p>
+            <p id="ringStatus" class="mt-[7px] text-[12.5px] font-semibold text-[#1763AC]">Please wait&hellip;</p>
+          </div>
+        </div>
+
+        <!-- Status panel -->
+        <div id="panelWrap" class="hidden px-[20px] pt-[8px] pb-[20px]">
+
+          <!-- Deletion complete -->
+          <div id="panelSuccess" class="panel panel-success hidden">
+            <span class="panel-icon-success">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="text-[16px] font-extrabold leading-[22px] tracking-[-0.2px] text-[#01315F]">Your data has been
+                deleted from the MOSIP Collab environment.</p>
+              <p class="mt-[6px] text-[13.5px] font-semibold text-[#00926E]">This UIN can no longer be used.</p>
+              <div class="pt-[10px]">
+                <a class="btn" href="{{ .Values.collab.homepageUrl }}">Back to MOSIP Collab</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Deletion failed, retry available -->
+          <div id="panelFailed" class="panel panel-warn hidden">
+            <span class="panel-icon-warn">
+              <span class="text-[19px] font-bold leading-[19px]">!</span>
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="text-[15px] font-extrabold tracking-[-0.2px] text-[#01315F]">The deletion could not be
+                completed</p>
+              <p class="mt-[6px] text-[13px] leading-[19px] text-[#5B6776]">The process was interrupted before it
+                finished. Retry to resume from where it stopped &mdash; data already deleted stays deleted.</p>
+              <div class="flex flex-wrap items-center gap-[14px] pt-[10px]">
+                <button type="button" id="retryBtn" class="btn">Retry deletion</button>
+                <span id="retryCountdown" class="hidden text-[12px] text-[#6C7787]">Retry window closes in
+                  <span id="retryClock" class="font-bold text-[#CA7322]"></span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Retry window expired / needs re-authentication -->
+          <div id="panelExpired" class="panel panel-warn hidden">
+            <span class="panel-icon-warn">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
+            </span>
+            <div class="min-w-0 flex-1">
+              <p id="expiredTitle" class="text-[15px] font-extrabold tracking-[-0.2px] text-[#01315F]">The retry window
+                has expired.</p>
+              <p id="expiredBody" class="mt-[6px] text-[13px] leading-[19px] text-[#5B6776]">Please click
+                &ldquo;Delete my UIN&rdquo; again on the Collab homepage to restart the deletion process.</p>
+              <div class="pt-[10px]">
+                <a class="btn" href="{{ .Values.collab.homepageUrl }}">Back to MOSIP Collab</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footnote -->
+        <div id="footnote" class="px-[28px] pt-[8px] pb-[20px]">
+          <p class="pr-[28px] text-[12px] leading-[18px] text-[#6C7787]">Deletion is permanent and applies only to the
+            MOSIP Collab sandbox environment.</p>
+        </div>
+      </section>
+
+      <details id="technical" class="hidden">
+        <summary class="cursor-pointer text-[12px] font-bold text-[#6C7787] hover:text-[#01315F]">Technical details
+        </summary>
+        <pre id="technicalBody"
+          class="mt-[9px] overflow-x-auto rounded-[9px] border border-[#D8E2EE] bg-white p-[13px] font-mono text-[11.5px] leading-[17px] text-[#5B6776]"></pre>
+      </details>
+    </div>
+  </main>
+
+  <!-- ============================ Footer ============================ -->
+  <footer class="flex h-[60px] w-full items-center justify-center bg-white">
+    <p class="text-[13px] text-[#727272]">&copy; 2026 All Rights Reserved &middot; MOSIP</p>
+  </footer>
+
+  <script>
+    /* ==================================================================
+       Delete my UIN
+       ------------------------------------------------------------------
+       Landing here with no authorization code means the resident has just
+       come from the Collab homepage: generate state/nonce/PKCE and hand
+       them to eSignet. Coming back with a code means eSignet vouched for
+       them: start the deletion job on the deletion service and follow it
+       to completion.
+
+       eSignet and the deletion service are separate backends. This page
+       never sees a token — it only carries the authorization code from
+       one to the other.
+       ================================================================== */
+
+    var CFG = {
+      esignet: {
+        authorizeUrl: "{{ .Values.esignet.authorizeUrl }}",
+        clientId: "{{ .Values.esignet.clientId }}",
+        redirectUri: "{{ .Values.esignet.redirectUri }}",
+        scope: "{{ .Values.esignet.scope }}",
+        responseType: "{{ .Values.esignet.responseType }}",
+        acrValues: "{{ .Values.esignet.acrValues }}",
+        claims: '{{ .Values.esignet.claims }}',
+        claimsLocales: "{{ .Values.esignet.claimsLocales }}",
+        display: "{{ .Values.esignet.display }}",
+        prompt: "{{ .Values.esignet.prompt }}",
+        maxAge: "{{ .Values.esignet.maxAge }}",
+        uiLocales: "{{ .Values.esignet.uiLocales }}",
+        usePkce: "{{ .Values.esignet.usePkce }}"
+      },
+      api: {
+        startEndpoint: "{{ .Values.deleteService.startEndpoint }}",
+        statusEndpoint: "{{ .Values.deleteService.statusEndpoint }}",
+        retryEndpoint: "{{ .Values.deleteService.retryEndpoint }}",
+        requestSource: "{{ .Values.deleteService.requestSource }}",
+        withCredentials: "{{ .Values.deleteService.withCredentials }}",
+        pollIntervalSeconds: "{{ .Values.deleteService.pollIntervalSeconds }}"
+      },
+      ui: {
+        showTechnicalErrors: "{{ .Values.ui.showTechnicalErrors }}",
+        demoMode: "{{ .Values.ui.demoMode }}"
+      }
+    };
+
+    /* Helm substitutes plain strings, so every value above is quoted - that
+       keeps this file valid JavaScript even before `helm template` runs, which
+       is what lets it be opened straight from the chart for a look. Coerce the
+       booleans and numbers back here. */
+    function looksUnrendered(v) { return typeof v === 'string' && v.indexOf('{' + '{') >= 0; }
+    function truthy(v) { return v === true || v === 'true'; }
+    function intOr(v, fallback) { var n = parseInt(v, 10); return isNaN(n) ? fallback : n; }
+
+    var UNRENDERED = looksUnrendered(CFG.esignet.authorizeUrl);
+
+    CFG.esignet.usePkce = truthy(CFG.esignet.usePkce);
+    CFG.api.withCredentials = truthy(CFG.api.withCredentials);
+    CFG.api.pollIntervalSeconds = intOr(CFG.api.pollIntervalSeconds, 2);
+    CFG.ui.showTechnicalErrors = truthy(CFG.ui.showTechnicalErrors);
+    CFG.ui.demoMode = truthy(CFG.ui.demoMode);
+
+    if (UNRENDERED) {
+      /* Opened directly from the chart (VS Code Live Preview, file://, ...) so
+         no value has been substituted. Run the demo rather than redirect to a
+         template string. */
+      CFG.ui.demoMode = true;
+    }
+
+    var AUTH_KEY = 'mosip.collab.deleteUin.auth.v2';   /* state + nonce + PKCE verifier, pre-redirect  */
+    var JOB_KEY = 'mosip.collab.deleteUin.job.v2';     /* transactionId, so a refresh resumes polling */
+    var AUTH_MAX_AGE_MS = 30 * 60 * 1000;
+    var RING_CIRCUMFERENCE = 2 * Math.PI * 41.25;      /* r = 41.25 in the 92x92 viewBox */
+
+    var $ = function (id) { return document.getElementById(id); };
+
+    var state = {
+      status: 'REDIRECTING',   /* REDIRECTING | STARTING | IN_PROGRESS | COMPLETED | FAILED | EXPIRED | RESTART */
+      progress: 0,
+      maskedUin: null,
+      transactionId: null,
+      retryExpiresAt: null,
+      restartTitle: null,
+      restartBody: null
+    };
+
+    var pollTimer = null;
+    var countdownTimer = null;
+
+    /* ---------------------- copy per status ---------------------- */
+
+    var COPY = {
+      REDIRECTING: {
+        title: 'Verifying your identity',
+        subtitle: 'Taking you to eSignet to confirm this UIN belongs to you.',
+        ringTitle: 'Redirecting to eSignet',
+        ringStatus: 'Please wait…'
+      },
+      STARTING: {
+        title: 'Deleting your identity data',
+        subtitle: 'Your data is being deleted. Please keep this page open until the deletion is complete.',
+        ringTitle: 'Starting deletion',
+        ringStatus: 'Please wait…'
+      },
+      IN_PROGRESS: {
+        title: 'Deleting your identity data',
+        subtitle: 'Your data is being deleted. Please keep this page open until the deletion is complete.',
+        ringTitle: 'Deleting your data',
+        ringStatus: 'Deletion in progress…'
+      },
+      COMPLETED: {
+        title: 'Deletion complete',
+        subtitle: 'Your request has been processed. A record of this deletion has been logged in the Collab environment.',
+        ringTitle: 'All data removed',
+        ringStatus: null
+      },
+      FAILED: {
+        title: 'Something went wrong',
+        subtitle: 'The deletion could not be completed. Retry to resume the process.',
+        ringTitle: 'Something went wrong',
+        ringStatus: null
+      },
+      EXPIRED: {
+        title: 'Retry window expired',
+        subtitle: 'This deletion request needs to be re-authenticated before it can continue.',
+        ringTitle: 'Something went wrong',
+        ringStatus: null
+      },
+      RESTART: {
+        title: 'Start again from the homepage',
+        subtitle: 'This deletion request needs to be re-authenticated before it can continue.',
+        ringTitle: 'Something went wrong',
+        ringStatus: null
+      }
+    };
+
+    /* ---------------------- render ---------------------- */
+
+    function render() {
+      var copy = COPY[state.status] || COPY.RESTART;
+      var terminal = state.status === 'COMPLETED' || state.status === 'FAILED' ||
+        state.status === 'EXPIRED' || state.status === 'RESTART';
+      var spinning = state.status === 'STARTING';
+
+      /* REDIRECTING has its own compact interstitial card. */
+      var redirecting = state.status === 'REDIRECTING';
+      $('redirectView').classList.toggle('hidden', !redirecting);
+      $('statusView').classList.toggle('hidden', redirecting);
+      $('statusView').classList.toggle('flex', !redirecting);
+      if (redirecting) { return; }
+
+      $('pageTitle').textContent = copy.title;
+      $('pageSubtitle').textContent = copy.subtitle;
+      $('ringTitle').textContent = copy.ringTitle;
+      $('ringStatus').textContent = copy.ringStatus || '';
+      $('ringStatus').classList.toggle('hidden', !copy.ringStatus);
+
+      if (state.maskedUin) {
+        $('uinChip').textContent = state.maskedUin;
+        $('uinChip').classList.remove('hidden');
+      } else {
+        $('uinChip').classList.add('hidden');
+      }
+
+      var card = $('statusCard');
+      card.setAttribute('data-tone', state.status === 'COMPLETED' ? 'success' : 'progress');
+      card.setAttribute('data-spin', spinning ? 'true' : 'false');
+      card.setAttribute('aria-busy', terminal ? 'false' : 'true');
+
+      /* Spinning states show a short fixed arc; otherwise the real percentage. */
+      var pct = spinning ? 25 : Math.max(0, Math.min(100, Math.round(state.progress)));
+      $('ringArc').setAttribute('stroke-dashoffset',
+        String(RING_CIRCUMFERENCE - (RING_CIRCUMFERENCE * pct / 100)));
+      $('ringArc').setAttribute('stroke-dasharray', String(RING_CIRCUMFERENCE));
+      $('ringPercent').textContent = spinning ? '' : pct + '%';
+
+      var showSuccess = state.status === 'COMPLETED';
+      var showFailed = state.status === 'FAILED';
+      var showExpired = state.status === 'EXPIRED' || state.status === 'RESTART';
+
+      $('panelSuccess').classList.toggle('hidden', !showSuccess);
+      $('panelFailed').classList.toggle('hidden', !showFailed);
+      $('panelExpired').classList.toggle('hidden', !showExpired);
+      $('panelWrap').classList.toggle('hidden', !(showSuccess || showFailed || showExpired));
+
+      if (showExpired) {
+        $('expiredTitle').textContent = state.restartTitle || 'The retry window has expired.';
+        $('expiredBody').textContent = state.restartBody ||
+          'Please click “Delete my UIN” again on the Collab homepage to restart the deletion process.';
+      }
+
+      /* The footnote aligns with the panel when there is one, with the ring when there is not. */
+      $('footnote').classList.toggle('hidden', showSuccess);
+      $('footnote').classList.toggle('px-[20px]', showFailed || showExpired);
+      $('footnote').classList.toggle('px-[28px]', !(showFailed || showExpired));
+
+      if (showSuccess || showFailed || showExpired) {
+        var panel = showSuccess ? $('panelSuccess') : (showFailed ? $('panelFailed') : $('panelExpired'));
+        panel.classList.remove('fade');
+        void panel.offsetWidth;
+        panel.classList.add('fade');
+      }
+    }
+
+    function setStatus(next, extra) {
+      state.status = next;
+      if (extra) { for (var k in extra) { if (Object.prototype.hasOwnProperty.call(extra, k)) { state[k] = extra[k]; } } }
+      render();
+    }
+
+    function showTechnical(err) {
+      if (!CFG.ui.showTechnicalErrors || !err) { return; }
+      var lines = [];
+      if (err.status) { lines.push('status: ' + err.status); }
+      if (err.message) { lines.push('message: ' + err.message); }
+      if (err.body) { lines.push('body: ' + JSON.stringify(err.body, null, 2)); }
+      $('technicalBody').textContent = lines.join('\n');
+      $('technical').classList.remove('hidden');
+    }
+
+    function restart(title, body, err) {
+      clearJob();
+      stopTimers();
+      setStatus('RESTART', { restartTitle: title, restartBody: body });
+      showTechnical(err);
+    }
+
+    /* ---------------------- storage ---------------------- */
+
+    function readJson(key) {
+      try { return JSON.parse(sessionStorage.getItem(key) || 'null'); } catch (e) { return null; }
+    }
+    function writeJson(key, value) {
+      try { sessionStorage.setItem(key, JSON.stringify(value)); return true; } catch (e) { return false; }
+    }
+    function clearAuth() { try { sessionStorage.removeItem(AUTH_KEY); } catch (e) { /* ignore */ } }
+    function clearJob() { try { sessionStorage.removeItem(JOB_KEY); } catch (e) { /* ignore */ } }
+
+    /* ---------------------- crypto helpers ---------------------- */
+
+    function base64url(bytes) {
+      var s = '';
+      for (var i = 0; i < bytes.length; i++) { s += String.fromCharCode(bytes[i]); }
+      return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    function randomToken(byteLength) {
+      var a = new Uint8Array(byteLength || 32);
+      window.crypto.getRandomValues(a);
+      return base64url(a);
+    }
+    function canUsePkce() {
+      return !!(window.isSecureContext && window.crypto && window.crypto.subtle && window.crypto.subtle.digest);
+    }
+    function sha256Challenge(verifier) {
+      return window.crypto.subtle
+        .digest('SHA-256', new TextEncoder().encode(verifier))
+        .then(function (buf) { return base64url(new Uint8Array(buf)); });
+    }
+
+    function maskUin(value) {
+      if (!value) { return null; }
+      var digits = String(value).replace(/\D/g, '');
+      var tail = digits.slice(-4) || String(value).slice(-4);
+      return 'UIN •••• •••• ' + tail;
+    }
+
+    /* ---------------------- eSignet hand-off ---------------------- */
+
+    function buildAuthorizeUrl(stateToken, nonce, codeChallenge) {
+      var e = CFG.esignet;
+      var p = new URLSearchParams();
+      p.set('response_type', e.responseType || 'code');
+      p.set('client_id', e.clientId);
+      p.set('redirect_uri', e.redirectUri || (window.location.origin + window.location.pathname));
+      p.set('scope', e.scope || 'openid profile');
+      p.set('state', stateToken);
+      p.set('nonce', nonce);
+      if (e.acrValues) { p.set('acr_values', e.acrValues); }
+      if (e.claims) { p.set('claims', e.claims); }
+      if (e.claimsLocales) { p.set('claims_locales', e.claimsLocales); }
+      if (e.display) { p.set('display', e.display); }
+      if (e.prompt) { p.set('prompt', e.prompt); }
+      if (e.maxAge) { p.set('max_age', e.maxAge); }
+      if (e.uiLocales) { p.set('ui_locales', e.uiLocales); }
+      if (codeChallenge) {
+        p.set('code_challenge', codeChallenge);
+        p.set('code_challenge_method', 'S256');
+      }
+      return e.authorizeUrl + (e.authorizeUrl.indexOf('?') >= 0 ? '&' : '?') + p.toString();
+    }
+
+    function goToESignet() {
+      setStatus('REDIRECTING');
+
+      if (CFG.ui.demoMode) {
+        window.setTimeout(function () { startDeletion({ demo: true }); }, 1400);
+        return;
+      }
+
+      var stateToken = randomToken(24);
+      var nonce = randomToken(16);
+      var verifier = CFG.esignet.usePkce && canUsePkce() ? randomToken(48) : null;
+
+      if (CFG.esignet.usePkce && !verifier) {
+        console.warn('[delete-uin] PKCE unavailable (needs a secure context); continuing without it.');
+      }
+
+      if (!writeJson(AUTH_KEY, { state: stateToken, nonce: nonce, verifier: verifier, startedAt: Date.now() })) {
+        restart('This browser is blocking storage',
+          'We need to remember this request while you are at eSignet. Turn off private browsing or allow site data for this page, then start again from the Collab homepage.');
+        return;
+      }
+
+      var go = function (challenge) { window.location.assign(buildAuthorizeUrl(stateToken, nonce, challenge)); };
+      if (verifier) { sha256Challenge(verifier).then(go).catch(function () { go(null); }); }
+      else { go(null); }
+    }
+
+    /* ---------------------- deletion service ---------------------- */
+
+    function request(url, options) {
+      return fetch(url, {
+        method: options.method,
+        mode: 'cors',
+        credentials: CFG.api.withCredentials ? 'include' : 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-Request-Source': CFG.api.requestSource },
+        body: options.body ? JSON.stringify(options.body) : undefined
+      }).then(function (response) {
+        return response.text().then(function (text) {
+          var body = null;
+          try { body = text ? JSON.parse(text) : null; } catch (e) { body = { raw: text }; }
+          if (!response.ok) {
+            var err = new Error('HTTP ' + response.status);
+            err.status = response.status;
+            err.body = body;
+            throw err;
+          }
+          return body || {};
+        });
+      });
+    }
+
+    /* Normalises whatever the deletion service returns into `state`. */
+    function applyJobResponse(data) {
+      data = data || {};
+      if (data.transactionId) {
+        state.transactionId = data.transactionId;
+        writeJson(JOB_KEY, { transactionId: data.transactionId });
+      }
+      if (data.maskedUin) { state.maskedUin = data.maskedUin; }
+      else if (data.uin) { state.maskedUin = maskUin(data.uin); }
+      if (typeof data.progress === 'number') { state.progress = data.progress; }
+      state.retryExpiresAt = data.retryExpiresAt || data.retryWindowExpiresAt || null;
+
+      var status = String(data.status || 'IN_PROGRESS').toUpperCase();
+      if (status === 'COMPLETED' || status === 'COMPLETE' || status === 'DELETED' || status === 'SUCCESS') {
+        stopTimers();
+        clearJob();
+        setStatus('COMPLETED', { progress: 100 });
+        return;
+      }
+      if (status === 'EXPIRED' || status === 'RETRY_WINDOW_EXPIRED') {
+        stopTimers();
+        clearJob();
+        setStatus('EXPIRED', { restartTitle: null, restartBody: null });
+        return;
+      }
+      if (status === 'FAILED' || status === 'ERROR' || status === 'INTERRUPTED') {
+        stopPolling();
+        setStatus('FAILED');
+        startCountdown();
+        return;
+      }
+      setStatus('IN_PROGRESS');
+      schedulePoll();
+    }
+
+    function startDeletion(auth) {
+      setStatus('STARTING');
+
+      if (CFG.ui.demoMode) {
+        state.maskedUin = 'UIN •••• •••• 9134';
+        runDemo();
+        return;
+      }
+
+      request(CFG.api.startEndpoint, {
+        method: 'POST',
+        body: {
+          code: auth.code,
+          state: auth.state,
+          redirectUri: CFG.esignet.redirectUri,
+          codeVerifier: auth.codeVerifier
+        }
+      }).then(applyJobResponse).catch(function (err) {
+        if (err.status === 401 || err.status === 403) {
+          restart('The retry window has expired.',
+            'Your eSignet verification is no longer valid. Please click “Delete my UIN” again on the Collab homepage to restart the deletion process.', err);
+          return;
+        }
+        stopPolling();
+        setStatus('FAILED');
+        showTechnical(err);
+      });
+    }
+
+    function pollStatus() {
+      if (!state.transactionId) { return; }
+      var url = CFG.api.statusEndpoint +
+        (CFG.api.statusEndpoint.indexOf('?') >= 0 ? '&' : '?') +
+        'transactionId=' + encodeURIComponent(state.transactionId);
+
+      request(url, { method: 'GET' })
+        .then(applyJobResponse)
+        .catch(function (err) {
+          if (err.status === 404 || err.status === 410) {
+            restart('The retry window has expired.',
+              'This deletion request is no longer available. Please click “Delete my UIN” again on the Collab homepage to restart the deletion process.', err);
+            return;
+          }
+          /* A transient failure while polling is not fatal — keep trying. */
+          console.warn('[delete-uin] status poll failed', err);
+          schedulePoll();
+        });
+    }
+
+    function schedulePoll() {
+      stopPolling();
+      var seconds = Math.max(1, CFG.api.pollIntervalSeconds || 2);
+      pollTimer = window.setTimeout(pollStatus, seconds * 1000);
+    }
+
+    function stopPolling() {
+      if (pollTimer) { window.clearTimeout(pollTimer); pollTimer = null; }
+    }
+
+    function stopTimers() {
+      stopPolling();
+      if (countdownTimer) { window.clearInterval(countdownTimer); countdownTimer = null; }
+    }
+
+    function retryDeletion() {
+      $('retryBtn').disabled = true;
+      $('retryBtn').textContent = 'Retrying…';
+      stopTimers();
+
+      var finish = function () {
+        $('retryBtn').disabled = false;
+        $('retryBtn').textContent = 'Retry deletion';
+      };
+
+      if (CFG.ui.demoMode) {
+        finish();
+        setStatus('IN_PROGRESS');
+        runDemo();
+        return;
+      }
+
+      request(CFG.api.retryEndpoint, { method: 'POST', body: { transactionId: state.transactionId } })
+        .then(function (data) { finish(); applyJobResponse(data); })
+        .catch(function (err) {
+          finish();
+          if (err.status === 401 || err.status === 403 || err.status === 410) {
+            restart(null, null, err);
+            return;
+          }
+          setStatus('FAILED');
+          startCountdown();
+          showTechnical(err);
+        });
+    }
+
+    /* ---------------------- retry countdown ---------------------- */
+
+    function startCountdown() {
+      if (countdownTimer) { window.clearInterval(countdownTimer); countdownTimer = null; }
+      if (!state.retryExpiresAt) {
+        $('retryCountdown').classList.add('hidden');
+        return;
+      }
+      var expiresAt = new Date(state.retryExpiresAt).getTime();
+      if (isNaN(expiresAt)) { $('retryCountdown').classList.add('hidden'); return; }
+
+      $('retryCountdown').classList.remove('hidden');
+      var tick = function () {
+        var remaining = Math.max(0, expiresAt - Date.now());
+        if (remaining <= 0) {
+          window.clearInterval(countdownTimer);
+          countdownTimer = null;
+          clearJob();
+          setStatus('EXPIRED', { restartTitle: null, restartBody: null });
+          return;
+        }
+        var total = Math.floor(remaining / 1000);
+        var mm = String(Math.floor(total / 60));
+        var ss = String(total % 60);
+        $('retryClock').textContent = mm + ':' + (ss.length < 2 ? '0' + ss : ss);
+      };
+      tick();
+      countdownTimer = window.setInterval(tick, 1000);
+    }
+
+    /* ---------------------- demo mode ---------------------- */
+
+    function runDemo() {
+      var preview = new URLSearchParams(window.location.search).get('preview');
+      state.progress = state.status === 'IN_PROGRESS' ? state.progress : 0;
+      setStatus('IN_PROGRESS');
+
+      var step = function () {
+        state.progress += 7;
+        if (state.progress >= 54 && preview === 'failed') {
+          state.progress = 54;
+          state.retryExpiresAt = new Date(Date.now() + 12 * 60 * 1000 + 46 * 1000).toISOString();
+          setStatus('FAILED');
+          startCountdown();
+          return;
+        }
+        if (state.progress >= 54 && preview === 'expired') {
+          state.progress = 54;
+          setStatus('EXPIRED');
+          return;
+        }
+        if (state.progress >= 100) {
+          setStatus('COMPLETED', { progress: 100 });
+          return;
+        }
+        render();
+        pollTimer = window.setTimeout(step, 450);
+      };
+      pollTimer = window.setTimeout(step, 600);
+    }
+
+    /* ---------------------- boot ---------------------- */
+
+    function stripQuery() {
+      if (window.history && window.history.replaceState) {
+        var preview = new URLSearchParams(window.location.search).get('preview');
+        var keep = (CFG.ui.demoMode && preview) ? ('?preview=' + encodeURIComponent(preview)) : '';
+        window.history.replaceState(null, '', window.location.pathname + keep);
+      }
+    }
+
+    /* Used only when the file is opened un-rendered, so "Back to MOSIP Collab"
+       still goes somewhere real instead of a dead '#'. */
+    var FALLBACK_HOMEPAGE = 'https://collab.mosip.net';
+
+    function markUnrenderedPreview() {
+      var links = document.querySelectorAll('a[href]');
+      for (var i = 0; i < links.length; i++) {
+        if (looksUnrendered(links[i].getAttribute('href'))) {
+          links[i].setAttribute('href', FALLBACK_HOMEPAGE);
+        }
+      }
+      var badge = document.createElement('div');
+      badge.textContent = 'Template preview - Helm values not rendered, running in demo mode';
+      badge.title = 'Links fall back to ' + FALLBACK_HOMEPAGE;
+      badge.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:60;background:#01315f;color:#fff;' +
+        'font:700 11.5px Montserrat,sans-serif;padding:7px 12px;border-radius:9px;' +
+        'box-shadow:0 8px 20px rgba(2,29,54,.35)';
+      document.body.appendChild(badge);
+      console.warn('[delete-uin] Helm values are not rendered in this file. ' +
+        'Run `helm template` for the real page; showing the demo flow instead.');
+    }
+
+    function boot() {
+      $('retryBtn').addEventListener('click', retryDeletion);
+      if (UNRENDERED) { markUnrenderedPreview(); }
+
+      if (CFG.ui.demoMode) {
+        console.warn('[delete-uin] demoMode is ON — no backend is contacted. Set ui.demoMode=false for real environments.');
+      }
+
+      var q = new URLSearchParams(window.location.search);
+      var oidcError = q.get('error');
+      var code = q.get('code');
+
+      /* A refresh mid-deletion should resume the job, not start a new one. */
+      var job = readJson(JOB_KEY);
+      if (!code && !oidcError && job && job.transactionId && !CFG.ui.demoMode) {
+        state.transactionId = job.transactionId;
+        setStatus('IN_PROGRESS');
+        pollStatus();
+        return;
+      }
+
+      if (oidcError) {
+        clearAuth();
+        stripQuery();
+        var denied = oidcError === 'access_denied';
+        restart(
+          denied ? 'Verification was cancelled' : 'The retry window has expired.',
+          denied
+            ? 'You chose not to continue at eSignet, so nothing has been deleted. Click “Delete my UIN” again on the Collab homepage when you are ready.'
+            : 'eSignet could not verify you. Please click “Delete my UIN” again on the Collab homepage to restart the deletion process.',
+          { message: oidcError + (q.get('error_description') ? ': ' + q.get('error_description') : '') }
+        );
+        return;
+      }
+
+      if (!code) {
+        goToESignet();
+        return;
+      }
+
+      var auth = readJson(AUTH_KEY);
+      clearAuth();
+      stripQuery();
+
+      if (!auth) {
+        restart('The retry window has expired.',
+          'We have no record in this browser of starting a deletion request. Please click “Delete my UIN” again on the Collab homepage to restart the deletion process.');
+        return;
+      }
+      if (auth.state !== q.get('state')) {
+        restart('This verification could not be matched',
+          'The reply from eSignet does not match the request this browser sent. As a precaution nothing has been deleted. Please click “Delete my UIN” again on the Collab homepage.');
+        return;
+      }
+      if (Date.now() - (auth.startedAt || 0) > AUTH_MAX_AGE_MS) {
+        restart('The retry window has expired.',
+          'Verification took longer than 30 minutes, so the request was discarded. Please click “Delete my UIN” again on the Collab homepage to restart the deletion process.');
+        return;
+      }
+
+      startDeletion({ code: code, state: q.get('state'), codeVerifier: auth.verifier || null });
+    }
+
+    document.addEventListener('DOMContentLoaded', boot);
+  </script>
+
+</body>
+
+</html>

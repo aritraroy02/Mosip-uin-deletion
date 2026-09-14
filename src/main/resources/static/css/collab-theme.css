@@ -1,0 +1,867 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+/* ==========================================================================
+   Collab theme tokens
+   Scoped to the Collab-branded pages (home, delete, verify-otp,
+   confirm-delete, deletion-progress). Does not affect register.html,
+   success.html, or audit-logs.html.
+   ========================================================================== */
+:root {
+    --collab-navy-deep: #01315f;
+    --collab-navy-1: rgb(2, 51, 95);
+    --collab-navy-2: rgb(1, 41, 77);
+    --collab-navy-3: rgb(2, 31, 59);
+    --collab-ink: #01315f;
+    --collab-text-muted: #6c7787;
+    --collab-text-faint: #9aa6b4;
+    --collab-border: #e4ecf4;
+    --collab-surface: #ffffff;
+    --collab-bg: #eef3f8;
+
+    --collab-tint-mosip: #ecf4ff;
+    --collab-tint-esignet: #ffefdf;
+    --collab-tint-inji: #e6f9f1;
+
+    --collab-accent-mosip: #3772bb;
+    --collab-accent-esignet: #ca7322;
+    --collab-accent-inji: #00926e;
+
+    --collab-success-bg: #ecfdf5;
+    --collab-success-border: #a7f3d0;
+    --collab-success-text: #065f46;
+    --collab-warn-bg: #fef3e2;
+    --collab-warn-border: #fde3b8;
+    --collab-warn-text: #92400e;
+
+    --collab-radius-card: 18px;
+    --collab-radius-pill: 9999px;
+    --collab-shadow-card: 0px 1px 2px 0px rgba(2,29,54,0.04), 0px 10px 24px -14px rgba(2,29,54,0.18);
+}
+
+.collab-page {
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--collab-bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.collab-page > main {
+    flex: 1 0 auto;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Header / hero                                                          */
+/* ---------------------------------------------------------------------- */
+.collab-header {
+    background:
+        radial-gradient(circle at 82% -30%, rgba(255,165,40,0.10) 0%, rgba(255,165,40,0) 45%),
+        linear-gradient(178deg, var(--collab-navy-1) 0%, var(--collab-navy-2) 55%, var(--collab-navy-3) 100%);
+    padding: 0 72px 40px;
+}
+
+.collab-nav {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 84px;
+    gap: 28px;
+}
+
+.collab-nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    text-decoration: none;
+    color: white;
+}
+
+.collab-nav-brand img {
+    width: 40px;
+    height: 40px;
+    display: block;
+}
+
+.collab-nav-brand span {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+    font-size: 22px;
+    letter-spacing: 0.2px;
+    color: white;
+}
+
+.collab-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    list-style: none;
+}
+
+.collab-nav-link {
+    color: #dbe7f4;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 15px;
+}
+
+.collab-nav-cta {
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 9px;
+    padding: 10px 19px;
+    color: white;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.collab-nav-cta-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 9px;
+    padding: 10px 15px;
+    color: white;
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: var(--transition);
+}
+
+.collab-nav-cta-danger:hover {
+    background: rgba(255,255,255,0.08);
+}
+
+.collab-nav-cta-danger {
+    position: relative;
+}
+
+.collab-nav-cta-danger .collab-tooltip {
+    position: absolute;
+    top: calc(100% + 14px);
+    right: 0;
+    width: 360px;
+    max-width: calc(100vw - 96px);
+    padding: 20px;
+    border-radius: 14px;
+    background: white;
+    box-shadow: 0px 1px 2px 0px rgba(2,29,54,0.04), 0px 20px 40px -14px rgba(2,29,54,0.35);
+    text-align: left;
+    /* The trigger button sets white-space: nowrap - the tooltip must reset it or
+       its copy renders on one long line and overflows the viewport. */
+    white-space: normal;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 10;
+    cursor: default;
+}
+
+/* Upward caret pointing at the trigger, as in the Figma hover state. */
+.collab-nav-cta-danger .collab-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -7px;
+    right: 26px;
+    width: 14px;
+    height: 14px;
+    background: white;
+    transform: rotate(45deg);
+    border-radius: 2px;
+}
+
+.collab-nav-cta-danger .collab-tooltip strong {
+    display: block;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--collab-navy-deep);
+    margin-bottom: 8px;
+}
+
+.collab-nav-cta-danger .collab-tooltip p {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--collab-text-muted);
+    margin: 0 0 8px;
+}
+
+.collab-nav-cta-danger .collab-tooltip p:last-child {
+    margin-bottom: 0;
+}
+
+.collab-nav-cta-danger:hover .collab-tooltip,
+.collab-nav-cta-danger:focus-visible .collab-tooltip {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.collab-hero {
+    max-width: 900px;
+    margin: 26px auto 0;
+    text-align: center;
+    color: white;
+}
+
+.collab-hero h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 34px;
+    letter-spacing: -0.4px;
+    margin-bottom: 11px;
+}
+
+.collab-hero p {
+    max-width: 680px;
+    margin: 0 auto;
+    color: #b9cde2;
+    font-size: 15px;
+    line-height: 23.25px;
+}
+
+.collab-hero p strong {
+    color: white;
+    font-weight: 600;
+}
+
+.collab-tablist {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    max-width: 1280px;
+    margin: 30px auto 0;
+}
+
+.collab-tab {
+    padding: 13px 40px;
+    border-radius: 12px 12px 0 0;
+    font-weight: 700;
+    font-size: 15px;
+    text-align: center;
+    background: rgba(255,255,255,0.07);
+    color: #cfe0f1;
+}
+
+.collab-tab.active {
+    background: #eef3f8;
+    color: var(--collab-navy-deep);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Catalogue                                                              */
+/* ---------------------------------------------------------------------- */
+.collab-main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 30px 0 80px;
+}
+
+.collab-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 30px;
+}
+
+.collab-toolbar h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 23px;
+    color: var(--collab-navy-deep);
+}
+
+.collab-toolbar-sub {
+    font-size: 13px;
+    color: var(--collab-text-muted);
+    margin-top: 6px;
+}
+
+.app-search {
+    position: relative;
+    width: 248px;
+}
+
+.app-search input {
+    width: 100%;
+    padding: 12.5px 16px 12.5px 39px;
+    border: 1px solid var(--collab-border);
+    border-radius: 10px;
+    background: white;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+}
+
+.app-search i {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--collab-text-faint);
+    font-size: 14px;
+}
+
+.app-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 32px;
+}
+
+.app-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: white;
+    box-shadow: var(--collab-shadow-card);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--collab-text-muted);
+    cursor: pointer;
+}
+
+.app-filter-btn.active {
+    color: var(--collab-navy-deep);
+}
+
+.app-filter-btn .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--collab-text-faint);
+}
+
+.app-filter-btn[data-category="mosip"] .dot { background: var(--collab-accent-mosip); }
+.app-filter-btn[data-category="esignet"] .dot { background: var(--collab-accent-esignet); }
+.app-filter-btn[data-category="inji"] .dot { background: var(--collab-accent-inji); }
+
+.app-filter-btn .count {
+    color: var(--collab-text-faint);
+    font-weight: 600;
+}
+
+.app-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+}
+
+.app-card {
+    background: white;
+    border: 1px solid var(--collab-border);
+    border-radius: var(--collab-radius-card);
+    box-shadow: var(--collab-shadow-card);
+    padding: 19px;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-card[hidden] { display: none; }
+
+/* Bundle ("stacked cards") variant - two rotated sheets peek out behind the card,
+   matching the Figma stack treatment for multi-offering families. */
+.app-card--bundle {
+    position: relative;
+}
+
+.app-card--bundle::before,
+.app-card--bundle::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: white;
+    border: 1px solid var(--collab-border);
+    border-radius: var(--collab-radius-card);
+    z-index: -1;
+}
+
+.app-card--bundle::before {
+    transform: rotate(-2deg);
+    opacity: 0.8;
+}
+
+.app-card--bundle::after {
+    transform: rotate(1.6deg);
+    box-shadow: var(--collab-shadow-card);
+}
+
+.app-card-head {
+    display: flex;
+    gap: 13px;
+    align-items: center;
+}
+
+.app-card-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.app-card-icon img {
+    width: 34px;
+    height: 34px;
+    display: block;
+}
+
+.app-card-icon.mosip { background: var(--collab-tint-mosip); }
+.app-card-icon.esignet { background: var(--collab-tint-esignet); }
+.app-card-icon.inji { background: var(--collab-tint-inji); }
+
+.app-card-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 11.5px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--collab-text-faint);
+    margin-bottom: 5px;
+}
+
+.app-card-eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; }
+.app-card-eyebrow.mosip .dot { background: var(--collab-accent-mosip); }
+.app-card-eyebrow.esignet .dot { background: var(--collab-accent-esignet); }
+.app-card-eyebrow.inji .dot { background: var(--collab-accent-inji); }
+
+.app-card-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 16.5px;
+    letter-spacing: -0.2px;
+    color: var(--collab-navy-deep);
+}
+
+.app-card-desc {
+    color: var(--collab-text-muted);
+    font-size: 13px;
+    line-height: 19.5px;
+    margin-top: 14px;
+}
+
+.app-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.app-card-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border-radius: 7px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    background: #f4f8fa;
+    border: 1px solid var(--collab-border);
+    color: #5b6776;
+}
+
+.app-card-pill.tint-mosip { background: var(--collab-tint-mosip); color: var(--collab-accent-mosip); border: none; }
+.app-card-pill.tint-esignet { background: var(--collab-tint-esignet); color: var(--collab-accent-esignet); border: none; }
+.app-card-pill.tint-inji { background: var(--collab-tint-inji); color: var(--collab-accent-inji); border: none; }
+
+.app-card-date {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--collab-text-faint);
+}
+
+.app-card-date .dot { width: 6px; height: 6px; border-radius: 50%; background: #53be70; }
+
+.app-card-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 16px;
+}
+
+.app-card-cta {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    background: #1763ac;
+    color: white;
+    border: none;
+    border-radius: 9px;
+    padding: 10px 15px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    text-decoration: none;
+    box-shadow: 0px 8px 16px -10px rgba(23,99,172,0.9);
+}
+
+.app-card-icon-btn {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    border: 1px solid #d8e2ee;
+    background: white;
+    color: var(--collab-navy-deep);
+    font-size: 14px;
+}
+
+.app-card-bundle-row {
+    background: #f4f8fa;
+    border: 1px solid var(--collab-border);
+    border-radius: 12px;
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 16px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--collab-navy-deep);
+    text-decoration: none;
+}
+
+.collab-footer {
+    background: white;
+    border-top: 1px solid var(--collab-border);
+    text-align: center;
+    padding: 34px 0;
+    color: var(--collab-text-muted);
+    font-size: 14px;
+}
+
+@media (max-width: 1100px) {
+    .app-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 720px) {
+    .app-grid { grid-template-columns: 1fr; }
+    .collab-header { padding: 0 24px 32px; }
+    .collab-nav { flex-wrap: wrap; height: auto; padding: 16px 0; }
+    .collab-nav-links { flex-wrap: wrap; }
+    .collab-toolbar { flex-direction: column; }
+    .app-search { width: 100%; }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Auth / consent screens (delete.html, verify-otp.html, confirm-delete.html) */
+/* ---------------------------------------------------------------------- */
+.collab-simple-header {
+    background: linear-gradient(178deg, var(--collab-navy-1) 0%, var(--collab-navy-2) 55%, var(--collab-navy-3) 100%);
+    padding: 20px 72px;
+}
+
+.collab-simple-body {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+}
+
+.collab-card {
+    background: white;
+    border: 1px solid var(--collab-border);
+    border-radius: var(--collab-radius-card);
+    box-shadow: var(--collab-shadow-card);
+    padding: 32px;
+}
+
+.collab-card h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 23px;
+    color: var(--collab-navy-deep);
+    margin-bottom: 8px;
+}
+
+.collab-card p.collab-subtitle {
+    color: var(--collab-text-muted);
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Deletion progress / success / retry states                            */
+/* ---------------------------------------------------------------------- */
+.progress-shell {
+    max-width: 720px;
+    margin: 48px auto 80px;
+    padding: 0 24px;
+}
+
+.progress-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13.5px;
+    border: 1px solid var(--collab-success-border);
+    background: var(--collab-success-bg);
+    color: var(--collab-success-text);
+    border-radius: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+.progress-title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.progress-title-row h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    color: var(--collab-navy-deep);
+}
+
+.uin-badge {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: #3772bb;
+}
+
+.progress-subtitle {
+    color: var(--collab-text-muted);
+    font-size: 14px;
+    margin: 12px 0 24px;
+}
+
+.progress-panel {
+    background: white;
+    border: 1px solid var(--collab-border);
+    border-radius: var(--collab-radius-card);
+    box-shadow: var(--collab-shadow-card);
+    padding: 32px;
+}
+
+.progress-summary {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.progress-percent {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 24px;
+    color: var(--collab-navy-deep);
+    min-width: 60px;
+}
+
+.progress-summary-text {
+    flex: 1;
+}
+
+.progress-stage-label {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 10.5px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--collab-text-faint);
+    margin-bottom: 2px;
+}
+
+.progress-stage-name {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--collab-navy-deep);
+}
+
+.progress-bar-track {
+    height: 6px;
+    border-radius: 3px;
+    background: #dbe4ee;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: #1763ac;
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.progress-bar-fill.warn { background: #d97706; }
+
+.stage-list {
+    margin-top: 20px;
+    border-top: 1px solid var(--collab-border);
+}
+
+.stage-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 8px;
+    border-bottom: none;
+}
+
+.stage-item.active {
+    background: #eef3fc;
+    border-radius: 10px;
+    margin: 0 -8px;
+    padding: 16px;
+}
+
+.stage-item.failed {
+    background: #fef3e2;
+    border-radius: 10px;
+    margin: 0 -8px;
+    padding: 16px;
+}
+
+.stage-marker {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border: 2px solid #dbe4ee;
+    color: transparent;
+    font-size: 13px;
+}
+
+.stage-item.completed .stage-marker { background: #34a853; border-color: #34a853; color: white; }
+.stage-item.active .stage-marker { border-color: #1763ac; color: #1763ac; }
+.stage-item.failed .stage-marker { background: #fde3b8; border-color: #d97706; color: #92400e; }
+
+.stage-text { flex: 1; }
+
+.stage-name {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--collab-navy-deep);
+}
+
+.stage-desc {
+    font-size: 12.5px;
+    color: var(--collab-text-faint);
+    margin-top: 2px;
+}
+
+.stage-status {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 12.5px;
+    white-space: nowrap;
+}
+
+.stage-status.completed { color: #1a8f4c; }
+.stage-status.queued { color: var(--collab-text-faint); }
+.stage-status.failed { color: #c2670f; }
+
+.outcome-callout {
+    margin-top: 24px;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    gap: 14px;
+}
+
+.outcome-callout.success { background: var(--collab-success-bg); border: 1px solid var(--collab-success-border); }
+.outcome-callout.warn { background: var(--collab-warn-bg); border: 1px solid var(--collab-warn-border); }
+
+.outcome-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    color: white;
+    font-size: 14px;
+}
+
+.outcome-callout.success .outcome-icon { background: #34a853; }
+.outcome-callout.warn .outcome-icon { background: transparent; border: 2px solid #d97706; color: #d97706; }
+
+.outcome-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--collab-navy-deep);
+    margin-bottom: 2px;
+}
+
+.outcome-desc {
+    font-size: 13px;
+    color: var(--collab-text-muted);
+}
+
+.outcome-callout.success .outcome-desc { color: #166534; }
+
+.outcome-actions { margin-top: 14px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+.outcome-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #1763ac;
+    color: white;
+    border: none;
+    border-radius: 9px;
+    padding: 10px 18px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.outcome-timer {
+    font-size: 13px;
+    color: var(--collab-text-muted);
+}
+
+.outcome-timer strong { color: #c2670f; }
+
+.progress-footnote {
+    margin-top: 20px;
+    font-size: 12.5px;
+    color: var(--collab-text-faint);
+    line-height: 1.5;
+}
+
+.detail-report-link {
+    display: inline-block;
+    margin-top: 14px;
+    font-size: 13px;
+    color: #1763ac;
+    text-decoration: underline;
+}

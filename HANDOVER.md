@@ -14,12 +14,6 @@ lists what must be resolved first; nothing in it is optional.
 > responsibility before go-live. Each item says what is wrong, why it matters
 > and what to do.
 
-| | |
-|---|---|
-| Handed over by | [name, email] |
-| Product owner | [name, email] |
-| Receiving team contact | [name, email] |
-
 ---
 
 ## Contents

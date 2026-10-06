@@ -88,14 +88,23 @@ public class DeletionService {
     }
 
     /**
-     * The authenticated entry point used by the JWT-secured API. Consent is not
-     * taken here -- it was proven at eSignet before the gateway minted the token.
-     * Still honours the availability gate: nothing to delete -> NOT_FOUND;
-     * already deleted -> DELETED (no re-deletion); otherwise deletes.
+     * Entry point for the token-secured REST API used by the CLI and Postman.
+     *
+     * Consent is never taken here: it was proven at eSignet before the caller
+     * ever reached this service. The availability gate still applies, so nothing
+     * to delete yields NOT_FOUND and an already-deleted UIN yields DELETED
+     * without re-running a single module.
      */
     public DeletionResult executeAuthorized(String uin) {
-        console.header(uin, saltBucket(uin), bare(uin), prefixed(uin),
-                "REST  POST /api/deletion/execute   (verified gateway JWT)");
+        return executeAuthorized(uin, "REST  POST /api/deletion/execute   (verified token)");
+    }
+
+    /**
+     * Same flow, but the caller says how the request arrived so the printed
+     * audit names the real source instead of assuming the token API.
+     */
+    public DeletionResult executeAuthorized(String uin, String source) {
+        console.header(uin, saltBucket(uin), bare(uin), prefixed(uin), source);
         CheckResult c = check(uin);
         return switch (c.availability()) {
             case ALREADY_DELETED -> {
@@ -129,7 +138,9 @@ public class DeletionService {
 
         DeletionContext ctx = resolver.resolve(uin);
         console.resolved(ctx);
-        console.plan(DeletionPlan.forContext(ctx, props.getDeletion().isEsignetCleanupEnabled()));
+        console.plan(DeletionPlan.forContext(ctx,
+                props.getDeletion().isEsignetCleanupEnabled(),
+                props.getDeletion().isSelfRegistrationEnabled()));
         console.executeHeading();
 
         List<ModuleResult> modules = new ArrayList<>();

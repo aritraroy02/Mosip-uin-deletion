@@ -1,6 +1,7 @@
 package com.mosip.deletion.steps;
 
 import com.mosip.deletion.config.Databases;
+import com.mosip.deletion.config.DeletionProperties;
 import com.mosip.deletion.datashare.DatashareUrl;
 import com.mosip.deletion.model.ModuleResult;
 import com.mosip.deletion.model.SubStep;
@@ -10,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -27,12 +29,14 @@ public class IdRepositoryStep {
     private final JdbcTemplate idmap;
     private final JdbcTemplate credential;
     private final ObjectStoreService store;
+    private final DeletionProperties props;
 
-    public IdRepositoryStep(Databases db, ObjectStoreService store) {
+    public IdRepositoryStep(Databases db, ObjectStoreService store, DeletionProperties props) {
         this.idrepo = db.db("idrepo");
         this.idmap = db.db("idmap");
         this.credential = db.db("credential");
         this.store = store;
+        this.props = props;
     }
 
     public ModuleResult run(DeletionContext ctx) {
@@ -74,8 +78,13 @@ public class IdRepositoryStep {
             return n;
         });
 
-        // 9.3.3 Rows by uin_ref_id: biometrics and documents (+ history).
+        // 9.3.2 Object store: the biometric and document blobs themselves. These
+        // must go BEFORE the rows below, because the rows carry the only reference
+        // to the stored files. Deleting the rows first would orphan the objects.
         List<String> refIds = new ArrayList<>(ctx.uinRefIds);
+        run(m, "idrepo biometric + document objects", () -> deleteIdentityObjects(ctx, refIds));
+
+        // 9.3.3 Rows by uin_ref_id: biometrics and documents (+ history).
         for (String table : List.of("idrepo.uin_biometric", "idrepo.uin_biometric_h",
                                     "idrepo.uin_document", "idrepo.uin_document_h")) {
             run(m, table, () -> {
@@ -101,6 +110,46 @@ public class IdRepositoryStep {
         run(m, "idrepo.uin_h", () ->
                 idrepo.update("DELETE FROM idrepo.uin_h WHERE uin_hash = ?", ctx.hashPrefixed));
         return m;
+    }
+
+    /**
+     * Design 9.3.2 -- remove the biometric and document objects referenced by the
+     * uin_biometric / uin_document tables (and their history tables).
+     *
+     * MOSIP's ObjectStoreHelper composes the object name as {uinHash}/{fileRefId},
+     * where fileRefId is bio_file_id for biometrics and doc_id for documents. The
+     * hash form differs between deployments, so both the prefixed and the bare
+     * form are attempted; a miss costs nothing because ObjectStoreService returns
+     * 0 for an absent object instead of throwing.
+     */
+    private int deleteIdentityObjects(DeletionContext ctx, List<String> refIds) {
+        if (refIds.isEmpty()) {
+            return 0;
+        }
+        String bucket = props.getDeletion().getIdrepoObjectBucket();
+        List<String> fileRefs = new ArrayList<>();
+        for (String ref : refIds) {
+            fileRefs.addAll(idrepo.queryForList(
+                    "SELECT bio_file_id FROM idrepo.uin_biometric "
+                    + "WHERE uin_ref_id = ? AND bio_file_id IS NOT NULL", String.class, ref));
+            fileRefs.addAll(idrepo.queryForList(
+                    "SELECT bio_file_id FROM idrepo.uin_biometric_h "
+                    + "WHERE uin_ref_id = ? AND bio_file_id IS NOT NULL", String.class, ref));
+            fileRefs.addAll(idrepo.queryForList(
+                    "SELECT doc_id FROM idrepo.uin_document "
+                    + "WHERE uin_ref_id = ? AND doc_id IS NOT NULL", String.class, ref));
+            fileRefs.addAll(idrepo.queryForList(
+                    "SELECT doc_id FROM idrepo.uin_document_h "
+                    + "WHERE uin_ref_id = ? AND doc_id IS NOT NULL", String.class, ref));
+        }
+
+        int removed = 0;
+        for (String fileRef : new LinkedHashSet<>(fileRefs)) {
+            for (String hash : List.of(ctx.hashPrefixed, ctx.hashBare)) {
+                removed += store.deleteObject(bucket, hash + "/" + fileRef);
+            }
+        }
+        return removed;
     }
 
     private void run(ModuleResult m, String name, CountingStep step) {

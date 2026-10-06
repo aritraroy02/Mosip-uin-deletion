@@ -11,8 +11,14 @@ import com.mosip.deletion.store.ObjectStoreService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Registration Processor deletion (design doc section 8).
@@ -55,10 +61,12 @@ public class RegistrationStep {
             }
             return n;
         });
+        // Design 8.3: the landing zone is either an object-store bucket or an NFS
+        // share mounted into the application (landing.zone.type = DMZServer).
         run(m, "landing-zone objects", () -> {
             int n = 0;
             for (String rid : rids) {
-                n += store.deletePrefix(props.getDeletion().getLandingZoneBucket(), rid + "/");
+                n += deleteLandingZone(rid);
             }
             return n;
         });
@@ -125,6 +133,43 @@ public class RegistrationStep {
             }
         }
         return n;
+    }
+
+    /**
+     * Design 8.3 -- landing-zone removal for one RID.
+     *
+     * ObjectStore: delete every object under the RID prefix in the configured
+     * bucket. DMZServer: the share is mounted as application storage, so delete
+     * the RID directory tree beneath the configured mount path. An absent path
+     * is not an error; it simply means nothing was staged for that RID.
+     */
+    private int deleteLandingZone(String rid) throws IOException {
+        if (!"DMZServer".equalsIgnoreCase(props.getDeletion().getLandingZoneType())) {
+            return store.deletePrefix(props.getDeletion().getLandingZoneBucket(), rid + "/");
+        }
+        String root = props.getDeletion().getLandingZoneNfsPath();
+        if (root == null || root.isBlank()) {
+            throw new IllegalStateException(
+                    "landing-zone-type is DMZServer but landing-zone-nfs-path is not set");
+        }
+        Path target = Paths.get(root).resolve(rid).normalize();
+        if (!target.startsWith(Paths.get(root).normalize())) {
+            throw new IllegalStateException("refusing to delete outside the landing zone: " + rid);
+        }
+        if (!Files.exists(target)) {
+            return 0;
+        }
+        int removed = 0;
+        try (Stream<Path> walk = Files.walk(target)) {
+            // deepest entries first, so a directory is empty by the time it is removed
+            for (Path p : walk.sorted(Comparator.reverseOrder()).toList()) {
+                boolean wasFile = Files.isRegularFile(p);
+                if (Files.deleteIfExists(p) && wasFile) {
+                    removed++;      // count files, not the directories holding them
+                }
+            }
+        }
+        return removed;
     }
 
     /** Grandchildren of abis_request: abis_response_det -> abis_response. */

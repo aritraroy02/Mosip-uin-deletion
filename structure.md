@@ -69,7 +69,7 @@ Mosip-uin-deletion/
 │   └── docker-compose/         esignet (8088), oidc-ui (3000),
 │                               mock-identity-system (8082), postgres (5455)
 │
-├── charts/                     Helm charts + local-dev harness
+├── collab-ui/                  Collab UI (Helm charts + local dev) + local-dev harness
 │   ├── delete-uin/             static "Delete my UIN" page (served on 5501)
 │   ├── landing-page/           static landing page (5500)
 │   └── local-dev/              render.py / serve.ps1 / values-local.json /
@@ -82,7 +82,7 @@ Mosip-uin-deletion/
 
 ## How a request flows through the code
 
-1. `charts/delete-uin` redirects to eSignet, returns with `?code`, and POSTs the
+1. `collab-ui/delete-uin` redirects to eSignet, returns with `?code`, and POSTs the
    code to `auth-gateway` `DeleteUinController.start`.
 2. `EsignetClient.resolveUin` exchanges the code and calls `/userinfo` → UIN.
 3. `GatewayTokenService.mintForUin` signs a 5-minute JWT;

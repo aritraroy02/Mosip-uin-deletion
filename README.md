@@ -38,7 +38,7 @@ loaded with the same seeded UINs that have deletable data.
 | [`auth-gateway/`](auth-gateway/) | eSignet RP: code → userinfo → 5-min JWT → deletion service | 8095 |
 | [`deletion-service/`](deletion-service/) | JWT-secured cross-module deletion + audit | 8096 |
 | [`esignet/`](esignet/) | eSignet stack (docker-compose): eSignet, oidc-ui, mock-identity-system | 8088, 3000, 8082 |
-| [`charts/`](charts/) | Helm charts + local-dev harness for the landing / delete-uin pages | 5500, 5501 |
+| [`collab-ui/`](collab-ui/) | Helm charts + local-dev harness for the landing / delete-uin pages | 5500, 5501 |
 
 Design decisions are in [decision.md](decision.md); the file/layout map is in
 [structure.md](structure.md).
@@ -67,7 +67,7 @@ cd ..
 ```powershell
 docker compose -f esignet\docker-compose\docker-compose.yml up -d
 # wait for the esignet container to be healthy, then:
-Get-Content charts\local-dev\register-client.sql | docker compose -f esignet\docker-compose\docker-compose.yml exec -T database psql -U postgres -d mosip_esignet
+Get-Content collab-ui\local-dev\register-client.sql | docker compose -f esignet\docker-compose\docker-compose.yml exec -T database psql -U postgres -d mosip_esignet
 python seed\load_mock_identities.py     # loads the 50 seeded UINs into mock eSignet
 ```
 
@@ -79,7 +79,7 @@ cd ..\auth-gateway;  .\run.ps1     # :8095, eSignet RP    (leave running)
 
 ### 5. The pages (optional, for the browser flow)
 ```powershell
-cd charts\local-dev
+cd collab-ui\local-dev
 python render.py                   # substitutes values-local.json into the pages
 .\serve.ps1                        # serves landing :5500 and delete-uin :5501
 ```
@@ -131,5 +131,5 @@ python load_mock_identities.py             # re-register them in mock eSignet
   gateway JWT (RS256, 5-minute life, checked issuer/audience). No token, no
   deletion. Consent is proven upstream at eSignet.
 - The plaintext UIN never reaches the browser; the page sees only a masked UIN.
-- The keys under `*/src/main/resources/*.pem` and `charts/local-dev/` are
+- The keys under `*/src/main/resources/*.pem` and `collab-ui/local-dev/` are
   **local-development keys**. Generate fresh keys for any real deployment.

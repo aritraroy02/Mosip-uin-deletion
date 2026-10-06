@@ -32,16 +32,24 @@ public final class DeletionPlan {
         public boolean willRun() { return skipReason == null; }
     }
 
-    public static List<Module> forContext(DeletionContext ctx, boolean esignetCleanupEnabled) {
+    public static List<Module> forContext(DeletionContext ctx, boolean esignetCleanupEnabled,
+                                          boolean selfRegistrationEnabled) {
         List<Module> modules = new ArrayList<>();
         modules.add(registration(ctx));
         modules.add(idRepository(ctx));
         modules.add(ida(ctx));
         modules.add(resident(ctx));
         modules.add(esignet(esignetCleanupEnabled));
-        modules.add(new Module("Self-Registration", "-", List.of(),
-                "module not deployed here"));
+        modules.add(selfRegistration(selfRegistrationEnabled));
         return modules;
+    }
+
+    private static Module selfRegistration(boolean enabled) {
+        String skip = enabled ? null : "self-registration-enabled = false";
+        return new Module("Self-Registration", "selfreg datasource",
+                List.of(new Target("inji_certify_tan.self_registration",
+                        "selfreg  by plain UIN")),
+                skip);
     }
 
     /** Total number of targets that will actually be attempted. */
@@ -80,6 +88,7 @@ public final class DeletionPlan {
                         new Target("credential datashare objects + credential_transaction",
                                 "MinIO + credential:5445"),
                         new Target("idrepo.credential_request_status", "idrepo:5448  by id_hash"),
+                        new Target("idrepo biometric + document objects", "MinIO  by uinHash/fileRef"),
                         new Target("idrepo.uin_biometric", "idrepo:5448  by uin_ref_id"),
                         new Target("idrepo.uin_biometric_h", "idrepo:5448  by uin_ref_id"),
                         new Target("idrepo.uin_document", "idrepo:5448  by uin_ref_id"),

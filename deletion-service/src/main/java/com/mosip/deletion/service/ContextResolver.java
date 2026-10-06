@@ -54,10 +54,22 @@ public class ContextResolver {
             }
         }
 
-        // Handle hashes (prefixed, stored directly).
+        // Handle hashes (stored prefixed in idrepo.handle).
         ctx.handleHashes.addAll(db.db("idrepo").queryForList(
                 "SELECT handle_hash FROM idrepo.handle WHERE uin_hash = ?",
                 String.class, ctx.hashPrefixed));
+
+        // Design 9.2 step 3: the individual hash set must cover the UIN, every VID
+        // AND every handle. handle_hash is stored in the {saltId}_{hash} form while
+        // individual_id_hash is bare, so strip the salt prefix before adding it --
+        // otherwise credentials issued against a handle are never found.
+        for (String handleHash : ctx.handleHashes) {
+            if (handleHash == null || handleHash.isBlank()) {
+                continue;
+            }
+            int sep = handleHash.indexOf('_');
+            ctx.individualHashesBare.add(sep >= 0 ? handleHash.substring(sep + 1) : handleHash);
+        }
 
         // token_id(s): identity_cache (id = bare hash) then credential_request_status.
         // This replaces TokenIDGenerator (design 11.1): we do not hold the

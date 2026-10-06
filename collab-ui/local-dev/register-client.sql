@@ -17,9 +17,13 @@ INSERT INTO esignet.client_detail (
     public_key, public_key_hash, grant_types, auth_methods, status, cr_dtimes
 ) VALUES (
     'mosip-collab-delete-uin-client',
-    'MOSIP Collab - Delete my UIN',
+    -- Shown on the eSignet login screen: "<name> is requesting authentication".
+    'MOSIP Collab',
     'mosip-collab',
-    'http://localhost:5500/logo.png',
+    -- Shown beside the eSignet logo. eSignet fits it into a small rounded square,
+    -- so the square MOSIP mark is used rather than the wide wordmark; it is the
+    -- same image the Collab pages already load.
+    'https://raw.githubusercontent.com/mosip/documentation/1.2.0/docs/_images/mosip-favicon.png',
     -- Every origin eSignet may redirect back to. 5501 serves the delete-uin page.
     '["http://localhost:5501/","http://127.0.0.1:5501/"]',
     -- individual_id is the claim that resolves to the resident's UIN; it is what
@@ -36,6 +40,8 @@ INSERT INTO esignet.client_detail (
     CURRENT_TIMESTAMP
 )
 ON CONFLICT (id) DO UPDATE SET
+    name          = EXCLUDED.name,
+    logo_uri      = EXCLUDED.logo_uri,
     redirect_uris = EXCLUDED.redirect_uris,
     claims        = EXCLUDED.claims,
     acr_values    = EXCLUDED.acr_values,

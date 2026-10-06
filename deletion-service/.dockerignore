@@ -1,0 +1,10 @@
+# Keep the build context small and force a clean in-image build.
+target/
+*.iml
+.idea/
+.vscode/
+*.log
+run.ps1
+run-cli.ps1
+postman_collection.json
+README.md

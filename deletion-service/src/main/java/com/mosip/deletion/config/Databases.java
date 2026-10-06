@@ -39,6 +39,11 @@ public class Databases implements DisposableBean {
         });
     }
 
+    /** True when a datasource with this logical name was configured. */
+    public boolean has(String name) {
+        return templates.containsKey(name);
+    }
+
     public JdbcTemplate db(String name) {
         JdbcTemplate t = templates.get(name);
         if (t == null) {

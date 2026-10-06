@@ -11,7 +11,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
-KEY = r"c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/charts/local-dev/esignet-rp-private-key.pem"
+KEY = r"c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/collab-ui/local-dev/esignet-rp-private-key.pem"
 CLIENT = "mosip-collab-delete-uin-client"
 AUD = "http://localhost:8088/v1/esignet/oauth/v2/token"
 

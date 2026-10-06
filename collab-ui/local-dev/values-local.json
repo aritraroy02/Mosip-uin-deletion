@@ -11,12 +11,10 @@
     "Ports: 5500 landing page, 5501 delete-uin page, 3000 eSignet UI,",
     "8088 eSignet service."
   ],
-
   "collab": {
     "homepageUrl": "http://localhost:5500/",
     "deleteUinUrl": "http://localhost:5501/"
   },
-
   "esignet": {
     "authorizeUrl": "http://localhost:3000/authorize",
     "clientId": "mosip-collab-delete-uin-client",
@@ -24,7 +22,7 @@
     "scope": "openid profile",
     "responseType": "code",
     "acrValues": "mosip:idp:acr:generated-code",
-    "claims": "{\"userinfo\":{\"individual_id\":{\"essential\":true},\"name\":{\"essential\":false}},\"id_token\":{}}",
+    "claims": "{\"userinfo\":{\"individual_id\":{\"essential\":true},\"name\":{\"essential\":false},\"gender\":{\"essential\":false},\"birthdate\":{\"essential\":false},\"email\":{\"essential\":false},\"phone_number\":{\"essential\":false},\"address\":{\"essential\":false},\"picture\":{\"essential\":false}},\"id_token\":{}}",
     "claimsLocales": "en",
     "display": "page",
     "prompt": "consent",
@@ -32,16 +30,14 @@
     "uiLocales": "en",
     "usePkce": "false"
   },
-
   "deleteService": {
-    "startEndpoint": "http://localhost:8095/v1/delete-uin/start",
-    "statusEndpoint": "http://localhost:8095/v1/delete-uin/status",
-    "retryEndpoint": "http://localhost:8095/v1/delete-uin/retry",
+    "startEndpoint": "http://localhost:8096/v1/delete-uin/start",
+    "statusEndpoint": "http://localhost:8096/v1/delete-uin/status",
+    "retryEndpoint": "http://localhost:8096/v1/delete-uin/retry",
     "pollIntervalSeconds": "2",
     "requestSource": "mosip-collab-delete-uin",
     "withCredentials": "false"
   },
-
   "ui": {
     "showTechnicalErrors": "true",
     "demoMode": "false"

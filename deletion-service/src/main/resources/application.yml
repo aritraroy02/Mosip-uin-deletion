@@ -30,9 +30,27 @@ app:
     access-key: minioadmin
     secret-key: minioadmin
 
-  # The service only accepts requests bearing a JWT signed by the auth-gateway
-  # (RS256). Consent is proven upstream at eSignet, so no consent flag is needed
-  # here -- a valid, unexpired token IS the authorisation to delete.
+  # The delete-uin page posts the eSignet authorization code straight here, so
+  # the browser needs CORS permission for the page's origin.
+  allowed-origins:
+    - "http://localhost:5501"
+    - "http://127.0.0.1:5501"
+
+  # This service IS the eSignet relying party: it exchanges the authorization
+  # code itself using private_key_jwt, then calls /userinfo. The public half of
+  # rp-private-key is registered against client-id in esignet.client_detail.
+  esignet:
+    token-url: "http://localhost:8088/v1/esignet/oauth/v2/token"
+    userinfo-url: "http://localhost:8088/v1/esignet/oidc/userinfo"
+    client-id: "mosip-collab-delete-uin-client"
+    rp-private-key: "classpath:esignet-rp-private-key.pem"
+    # How long a completed job stays retryable, mirroring the old token window.
+    retry-window-seconds: 300
+
+  # The direct REST API (/api/deletion/**) still accepts a signed token, which is
+  # how the CLI and the Postman collection drive a deletion without a browser.
+  # The page flow (/v1/delete-uin/**) does not use it: there the authorization
+  # code itself is the proof, and the UIN never leaves this service.
   security:
     jwt:
       public-key: "classpath:gateway-signing-public.pem"
@@ -47,6 +65,16 @@ app:
     # Object-store bucket names for RID-keyed artifacts (design sections 8.3, 8.4).
     packet-manager-bucket: packet-manager
     landing-zone-bucket: landing-zone
+    # Design 8.3: ObjectStore deletes by RID prefix from landing-zone-bucket.
+    # DMZServer instead deletes the RID directory under landing-zone-nfs-path,
+    # which must be mounted into this application. No NFS share exists here.
+    landing-zone-type: ObjectStore
+    landing-zone-nfs-path: ""
+    # Design 9.3.2: bucket holding idrepo biometric/document blobs, stored as
+    # {uinHash}/{bio_file_id or doc_id}. This dump restored only the packet,
+    # landing-zone and datashare buckets, so these objects are absent here and
+    # the sub-step reports 0 until a real idrepo bucket is present.
+    idrepo-object-bucket: idrepo
     # Modules absent from this Collab environment -> reported SKIPPED.
     digital-card-enabled: false
     self-registration-enabled: false

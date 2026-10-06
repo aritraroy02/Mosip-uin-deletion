@@ -36,3 +36,21 @@ build/
 .jdks/
 *.zip
 src/main/resources/application.properties
+
+### Environment files and secrets ###
+# Real settings live in .env files next to each component; only the
+# *.env.example templates are committed. Copy one to .env and fill it in.
+.env
+.env.*
+!.env.example
+# Private keys are never committed. Generate one per environment and point
+# the component at it (see README, "Environment files").
+*private*.pem
+*private-key*.pem
+# Helm value files filled in for a real environment
+values-*.yaml
+!values-*.example.yaml
+
+### Python ###
+__pycache__/
+*.pyc

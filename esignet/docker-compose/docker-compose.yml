@@ -39,6 +39,15 @@ services:
       - SPRING_DATASOURCE_PASSWORD=postgres
       - MOSIP_MOCK_IDA_KYC_TRANSACTION_TIMEOUT_SECS=900
       - MOSIP_ESIGNET_HOST=localhost:8088
+      # Deliver the UIN to the relying party as a real OIDC claim.
+      #
+      # The stock mapping has no entry for individualId, which is why /userinfo
+      # returned only a pairwise pseudonym and the deletion service had to look
+      # the UIN up in kyc_auth. Adding "individualId":"individual_id" makes the
+      # identity system emit the plain UIN as the individual_id claim, which is
+      # how a production IDA plugin behaves. sub stays a pseudonym, so the
+      # privacy property of pairwise subjects is preserved.
+      - MOSIP_MOCK_IDA_IDENTITY_OPENID_CLAIMS_MAPPING={"individualId":"individual_id","fullName":"name","givenName":"given_name","familyName":"family_name","email":"email","phone":"phone_number","gender":"gender","dateOfBirth":"birthdate","encodedPhoto":"picture","preferredUsername":"preferred_username","middleName":"middle_name","nickName":"nickname","streetAddress":"address.street_address","locality":"address.locality","region":"address.region","country":"address.country","postalCode":"address.postal_code","preferredLang":"locale","zoneInfo":"address.zoneinfo"}
     depends_on:
       database:
         condition: service_healthy

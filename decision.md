@@ -19,12 +19,12 @@ service:
   JWT.
 
 The gateway takes 8095 because that is the port the page's own config
-(`charts/local-dev/values-local.json` → `deleteService.startEndpoint`) already
+(`collab-ui/local-dev/values-local.json` → `deleteService.startEndpoint`) already
 points at; the deletion service moved from 8095 to 8096. No page change needed.
 
 ## 2. The page contract is defined by the page, and the gateway matches it
 
-`charts/delete-uin/delete-uin-index.html` already expects an async
+`collab-ui/delete-uin/delete-uin-index.html` already expects an async
 `start` / `status` / `retry` API and consumes
 `{transactionId, status, maskedUin, retryExpiresAt}`. The gateway implements
 exactly that under `/v1/delete-uin/*`, returning `COMPLETED` / `FAILED`, so the

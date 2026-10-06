@@ -15,6 +15,32 @@ public class DeletionProperties {
     private Minio minio = new Minio();
     private Deletion deletion = new Deletion();
     private Security security = new Security();
+    private Esignet esignet = new Esignet();
+    private java.util.List<String> allowedOrigins;
+
+    public Esignet getEsignet() { return esignet; }
+    public void setEsignet(Esignet esignet) { this.esignet = esignet; }
+    public java.util.List<String> getAllowedOrigins() { return allowedOrigins; }
+    public void setAllowedOrigins(java.util.List<String> v) { this.allowedOrigins = v; }
+
+    /** This service acting as the eSignet relying party (design sections 5.2, 16). */
+    public static class Esignet {
+        private String tokenUrl;
+        private String userinfoUrl;
+        private String clientId;
+        private String rpPrivateKey;
+        private int retryWindowSeconds = 300;
+        public String getTokenUrl() { return tokenUrl; }
+        public void setTokenUrl(String v) { this.tokenUrl = v; }
+        public String getUserinfoUrl() { return userinfoUrl; }
+        public void setUserinfoUrl(String v) { this.userinfoUrl = v; }
+        public String getClientId() { return clientId; }
+        public void setClientId(String v) { this.clientId = v; }
+        public String getRpPrivateKey() { return rpPrivateKey; }
+        public void setRpPrivateKey(String v) { this.rpPrivateKey = v; }
+        public int getRetryWindowSeconds() { return retryWindowSeconds; }
+        public void setRetryWindowSeconds(int v) { this.retryWindowSeconds = v; }
+    }
 
     public Map<String, Ds> getDatasources() { return datasources; }
     public void setDatasources(Map<String, Ds> datasources) { this.datasources = datasources; }
@@ -72,6 +98,12 @@ public class DeletionProperties {
         private String authPartnerId = "mpartner-default-auth";
         private String packetManagerBucket = "packet-manager";
         private String landingZoneBucket = "landing-zone";
+        /** Design 8.3: ObjectStore (bucket) or DMZServer (mounted NFS path). */
+        private String landingZoneType = "ObjectStore";
+        /** Root of the mounted landing-zone NFS share, used only for DMZServer. */
+        private String landingZoneNfsPath = "";
+        /** Design 9.3.2: bucket holding idrepo biometric and document objects. */
+        private String idrepoObjectBucket = "idrepo";
         private boolean digitalCardEnabled = false;
         private boolean selfRegistrationEnabled = false;
         private boolean esignetCleanupEnabled = true;
@@ -86,6 +118,12 @@ public class DeletionProperties {
         public void setPacketManagerBucket(String v) { this.packetManagerBucket = v; }
         public String getLandingZoneBucket() { return landingZoneBucket; }
         public void setLandingZoneBucket(String v) { this.landingZoneBucket = v; }
+        public String getLandingZoneType() { return landingZoneType; }
+        public void setLandingZoneType(String v) { this.landingZoneType = v; }
+        public String getLandingZoneNfsPath() { return landingZoneNfsPath; }
+        public void setLandingZoneNfsPath(String v) { this.landingZoneNfsPath = v; }
+        public String getIdrepoObjectBucket() { return idrepoObjectBucket; }
+        public void setIdrepoObjectBucket(String v) { this.idrepoObjectBucket = v; }
         public boolean isDigitalCardEnabled() { return digitalCardEnabled; }
         public void setDigitalCardEnabled(boolean v) { this.digitalCardEnabled = v; }
         public boolean isSelfRegistrationEnabled() { return selfRegistrationEnabled; }

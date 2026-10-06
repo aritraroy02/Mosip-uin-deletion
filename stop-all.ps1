@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------
 # Graceful shutdown for everything start-all.ps1 brings up, in reverse order:
 #
-#   1. Host windows : auth-gateway 8095, deletion-service 8096, admin 8090,
+#   1. Host windows : deletion-service 8096, admin 8090,
 #                     landing 5500, delete-uin 5501, eSignet log windows.
 #                     Each gets a Ctrl+C (so Spring Boot runs its shutdown hooks
 #                     and python exits cleanly), and its window closes once the
@@ -70,9 +70,10 @@ function Stop-Window([string]$Title) {
     }
 }
 
-# 1. Host windows: front-facing first, the deletion service after the gateway
+# 1. Host windows: the pages first, so nothing new can start a deletion while
+#    the deletion service shuts down
 Write-Host '==> [1/3] host services and windows'
-foreach ($t in 'AUTH-GATEWAY', 'DELETION-SERVICE', 'ADMIN', 'LANDING', 'DELETE-UIN',
+foreach ($t in 'LANDING', 'DELETE-UIN', 'DELETION-SERVICE', 'ADMIN',
                 'ESIGNET LOGS', 'MOCK-IDENTITY LOGS') {
     Stop-Window $t
 }

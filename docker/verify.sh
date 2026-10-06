@@ -21,5 +21,7 @@ check pg-credential mosip_credential
 check pg-ida        mosip_ida
 
 echo "=== minio ==="
-docker run --rm --network mosip-collab_default --entrypoint sh minio/mc -c \
-  'mc alias set local http://minio:9000 minioadmin minioadmin >/dev/null; mc ls local' 2>&1
+docker run --rm --network mosip-collab_default \
+  -e MC_USER="${MINIO_ROOT_USER:-minioadmin}" -e MC_PASS="${MINIO_ROOT_PASSWORD:-minioadmin}" \
+  --entrypoint sh minio/mc -c \
+  'mc alias set local http://minio:9000 "$MC_USER" "$MC_PASS" >/dev/null; mc ls local' 2>&1

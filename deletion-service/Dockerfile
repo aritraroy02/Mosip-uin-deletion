@@ -5,20 +5,17 @@
 #
 # The image ships application.yml defaults that point at 127.0.0.1, which is the
 # container itself, so every datasource and the MinIO endpoint MUST be overridden
-# at run time. Spring maps APP_DATASOURCES_<KEY>_URL onto app.datasources.<key>.url.
+# at run time. Put them in an env file (template: .env.example) and mount the
+# private keys, which .dockerignore keeps out of the image:
 #
 #     docker run --rm -p 8096:8096 \
-#       -e APP_DATASOURCES_IDREPO_URL=jdbc:postgresql://host.docker.internal:5448/mosip_idrepo \
-#       -e APP_DATASOURCES_IDMAP_URL=jdbc:postgresql://host.docker.internal:5442/mosip_idmap \
-#       -e APP_DATASOURCES_REGPRC_URL=jdbc:postgresql://host.docker.internal:5443/mosip_regprc \
-#       -e APP_DATASOURCES_RESIDENT_URL=jdbc:postgresql://host.docker.internal:5444/mosip_resident \
-#       -e APP_DATASOURCES_CREDENTIAL_URL=jdbc:postgresql://host.docker.internal:5445/mosip_credential \
-#       -e APP_DATASOURCES_IDA_URL=jdbc:postgresql://host.docker.internal:5446/mosip_ida \
-#       -e APP_DATASOURCES_AUDIT_URL=jdbc:postgresql://host.docker.internal:5447/mosip_deletion_audit \
-#       -e APP_DATASOURCES_MOCKIDENTITY_URL=jdbc:postgresql://host.docker.internal:5455/mosip_mockidentitysystem \
-#       -e APP_DATASOURCES_ESIGNET_URL=jdbc:postgresql://host.docker.internal:5455/mosip_esignet \
-#       -e APP_MINIO_ENDPOINT=http://host.docker.internal:9000 \
+#       --env-file deletion-service/.env \
+#       -v /path/to/keys:/run/secrets:ro \
 #       identity-data-deletion-service:1.0.0
+#
+# with ESIGNET_RP_PRIVATE_KEY=file:/run/secrets/esignet-rp-private-key.pem and
+# DELETION_API_JWT_PUBLIC_KEY=file:/run/secrets/deletion-api-jwt-public.pem in
+# the env file.
 #
 # On Linux hosts add --add-host=host.docker.internal:host-gateway, or attach the
 # container to the same compose network and use the service names instead.

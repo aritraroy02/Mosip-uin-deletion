@@ -35,7 +35,6 @@ build/
 ### Local JDKs and Temp Files ###
 .jdks/
 *.zip
-src/main/resources/application.properties
 
 ### Environment files and secrets ###
 # Real settings live in .env files next to each component; only the

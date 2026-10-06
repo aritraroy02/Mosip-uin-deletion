@@ -1,135 +1,154 @@
 # MOSIP Collab — Self-Service UIN Deletion
 
-An end-to-end local environment for the *Collab Self-Service UIN and Personal
-Data Deletion Process*: a resident authenticates with eSignet (UIN → OTP →
-consent), and their data is permanently deleted across every MOSIP module and
-the object store. Authentication and deletion are separate, secured backends —
-the UIN travels between them only inside a short-lived signed token.
+An end-to-end environment for the *Collab Self-Service UIN and Personal Data
+Deletion Process*: a resident clicks **Delete my UIN** on the Collab landing
+page, authenticates with eSignet (UIN → OTP → consent), and their data is
+permanently deleted across every MOSIP module and the object store. Every
+deletion is audited by hashed UIN only.
 
 ## The flow
 
 ```
- delete-uin page (static, :5501)
-    │  "Delete my UIN" → OIDC redirect
+ landing page (:5500) ── "Delete my UIN" ──► delete-uin page (:5501)
+                                                │  OIDC redirect
+                                                ▼
+ eSignet (:3000 UI, :8088 API) ── UIN + OTP + consent ──► back with ?code
+                                                │
+                                                ▼  page POSTs the code
+ deletion-service (:8096)   /v1/delete-uin/start · status · retry
+    │  1. eSignet relying party: code → token (private_key_jwt) → /userinfo
+    │     → plain UIN from the individual_id claim (never sent to the browser)
+    │  2. already deleted? → resolve keys → 6 modules → audit row
     ▼
- eSignet (:3000 UI, :8088 API) ── OTP + consent ──► back to page with ?code
-    │
-    ▼  page POSTs the code (never a token)
- auth-gateway (:8095)                         ← eSignet relying party
-    │  token-exchange (private_key_jwt) + GET /userinfo → UIN
-    │  mint 5-minute RS256 JWT { uin }
-    ▼  POST /api/deletion/execute  (Bearer JWT)
- deletion-service (:8096)                      ← JWT-secured, no consent flag
-    │  verify JWT (sig, exp, iss, aud) → UIN
-    ▼  delete across all modules, write audit, return per-module status
- 7 PostgreSQL DBs (:5442-5448) + MinIO (:9000)
+ MOSIP DBs (:5442-5448) + MinIO (:9000) + eSignet / mock-identity DB (:5455)
 ```
 
-The mock eSignet resolves logins against **mock-identity-system** (:8082),
-loaded with the same seeded UINs that have deletable data.
+The page only ever holds the one-time code and a masked UIN. Locally, eSignet
+authenticates against **mock-identity-system** (:8082), loaded with the same
+seeded UINs that have deletable data.
 
 ## Components
 
 | Directory | What it is | Port |
 |---|---|---|
-| [`docker/`](docker/) | 7 MOSIP module DBs + a deletion-audit DB + MinIO | 5442-5448, 9000 |
-| [`seed/`](seed/) | Synthetic identities with **known** plaintext UINs; loader for mock eSignet | — |
-| [`admin/`](admin/) | Read-only browser for all DBs + MinIO (no SQL) | 8090 |
-| [`auth-gateway/`](auth-gateway/) | eSignet RP: code → userinfo → 5-min JWT → deletion service | 8095 |
-| [`deletion-service/`](deletion-service/) | JWT-secured cross-module deletion + audit | 8096 |
-| [`esignet/`](esignet/) | eSignet stack (docker-compose): eSignet, oidc-ui, mock-identity-system | 8088, 3000, 8082 |
-| [`collab-ui/`](collab-ui/) | Helm charts + local-dev harness for the landing / delete-uin pages | 5500, 5501 |
+| [`deletion-service/`](deletion-service/) | The deletion service: eSignet relying party, cross-module deletion, audit | 8096 |
+| [`collab-ui/`](collab-ui/) | Landing + delete-UIN pages (Helm charts) and the local-dev harness | 5500, 5501 |
+| [`esignet/docker-compose/`](esignet/docker-compose/) | Local eSignet stack: eSignet, oidc-ui, mock-identity-system, Postgres | 8088, 3000, 8082, 5455 |
+| [`docker/`](docker/) | Local MOSIP module DBs + deletion-audit DB + MinIO | 5442-5448, 9000 |
+| [`admin/`](admin/) | Read-only data browser for every DB and bucket | 8090 |
+| [`seed/`](seed/) | Synthetic identities with **known** UINs; loader for mock eSignet | — |
+| [`postman/`](postman/) | eSignet + deletion-service collections and token helpers | — |
 
-Design decisions are in [decision.md](decision.md); the file/layout map is in
+Design decisions are in [decision.md](decision.md); the file map is in
 [structure.md](structure.md).
 
-## Bring it all up
+## Environment files
 
-All commands are PowerShell from the repo root. The `.ps1` scripts need
-PowerShell; docker/python commands run in any shell.
+Every component that has environment-specific settings has a committed
+template, `.env.example`, next to it. Copy it to `.env` in the same folder and
+fill it in. **`.env` files and private keys are git-ignored and must never be
+committed.**
 
-### 1. Deletion databases + MinIO
+| Template | Read by | Holds |
+|---|---|---|
+| [`deletion-service/.env.example`](deletion-service/.env.example) | the service itself (from its working directory), or `docker run --env-file` | DB URLs and credentials, MinIO, eSignet URLs, client id, key paths, allowed origins |
+| [`docker/.env.example`](docker/.env.example) | `docker compose` in `docker/` | dump folder, Postgres and MinIO passwords |
+| [`esignet/docker-compose/.env.example`](esignet/docker-compose/.env.example) | `docker compose` in `esignet/docker-compose/` | local eSignet DB password |
+| [`admin/.env.example`](admin/.env.example) | `admin/server.py` | DB host/port/credentials (read-only user), MinIO |
+| [`seed/.env.example`](seed/.env.example) | the `seed/` scripts | DB host/port/credentials, MinIO, mock-identity URL |
+| [`postman/.env.example`](postman/.env.example) | the two token helpers | key paths, client id, token URL |
+| [`collab-ui/delete-uin/values-qa.example.yaml`](collab-ui/delete-uin/values-qa.example.yaml) | `helm -f` | page URLs, eSignet client, deletion-service endpoints |
+| [`collab-ui/landing-page/values-qa.example.yaml`](collab-ui/landing-page/values-qa.example.yaml) | `helm -f` | delete-UIN link, host |
+
+**Local development needs no `.env` files.** Every setting falls back to the
+local docker value.
+
+**It does need the local-development keys**, which are no longer committed. On
+a fresh clone, restore them once from git history (they are throwaway keys for
+the local mock eSignet, matching `collab-ui/local-dev/register-client.sql`):
+
 ```powershell
-cd docker
-docker compose up -d          # wait until all 8 containers are healthy
-cd ..
+git show 45ea857:charts/local-dev/esignet-rp-private-key.pem | Set-Content -Encoding ascii collab-ui\local-dev\esignet-rp-private-key.pem
+Copy-Item collab-ui\local-dev\esignet-rp-private-key.pem deletion-service\src\main\resources\
+git show 45ea857:auth-gateway/src/main/resources/gateway-signing-private.pem | Set-Content -Encoding ascii postman\gateway-signing-private.pem
 ```
 
-### 2. Seed identities with known UINs
+(`Set-Content -Encoding ascii` matters: PowerShell's `>` writes a byte-order
+mark, which breaks a PEM file.)
+
+The templates are written for QA. Two settings there matter most:
+
+- **Keys.** Generate new key pairs for QA. The local-development keys are in
+  this repository's history and must not be trusted anywhere else:
+  - the eSignet client key: its private key goes to the deletion service
+    (`ESIGNET_RP_PRIVATE_KEY`), and its public JWK is registered with the QA
+    eSignet client;
+  - the `/api/deletion` token key: the public key goes to the deletion service
+    (`DELETION_API_JWT_PUBLIC_KEY`), and the private key stays with whoever
+    mints test tokens (`postman/.env`).
+- **`CONSOLE_SHOW_PLAIN_UIN=false`** anywhere real identities are processed.
+
+## Run it locally
+
+All commands are PowerShell from the repo root.
+
+**One command** (Docker Desktop, both stacks, the service, the pages and the
+log windows, in the right order):
+
 ```powershell
-cd seed
-pip install -r requirements.txt
-python seed.py                # 50 identities -> manifest.json
-cd ..
+mvn -f deletion-service\pom.xml -DskipTests package    # first time, or after code changes
+.\start-all.ps1
+.\stop-all.ps1                                          # graceful shutdown; data is kept
 ```
 
-### 3. eSignet stack + register the RP client + load residents
-```powershell
-docker compose -f esignet\docker-compose\docker-compose.yml up -d
-# wait for the esignet container to be healthy, then:
-Get-Content collab-ui\local-dev\register-client.sql | docker compose -f esignet\docker-compose\docker-compose.yml exec -T database psql -U postgres -d mosip_esignet
-python seed\load_mock_identities.py     # loads the 50 seeded UINs into mock eSignet
-```
+Then open **http://localhost:5500/**, click **Delete my UIN**, log in with a
+seeded UIN (e.g. `6743558386`) and OTP **111111**, approve consent, and the page
+shows the result.
 
-### 4. The two backends
-```powershell
-cd deletion-service; .\run.ps1     # :8096, JWT-secured   (leave running)
-cd ..\auth-gateway;  .\run.ps1     # :8095, eSignet RP    (leave running)
-```
+**Step by step**, if you prefer:
 
-### 5. The pages (optional, for the browser flow)
-```powershell
-cd collab-ui\local-dev
-python render.py                   # substitutes values-local.json into the pages
-.\serve.ps1                        # serves landing :5500 and delete-uin :5501
-```
-
-Open **http://localhost:5501/**, click **Delete my UIN**, log in with a seeded
-UIN (e.g. `6743558386`) and OTP **111111**, approve consent, and the page shows
-the module-wise deletion status.
+1. Databases + MinIO: `cd docker; docker compose up -d` (the dumps are not in
+   the repository; set `DUMPS_DIR` and see [docker/README.md](docker/README.md)).
+2. Test identities: `cd seed; pip install -r requirements.txt; python seed.py`.
+3. eSignet, the client registration and the test logins:
+   ```powershell
+   docker compose -f esignet\docker-compose\docker-compose.yml up -d
+   Get-Content collab-ui\local-dev\register-client.sql | docker compose -f esignet\docker-compose\docker-compose.yml exec -T database psql -U postgres -d mosip_esignet
+   python seed\load_mock_identities.py
+   ```
+4. The service: `cd deletion-service; .\run.ps1` (port 8096).
+5. The pages: `cd collab-ui\local-dev; python render.py; .\serve.ps1`.
+6. Optional: the data browser, `cd admin; pip install -r requirements.txt; python server.py` (port 8090).
 
 ## Testing without a browser
 
-The eSignet OTP step needs a browser, but the secured deletion path can be
-driven directly. Mint a gateway-signed JWT and call the deletion service:
-
-```powershell
-# deletion-service must be running on :8096
-$jwt = "<RS256 JWT signed with auth-gateway/.../gateway-signing-private.pem,
-         claims: iss=mosip-collab-auth-gateway, aud=identity-data-deletion-service,
-         uin=<seeded uin>, exp=now+300>"
-curl.exe -s -X POST http://127.0.0.1:8096/api/deletion/execute `
-  -H "Authorization: Bearer $jwt"
-```
-
-Or use the interactive CLI (no JWT, local only): `cd deletion-service; .\run-cli.ps1`.
-
-## Admin browser
-
-```powershell
-cd admin; pip install -r requirements.txt; python server.py   # http://127.0.0.1:8090
-```
-Search a seeded UIN's RID or `synthetic-seed` to see an identity's footprint
-across every database and bucket. See [admin/README.md](admin/README.md).
+- **Postman:** [postman/README.md](postman/README.md) walks the eSignet flow
+  and both deletion APIs.
+- **Direct API:** `/api/deletion/check` and `/api/deletion/execute` take a
+  signed token instead of an eSignet code. Mint one with
+  `python postman\mint_jwt.py <uin>`.
+- **Interactive CLI** (local only, no token): `cd deletion-service; .\run-cli.ps1`.
 
 ## Resetting test data
 
-Deleting a UIN removes its rows/objects and writes a permanent audit record (so
-it then reports "already deleted"). To start clean:
+A deleted UIN writes a permanent audit record, so it then reports "already
+deleted" and its test login is not restored. To start clean:
 
 ```powershell
 cd seed
-python teardown.py                          # remove remaining synthetic rows/objects
+python teardown.py                    # remove remaining synthetic rows/objects
 # clear the audit (psql on :5447):  TRUNCATE deletion.uin_deletion_audit;
-python seed.py                              # re-create 50 identities
-python load_mock_identities.py             # re-register them in mock eSignet
+python seed.py                        # re-create 50 identities
+python load_mock_identities.py       # re-register them in mock eSignet
 ```
 
 ## Security notes
 
-- The deletion service accepts **only** requests bearing a valid, unexpired
-  gateway JWT (RS256, 5-minute life, checked issuer/audience). No token, no
-  deletion. Consent is proven upstream at eSignet.
-- The plaintext UIN never reaches the browser; the page sees only a masked UIN.
-- The keys under `*/src/main/resources/*.pem` and `collab-ui/local-dev/` are
-  **local-development keys**. Generate fresh keys for any real deployment.
+- The page flow is authorised by the eSignet authorization code alone: it is
+  single-use, redeemed by the service with its own client key, and the UIN
+  never leaves the service. CORS allows only the configured page origins.
+- The direct API (`/api/deletion/**`) requires a signed, unexpired token.
+- The audit stores salted SHA-256 hashes, never the plain UIN.
+- Keys and `.env` files are git-ignored. Anything that was committed before
+  (keys, the old cloud database passwords in early history) must be treated as
+  public and rotated.

@@ -8,8 +8,8 @@
 #   2. Deletion data stack   : docker/docker-compose.yml  (7 DBs + MinIO)
 #   3. eSignet stack         : esignet/docker-compose      (eSignet, oidc-ui,
 #                              mock-identity, DB, redis)
-#   4. Host services         : deletion-service 8096, auth-gateway 8095,
-#                              admin 8090   (each in its own visible window)
+#   4. Host services         : deletion-service 8096, admin 8090
+#                              (each in its own visible window)
 #   5. Static pages          : landing 5500, delete-uin 5501
 #   6. eSignet log windows   : readable live view of esignet 8088 and
 #                              mock-identity 8082, which have no console of
@@ -135,16 +135,14 @@ Invoke-Probe 'docker exec redis-server redis-cli DEL esignet:clientdetails::mosi
 python (Join-Path $repo 'seed\load_mock_identities.py') | Out-Null
 
 # 4. Host services (each in its own visible window) ------------------------
-Write-Host '==> [4/6] host services (deletion 8096, gateway 8095, admin 8090)'
+Write-Host '==> [4/6] host services (deletion 8096, admin 8090)'
 $delDir = Join-Path $repo 'deletion-service'
-$gwDir  = Join-Path $repo 'auth-gateway'
 $admDir = Join-Path $repo 'admin'
+# Each service reads its own .env (deletion-service/.env, admin/.env) when one
+# exists; without it the built-in local defaults apply. See README.
 $delCmd = "title DELETION-SERVICE 8096 && cd /d `"$delDir`" && java -Duser.timezone=UTC -jar target\identity-data-deletion-service-1.0.0.jar"
-$gwCmd  = "title AUTH-GATEWAY 8095 (userinfo logs) && cd /d `"$gwDir`" && java -jar target\auth-gateway-1.0.0.jar"
 $admCmd = "title ADMIN 8090 && cd /d `"$admDir`" && python server.py"
 Start-Process cmd -ArgumentList '/k', $delCmd
-Start-Sleep -Seconds 10          # let the deletion service bind 8096 before the gateway starts
-Start-Process cmd -ArgumentList '/k', $gwCmd
 Start-Process cmd -ArgumentList '/k', $admCmd
 
 # 5. Static pages ----------------------------------------------------------

@@ -12,7 +12,7 @@ name: mosip-collab
 
 x-pg-env: &pg-env
   POSTGRES_USER: postgres
-  POSTGRES_PASSWORD: postgres
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
   PGDATA: /var/lib/postgresql/data/pgdata
 
 x-pg-base: &pg-base
@@ -20,7 +20,7 @@ x-pg-base: &pg-base
   restart: unless-stopped
   shm_size: 256mb
   volumes:
-    - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+    - "${DUMPS_DIR:-C:/Users/Harsh/Documents/sudo data}:/dumps:ro"
   healthcheck:
     test: ["CMD-SHELL", "pg_isready -U postgres"]
     interval: 10s
@@ -49,7 +49,7 @@ services:
       POSTGRES_DB: mosip_idmap
     ports: ["5442:5432"]
     volumes:
-      - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+      - "${DUMPS_DIR:-C:/Users/Harsh/Documents/sudo data}:/dumps:ro"
       - pg-idmap-data:/var/lib/postgresql/data
 
   pg-regprc:
@@ -61,7 +61,7 @@ services:
       POSTGRES_DB: mosip_regprc
     ports: ["5443:5432"]
     volumes:
-      - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+      - "${DUMPS_DIR:-C:/Users/Harsh/Documents/sudo data}:/dumps:ro"
       - pg-regprc-data:/var/lib/postgresql/data
 
   pg-resident:
@@ -73,7 +73,7 @@ services:
       POSTGRES_DB: mosip_resident
     ports: ["5444:5432"]
     volumes:
-      - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+      - "${DUMPS_DIR:-C:/Users/Harsh/Documents/sudo data}:/dumps:ro"
       - pg-resident-data:/var/lib/postgresql/data
 
   pg-credential:
@@ -85,7 +85,7 @@ services:
       POSTGRES_DB: mosip_credential
     ports: ["5445:5432"]
     volumes:
-      - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+      - "${DUMPS_DIR:-C:/Users/Harsh/Documents/sudo data}:/dumps:ro"
       - pg-credential-data:/var/lib/postgresql/data
 
   # IDA is the 36.8 GB dump -- more shared_buffers and a much larger
@@ -106,7 +106,7 @@ services:
       POSTGRES_DB: mosip_ida
     ports: ["5446:5432"]
     volumes:
-      - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+      - "${DUMPS_DIR:-C:/Users/Harsh/Documents/sudo data}:/dumps:ro"
       - pg-ida-data:/var/lib/postgresql/data
 
   # ID Repository -- the entry point for the whole deletion flow: idrepo.uin
@@ -121,7 +121,7 @@ services:
       POSTGRES_DB: mosip_idrepo
     ports: ["5448:5432"]
     volumes:
-      - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+      - "${DUMPS_DIR:-C:/Users/Harsh/Documents/sudo data}:/dumps:ro"
       - pg-idrepo-data:/var/lib/postgresql/data
 
   # Audit store for the deletion service itself (design doc section 13).
@@ -135,7 +135,7 @@ services:
       POSTGRES_DB: mosip_deletion_audit
     ports: ["5447:5432"]
     volumes:
-      - "C:/Users/Harsh/Documents/sudo data:/dumps:ro"
+      - "${DUMPS_DIR:-C:/Users/Harsh/Documents/sudo data}:/dumps:ro"
       - pg-audit-data:/var/lib/postgresql/data
 
   minio:
@@ -144,8 +144,8 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9011"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     ports:
       - "9000:9000"
       - "9011:9011"

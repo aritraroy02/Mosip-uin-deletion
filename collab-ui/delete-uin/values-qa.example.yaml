@@ -1,0 +1,38 @@
+# QA overrides for the delete-uin chart. Copy to values-qa.yaml (git-ignored),
+# replace every <...>, then:
+#
+#   helm upgrade --install delete-uin collab-ui/delete-uin \
+#     -f collab-ui/delete-uin/values-qa.yaml
+#
+# Only the keys that differ per environment are listed; everything else comes
+# from values.yaml. No secrets belong in this file: the page only holds public
+# URLs and the client id. The client's private key lives with the deletion
+# service (deletion-service/.env, ESIGNET_RP_PRIVATE_KEY).
+
+collab:
+  # "Back to Collab" and restart target.
+  homepageUrl: https://<qa-landing-host>/
+
+esignet:
+  authorizeUrl: https://<qa-esignet-ui-host>/authorize
+  # Same client as the deletion service's ESIGNET_CLIENT_ID.
+  clientId: <qa-client-id>
+  # This page's own URL, registered as a redirect URI of that client.
+  redirectUri: https://<qa-delete-uin-host>/
+  # individual_id MUST be requested: it is the claim that carries the UIN to
+  # the deletion service. values.yaml asks only for "name", which makes every
+  # deletion fail with 401.
+  claims: '{"userinfo":{"individual_id":{"essential":true},"name":{"essential":false}},"id_token":{}}'
+
+deleteService:
+  startEndpoint: https://<qa-deletion-service-host>/v1/delete-uin/start
+  statusEndpoint: https://<qa-deletion-service-host>/v1/delete-uin/status
+  retryEndpoint: https://<qa-deletion-service-host>/v1/delete-uin/retry
+
+ui:
+  # Raw error details are for local debugging only.
+  showTechnicalErrors: false
+  demoMode: false
+
+istio:
+  host: <qa-delete-uin-host>

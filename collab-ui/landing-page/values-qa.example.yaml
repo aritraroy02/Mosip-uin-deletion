@@ -1,0 +1,19 @@
+# QA overrides for the landing-page chart. Copy to values-qa.yaml (git-ignored),
+# replace every <...>, then:
+#
+#   helm upgrade --install landing-page collab-ui/landing-page \
+#     -f collab-ui/landing-page/values-qa.yaml
+#
+# Only the keys that differ per environment are listed; everything else comes
+# from values.yaml. No secrets belong in this file.
+
+# The Collab page with the "Delete my UIN" button. The chart's default,
+# default-index.html, has no delete button.
+indexFile: "collab-index.html"
+
+collab:
+  # Where the "Delete my UIN" button goes: the delete-uin chart's host.
+  deleteUinUrl: https://<qa-delete-uin-host>/
+
+istio:
+  host: <qa-landing-host>

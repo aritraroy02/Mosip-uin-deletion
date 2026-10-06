@@ -14,7 +14,8 @@ set -euo pipefail
 export MSYS_NO_PATHCONV=1
 cd "$(dirname "$0")"
 
-DUMPDIR="C:/Users/Harsh/Documents/sudo data"
+# Override with the same variables as docker/.env (export them first).
+DUMPDIR="${DUMPS_DIR:-C:/Users/Harsh/Documents/sudo data}"
 TARBALL="minIO-backup-2026-07-15.tar.gz"
 NETWORK="mosip-collab_default"
 SCRATCH="mosip-minio-restore-scratch"
@@ -30,9 +31,11 @@ echo "=== [2/3] creating buckets and mirroring ==="
 docker run --rm \
   --network "$NETWORK" \
   -v "$SCRATCH:/work" \
+  -e MC_USER="${MINIO_ROOT_USER:-minioadmin}" \
+  -e MC_PASS="${MINIO_ROOT_PASSWORD:-minioadmin}" \
   --entrypoint sh minio/mc -c '
     set -e
-    mc alias set local http://minio:9000 minioadmin minioadmin >/dev/null
+    mc alias set local http://minio:9000 "$MC_USER" "$MC_PASS" >/dev/null
     for d in /work/*/; do
       b=$(basename "$d")
       mc mb --ignore-existing "local/$b" >/dev/null

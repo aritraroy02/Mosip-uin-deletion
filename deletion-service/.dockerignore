@@ -8,3 +8,8 @@ run.ps1
 run-cli.ps1
 postman_collection.json
 README.md
+# Settings and keys are supplied at run time (--env-file, mounted secrets),
+# never baked into the image.
+.env
+.env.*
+**/*private*.pem

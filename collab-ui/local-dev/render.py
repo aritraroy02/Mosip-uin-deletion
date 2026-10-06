@@ -2,7 +2,7 @@
 """
 Render the two static-page charts for local development.
 
-The pages in charts/delete-uin and charts/landing-page are Helm templates: the
+The pages in collab-ui/delete-uin and collab-ui/landing-page are Helm templates: the
 config they run on arrives as {{ .Values.x.y }} placeholders that Helm fills in
 at install time. Opened straight from the repo, nothing is substituted, so the
 delete-uin page detects the un-rendered placeholders, forces demo mode, and

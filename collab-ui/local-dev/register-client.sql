@@ -6,11 +6,11 @@
 -- registered is the origin eSignet is allowed to redirect BACK to.
 --
 -- The public key below is the same RSA JWK the previous portal client used, so
--- the matching private key (charts/local-dev/esignet-rp-private-key.pem) still
+-- the matching private key (collab-ui/local-dev/esignet-rp-private-key.pem) still
 -- works for the private_key_jwt token exchange the deletion service will need.
 --
 -- Apply with:
---   Get-Content charts/local-dev/register-client.sql | docker compose -f esignet/docker-compose/docker-compose.yml exec -T database psql -U postgres -d mosip_esignet
+--   Get-Content collab-ui/local-dev/register-client.sql | docker compose -f esignet/docker-compose/docker-compose.yml exec -T database psql -U postgres -d mosip_esignet
 
 INSERT INTO esignet.client_detail (
     id, name, rp_id, logo_uri, redirect_uris, claims, acr_values,

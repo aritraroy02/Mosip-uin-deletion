@@ -16,13 +16,14 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 /**
- * Verifies the short-lived RS256 JWT minted by the auth-gateway after a
- * successful eSignet authentication.
+ * Verifies the short-lived RS256 JWT presented to the direct API
+ * (/api/deletion/**), which the CLI-style and Postman paths use. The page flow
+ * does not come through here: it is authorised by the eSignet code instead.
  *
- * Checks, in order: RS256 signature against the gateway's public key, token not
- * expired, issuer and audience match configuration. On success the UIN claim is
- * returned. There is no other way into the deletion API -- a valid, unexpired
- * token is the sole authorisation to delete (consent was proven at eSignet).
+ * Checks, in order: RS256 signature against the configured public key
+ * (DELETION_API_JWT_PUBLIC_KEY), token not expired, issuer and audience match
+ * configuration. On success the UIN claim is returned. A valid, unexpired token
+ * is the sole authorisation to delete on this API.
  */
 @Component
 public class JwtVerifier {

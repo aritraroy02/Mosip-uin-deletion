@@ -1,4 +1,4 @@
-# Build (if needed) and run the deletion service as a REST API on port 8095.
+# Build (if needed) and run the deletion service as a REST API on port 8096.
 #
 # -Duser.timezone=UTC is required: this machine's default zone is the legacy
 # alias "Asia/Calcutta", which the PostgreSQL containers reject on connect.

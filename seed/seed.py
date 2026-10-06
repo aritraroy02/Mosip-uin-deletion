@@ -47,6 +47,30 @@ DBNAME = {
     "credential": "mosip_credential", "ida": "mosip_ida",
     "resident": "mosip_resident",
 }
+
+
+def _load_dotenv(path):
+    """Fill os.environ from a KEY=VALUE .env file; real variables take precedence."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
+                    os.environ.setdefault(key.strip(), value.strip())
+    except FileNotFoundError:
+        pass
+
+
+# Settings come from seed/.env (template: .env.example) or the environment;
+# teardown.py and verify.py import them from here. Without either, the local
+# docker ports and credentials apply.
+_load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+
+# One PostgreSQL port for every database. Unset keeps the per-module ports.
+if os.environ.get("PGPORT"):
+    PORTS = {m: int(os.environ["PGPORT"]) for m in PORTS}
+
 PGHOST = os.environ.get("PGHOST", "127.0.0.1")
 PGUSER = os.environ.get("PGUSER", "postgres")
 PGPASSWORD = os.environ.get("PGPASSWORD", "postgres")

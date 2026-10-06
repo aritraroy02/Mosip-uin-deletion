@@ -10,10 +10,31 @@ import base64, json, time, uuid
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
+import os
 
-KEY = r"c:/Users/Harsh/Documents/GitHub/Mosip-uin-deletion/collab-ui/local-dev/esignet-rp-private-key.pem"
-CLIENT = "mosip-collab-delete-uin-client"
-AUD = "http://localhost:8088/v1/esignet/oauth/v2/token"
+
+def _load_dotenv(path):
+    """Fill os.environ from a KEY=VALUE .env file; real variables take precedence."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
+                    os.environ.setdefault(key.strip(), value.strip())
+    except FileNotFoundError:
+        pass
+
+
+# Settings come from postman/.env (template: .env.example) or the environment;
+# without either, the local-development values apply.
+HERE = os.path.dirname(os.path.abspath(__file__))
+_load_dotenv(os.path.join(HERE, ".env"))
+
+KEY = os.environ.get("ESIGNET_RP_PRIVATE_KEY_PATH",
+                     os.path.join(HERE, "..", "collab-ui", "local-dev", "esignet-rp-private-key.pem"))
+CLIENT = os.environ.get("ESIGNET_CLIENT_ID", "mosip-collab-delete-uin-client")
+AUD = os.environ.get("ESIGNET_TOKEN_URL", "http://localhost:8088/v1/esignet/oauth/v2/token")
 
 key = load_pem_private_key(open(KEY, "rb").read(), None)
 b = lambda x: base64.urlsafe_b64encode(x).rstrip(b"=").decode()

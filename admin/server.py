@@ -55,6 +55,29 @@ DATABASES = {
     "mosip_esignet": 5455,
 }
 
+
+def _load_dotenv(path):
+    """Fill os.environ from a KEY=VALUE .env file; real variables take precedence."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
+                    os.environ.setdefault(key.strip(), value.strip())
+    except FileNotFoundError:
+        pass
+
+
+# Settings come from admin/.env (template: .env.example) or the environment.
+# With neither, the local docker ports and credentials above and below apply.
+_load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+
+# One PostgreSQL port for every database (typical outside local docker, where
+# all databases share one server). Unset keeps the per-database ports above.
+if os.environ.get("PGPORT"):
+    DATABASES = {db: int(os.environ["PGPORT"]) for db in DATABASES}
+
 PGHOST = os.environ.get("PGHOST", "127.0.0.1")
 PGUSER = os.environ.get("PGUSER", "postgres")
 PGPASSWORD = os.environ.get("PGPASSWORD", "postgres")

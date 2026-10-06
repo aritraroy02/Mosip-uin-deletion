@@ -6,7 +6,7 @@ The **Delete my UIN** page for the MOSIP Collab environment, built from the
 A resident clicks **Delete my UIN** in the Collab header, verifies with eSignet
 (UIN/VID/Handle plus a one-time password), and this page follows the deletion job
 to completion. It is static HTML served by nginx from a ConfigMap — the same
-pattern as `charts/landing-page`.
+pattern as `collab-ui/landing-page`.
 
 ## Flow
 
@@ -198,7 +198,7 @@ helm install delete-uin mosip/delete-uin \
 ```
 
 The Collab landing page links here from the header button and the mobile menu via
-`collab.deleteUinUrl` in `charts/landing-page/values.yaml`.
+`collab.deleteUinUrl` in `collab-ui/landing-page/values.yaml`.
 
 ## Known deviations from the Figma
 

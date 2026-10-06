@@ -1,11 +1,10 @@
 {
   "info": {
-    "name": "MOSIP Deletion Service + Gateway",
-    "description": "The JWT-secured deletion service (8096) and the auth-gateway front door (8095). The deletion service takes the UIN from a signed JWT, not the body. Get a JWT with: python postman/mint_jwt.py <uin>  and paste it into the collection variable `jwt`.",
+    "name": "MOSIP Deletion Service",
+    "description": "The deletion service (8096): the page API (/v1/delete-uin) and the JWT-secured direct API (/api/deletion), which takes the UIN from a signed JWT, not the body. Get a JWT with: python postman/mint_jwt.py <uin>  and paste it into the collection variable `jwt`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "gateway", "value": "http://localhost:8095" },
     { "key": "deletion", "value": "http://localhost:8096" },
     { "key": "jwt", "value": "PASTE_FROM_mint_jwt.py" },
     { "key": "code", "value": "PASTE_ESIGNET_AUTH_CODE" },
@@ -45,13 +44,13 @@
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "url": { "raw": "{{deletion}}/api/deletion/execute", "host": ["{{deletion}}"], "path": ["api","deletion","execute"] },
-            "description": "Shows the service rejects any request without a valid gateway JWT."
+            "description": "Shows the direct API rejects any request without a valid JWT."
           }
         }
       ]
     },
     {
-      "name": "Auth-gateway (8095) — front door",
+      "name": "Page API (8096) — what the delete-UIN page calls",
       "item": [
         {
           "name": "start  (hand eSignet code -> runs whole deletion)",
@@ -63,16 +62,16 @@
           "request": {
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": { "raw": "{{gateway}}/v1/delete-uin/start", "host": ["{{gateway}}"], "path": ["v1","delete-uin","start"] },
+            "url": { "raw": "{{deletion}}/v1/delete-uin/start", "host": ["{{deletion}}"], "path": ["v1","delete-uin","start"] },
             "body": { "mode": "raw", "raw": "{\n  \"code\": \"{{code}}\",\n  \"state\": \"x\",\n  \"redirectUri\": \"http://localhost:5501/\",\n  \"codeVerifier\": null\n}" },
-            "description": "The page's real call. Paste a fresh eSignet authorization code into `code`. The gateway does token-exchange + userinfo, resolves the UIN, mints the 5-min JWT, and calls the deletion service. Returns {transactionId, status, maskedUin, retryExpiresAt}. Codes are single-use."
+            "description": "The page's real call. Paste a fresh eSignet authorization code into `code`. The service does the eSignet token exchange + userinfo, resolves the UIN and runs the deletion. Returns {transactionId, status, maskedUin, retryExpiresAt}. Codes are single-use."
           }
         },
         {
           "name": "status  (?transactionId=...)",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{gateway}}/v1/delete-uin/status?transactionId={{transactionId}}", "host": ["{{gateway}}"], "path": ["v1","delete-uin","status"], "query": [ { "key": "transactionId", "value": "{{transactionId}}" } ] }
+            "url": { "raw": "{{deletion}}/v1/delete-uin/status?transactionId={{transactionId}}", "host": ["{{deletion}}"], "path": ["v1","delete-uin","status"], "query": [ { "key": "transactionId", "value": "{{transactionId}}" } ] }
           }
         },
         {
@@ -80,7 +79,7 @@
           "request": {
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": { "raw": "{{gateway}}/v1/delete-uin/retry", "host": ["{{gateway}}"], "path": ["v1","delete-uin","retry"] },
+            "url": { "raw": "{{deletion}}/v1/delete-uin/retry", "host": ["{{deletion}}"], "path": ["v1","delete-uin","retry"] },
             "body": { "mode": "raw", "raw": "{ \"transactionId\": \"{{transactionId}}\" }" }
           }
         }

@@ -1,51 +1,86 @@
 server:
-  # 8095 is taken by the auth-gateway (the delete-uin page's front-facing API).
-  # The deletion service sits behind it, reachable only with a valid gateway JWT.
-  port: 8096
+  # The delete-uin page calls this service directly on this port.
+  port: ${SERVER_PORT:8096}
 
 spring:
   application:
     name: identity-data-deletion-service
+  config:
+    # Environment-specific values come from environment variables, or from a
+    # .env file in the working directory (KEY=VALUE lines; see .env.example).
+    # Every ${VAR:default} below falls back to the local-development value, so
+    # with no .env and no variables set the service behaves exactly as before.
+    import: optional:file:.env[.properties]
 
 # All environment-specific values are configurable (design doc section 16).
 # Ports 5442-5448 are the per-database containers from ../docker/docker-compose.yml.
+# DB_USERNAME / DB_PASSWORD apply to every datasource unless that datasource sets
+# its own <NAME>_DB_USERNAME / <NAME>_DB_PASSWORD.
 app:
   datasources:
-    idmap:      { url: "jdbc:postgresql://127.0.0.1:5442/mosip_idmap",           username: postgres, password: postgres }
-    idrepo:     { url: "jdbc:postgresql://127.0.0.1:5448/mosip_idrepo",          username: postgres, password: postgres }
-    regprc:     { url: "jdbc:postgresql://127.0.0.1:5443/mosip_regprc",          username: postgres, password: postgres }
-    credential: { url: "jdbc:postgresql://127.0.0.1:5445/mosip_credential",      username: postgres, password: postgres }
-    ida:        { url: "jdbc:postgresql://127.0.0.1:5446/mosip_ida",             username: postgres, password: postgres }
-    resident:   { url: "jdbc:postgresql://127.0.0.1:5444/mosip_resident",        username: postgres, password: postgres }
-    audit:      { url: "jdbc:postgresql://127.0.0.1:5447/mosip_deletion_audit",  username: postgres, password: postgres }
+    idmap:
+      url: ${IDMAP_DB_URL:jdbc:postgresql://127.0.0.1:5442/mosip_idmap}
+      username: ${IDMAP_DB_USERNAME:${DB_USERNAME:postgres}}
+      password: ${IDMAP_DB_PASSWORD:${DB_PASSWORD:postgres}}
+    idrepo:
+      url: ${IDREPO_DB_URL:jdbc:postgresql://127.0.0.1:5448/mosip_idrepo}
+      username: ${IDREPO_DB_USERNAME:${DB_USERNAME:postgres}}
+      password: ${IDREPO_DB_PASSWORD:${DB_PASSWORD:postgres}}
+    regprc:
+      url: ${REGPRC_DB_URL:jdbc:postgresql://127.0.0.1:5443/mosip_regprc}
+      username: ${REGPRC_DB_USERNAME:${DB_USERNAME:postgres}}
+      password: ${REGPRC_DB_PASSWORD:${DB_PASSWORD:postgres}}
+    credential:
+      url: ${CREDENTIAL_DB_URL:jdbc:postgresql://127.0.0.1:5445/mosip_credential}
+      username: ${CREDENTIAL_DB_USERNAME:${DB_USERNAME:postgres}}
+      password: ${CREDENTIAL_DB_PASSWORD:${DB_PASSWORD:postgres}}
+    ida:
+      url: ${IDA_DB_URL:jdbc:postgresql://127.0.0.1:5446/mosip_ida}
+      username: ${IDA_DB_USERNAME:${DB_USERNAME:postgres}}
+      password: ${IDA_DB_PASSWORD:${DB_PASSWORD:postgres}}
+    resident:
+      url: ${RESIDENT_DB_URL:jdbc:postgresql://127.0.0.1:5444/mosip_resident}
+      username: ${RESIDENT_DB_USERNAME:${DB_USERNAME:postgres}}
+      password: ${RESIDENT_DB_PASSWORD:${DB_PASSWORD:postgres}}
+    audit:
+      url: ${AUDIT_DB_URL:jdbc:postgresql://127.0.0.1:5447/mosip_deletion_audit}
+      username: ${AUDIT_DB_USERNAME:${DB_USERNAME:postgres}}
+      password: ${AUDIT_DB_PASSWORD:${DB_PASSWORD:postgres}}
     # The eSignet stack's Postgres (esignet/docker-compose), both databases on
     # host port 5455. Used by the eSignet identity-erasure step so a deleted UIN
     # can no longer authenticate. mockidentity keys on the plaintext UIN;
     # esignet keys on the partner_specific_user_token resolved from kyc_auth.
-    mockidentity: { url: "jdbc:postgresql://127.0.0.1:5455/mosip_mockidentitysystem", username: postgres, password: postgres }
-    esignet:      { url: "jdbc:postgresql://127.0.0.1:5455/mosip_esignet",            username: postgres, password: postgres }
+    mockidentity:
+      url: ${MOCKIDENTITY_DB_URL:jdbc:postgresql://127.0.0.1:5455/mosip_mockidentitysystem}
+      username: ${MOCKIDENTITY_DB_USERNAME:${DB_USERNAME:postgres}}
+      password: ${MOCKIDENTITY_DB_PASSWORD:${DB_PASSWORD:postgres}}
+    esignet:
+      url: ${ESIGNET_DB_URL:jdbc:postgresql://127.0.0.1:5455/mosip_esignet}
+      username: ${ESIGNET_DB_USERNAME:${DB_USERNAME:postgres}}
+      password: ${ESIGNET_DB_PASSWORD:${DB_PASSWORD:postgres}}
 
   minio:
-    endpoint: "http://127.0.0.1:9000"
-    access-key: minioadmin
-    secret-key: minioadmin
+    endpoint: ${MINIO_ENDPOINT:http://127.0.0.1:9000}
+    access-key: ${MINIO_ACCESS_KEY:minioadmin}
+    secret-key: ${MINIO_SECRET_KEY:minioadmin}
 
   # The delete-uin page posts the eSignet authorization code straight here, so
-  # the browser needs CORS permission for the page's origin.
-  allowed-origins:
-    - "http://localhost:5501"
-    - "http://127.0.0.1:5501"
+  # the browser needs CORS permission for the page's origin. Comma-separated.
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5501,http://127.0.0.1:5501}
 
   # This service IS the eSignet relying party: it exchanges the authorization
   # code itself using private_key_jwt, then calls /userinfo. The public half of
   # rp-private-key is registered against client-id in esignet.client_detail.
   esignet:
-    token-url: "http://localhost:8088/v1/esignet/oauth/v2/token"
-    userinfo-url: "http://localhost:8088/v1/esignet/oidc/userinfo"
-    client-id: "mosip-collab-delete-uin-client"
-    rp-private-key: "classpath:esignet-rp-private-key.pem"
+    token-url: ${ESIGNET_TOKEN_URL:http://localhost:8088/v1/esignet/oauth/v2/token}
+    userinfo-url: ${ESIGNET_USERINFO_URL:http://localhost:8088/v1/esignet/oidc/userinfo}
+    client-id: ${ESIGNET_CLIENT_ID:mosip-collab-delete-uin-client}
+    # A Spring resource: classpath:... or file:/path/to/key.pem (forward slashes).
+    # The key file is git-ignored; outside local development always point this
+    # at a key generated for that environment.
+    rp-private-key: ${ESIGNET_RP_PRIVATE_KEY:classpath:esignet-rp-private-key.pem}
     # How long a completed job stays retryable, mirroring the old token window.
-    retry-window-seconds: 300
+    retry-window-seconds: ${RETRY_WINDOW_SECONDS:300}
 
   # The direct REST API (/api/deletion/**) still accepts a signed token, which is
   # how the CLI and the Postman collection drive a deletion without a browser.
@@ -53,9 +88,9 @@ app:
   # code itself is the proof, and the UIN never leaves this service.
   security:
     jwt:
-      public-key: "classpath:gateway-signing-public.pem"
-      issuer: "mosip-collab-auth-gateway"
-      audience: "identity-data-deletion-service"
+      public-key: ${DELETION_API_JWT_PUBLIC_KEY:classpath:gateway-signing-public.pem}
+      issuer: ${DELETION_API_JWT_ISSUER:mosip-collab-auth-gateway}
+      audience: ${DELETION_API_JWT_AUDIENCE:identity-data-deletion-service}
 
   deletion:
     # MOSIP salt-modulo: salt bucket for an identifier is int(id) % salt-modulo.
@@ -63,27 +98,27 @@ app:
     # Partner used to resolve auth token / datashare (design sections 9, 11).
     auth-partner-id: mpartner-default-auth
     # Object-store bucket names for RID-keyed artifacts (design sections 8.3, 8.4).
-    packet-manager-bucket: packet-manager
-    landing-zone-bucket: landing-zone
+    packet-manager-bucket: ${PACKET_MANAGER_BUCKET:packet-manager}
+    landing-zone-bucket: ${LANDING_ZONE_BUCKET:landing-zone}
     # Design 8.3: ObjectStore deletes by RID prefix from landing-zone-bucket.
     # DMZServer instead deletes the RID directory under landing-zone-nfs-path,
     # which must be mounted into this application. No NFS share exists here.
-    landing-zone-type: ObjectStore
-    landing-zone-nfs-path: ""
+    landing-zone-type: ${LANDING_ZONE_TYPE:ObjectStore}
+    landing-zone-nfs-path: ${LANDING_ZONE_NFS_PATH:}
     # Design 9.3.2: bucket holding idrepo biometric/document blobs, stored as
     # {uinHash}/{bio_file_id or doc_id}. This dump restored only the packet,
     # landing-zone and datashare buckets, so these objects are absent here and
     # the sub-step reports 0 until a real idrepo bucket is present.
-    idrepo-object-bucket: idrepo
+    idrepo-object-bucket: ${IDREPO_OBJECT_BUCKET:idrepo}
     # Modules absent from this Collab environment -> reported SKIPPED.
     digital-card-enabled: false
-    self-registration-enabled: false
+    self-registration-enabled: ${SELF_REGISTRATION_ENABLED:false}
 
     # After removing a UIN from the 7 deletion databases, also erase the identity
     # from the eSignet stack (mock-identity + eSignet consent/wallet-binding) so
     # the resident can no longer authenticate. Set false to leave eSignet
     # untouched, in which case the module reports SKIPPED.
-    esignet-cleanup-enabled: true
+    esignet-cleanup-enabled: ${ESIGNET_CLEANUP_ENABLED:true}
 
     # Terminal audit trail printed by the running service: the UIN asked for,
     # every table and bucket the request plans to touch, and whether each one
@@ -94,5 +129,5 @@ app:
     # is the only place the system writes a plaintext UIN outside memory -- set
     # it to false anywhere real identities are held.
     console-audit:
-      enabled: true
-      show-plain-uin: true
+      enabled: ${CONSOLE_AUDIT_ENABLED:true}
+      show-plain-uin: ${CONSOLE_SHOW_PLAIN_UIN:true}

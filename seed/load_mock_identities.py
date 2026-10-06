@@ -35,12 +35,29 @@ try:
 except ImportError:                                  # guard degrades, never blocks
     psycopg = None
 
+
+def _load_dotenv(path):
+    """Fill os.environ from a KEY=VALUE .env file; real variables take precedence."""
+    try:
+        with open(path, encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
+                    os.environ.setdefault(key.strip(), value.strip())
+    except FileNotFoundError:
+        pass
+
+
+# Same seed/.env as seed.py; without it the local docker defaults apply.
+_load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+
 PGHOST = os.environ.get("PGHOST", "127.0.0.1")
 PGUSER = os.environ.get("PGUSER", "postgres")
 PGPASSWORD = os.environ.get("PGPASSWORD", "postgres")
-AUDIT_PORT = int(os.environ.get("AUDIT_PORT", "5447"))
+AUDIT_PORT = int(os.environ.get("AUDIT_PORT", os.environ.get("PGPORT", "5447")))
 AUDIT_DB = os.environ.get("AUDIT_DB", "mosip_deletion_audit")
-IDREPO_PORT = int(os.environ.get("IDREPO_PORT", "5448"))
+IDREPO_PORT = int(os.environ.get("IDREPO_PORT", os.environ.get("PGPORT", "5448")))
 IDREPO_DB = os.environ.get("IDREPO_DB", "mosip_idrepo")
 SALT_MODULO = 1000
 

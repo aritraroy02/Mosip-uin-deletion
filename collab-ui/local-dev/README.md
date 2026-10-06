@@ -1,6 +1,6 @@
 # Local development harness for the static-page charts
 
-Runs [`charts/landing-page`](../landing-page) and [`charts/delete-uin`](../delete-uin)
+Runs [`collab-ui/landing-page`](../landing-page) and [`collab-ui/delete-uin`](../delete-uin)
 against the mock eSignet stack in [`esignet/docker-compose`](../../esignet/docker-compose),
 so clicking **Delete my UIN** performs a real OIDC redirect.
 
@@ -37,7 +37,7 @@ Wait for the `esignet` container to report healthy (its healthcheck polls
 ### 2. Register the relying party
 
 ```powershell
-Get-Content charts\local-dev\register-client.sql | docker compose -f esignet\docker-compose\docker-compose.yml exec -T database psql -U postgres -d mosip_esignet
+Get-Content collab-ui\local-dev\register-client.sql | docker compose -f esignet\docker-compose\docker-compose.yml exec -T database psql -U postgres -d mosip_esignet
 ```
 
 This creates the OIDC client `mosip-collab-delete-uin-client`. It is idempotent
@@ -59,7 +59,7 @@ verified claims.
 ### 4. Render and serve
 
 ```powershell
-cd charts\local-dev
+cd collab-ui\local-dev
 .\serve.ps1
 ```
 

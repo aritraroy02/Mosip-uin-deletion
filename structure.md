@@ -195,15 +195,15 @@ This file dictates system ports, three-way Postgres database URLs/credentials, J
 | `spring.application.name` | Spring Application Identifier name | `mosip-uin-deletion` |
 | `spring.datasource.basic.jdbc-url` | Database 1 connection JDBC string | Host port `:20760/defaultdb?sslmode=require` |
 | `spring.datasource.basic.username` | Database 1 user credential | `avnadmin` |
-| `spring.datasource.basic.password` | Database 1 password credential | `AVNS_FFoMkhXWnM1cbEEb-EM` |
+| `spring.datasource.basic.password` | Database 1 password credential | set locally in `application.properties`; never committed |
 | `spring.datasource.basic.driver-class-name`| Java PostgreSQL Database driver | `org.postgresql.Driver` |
 | `spring.datasource.hashing.jdbc-url` | Database 2 connection JDBC string | Host port `:24845/defaultdb?sslmode=require` |
 | `spring.datasource.hashing.username` | Database 2 user credential | `avnadmin` |
-| `spring.datasource.hashing.password` | Database 2 password credential | `AVNS_C9vZjT7iTvBt1znplr4` |
+| `spring.datasource.hashing.password` | Database 2 password credential | set locally in `application.properties`; never committed |
 | `spring.datasource.hashing.driver-class-name`| Java PostgreSQL Database driver | `org.postgresql.Driver` |
 | `spring.datasource.parent.jdbc-url` | Database 3 connection JDBC string | Host port `:12810/defaultdb?sslmode=require` |
 | `spring.datasource.parent.username` | Database 3 user credential | `avnadmin` |
-| `spring.datasource.parent.password` | Database 3 password credential | `AVNS_NvYpCTwngfMlfrReoIj` |
+| `spring.datasource.parent.password` | Database 3 password credential | set locally in `application.properties`; never committed |
 | `spring.datasource.parent.driver-class-name`| Java PostgreSQL Database driver | `org.postgresql.Driver` |
 | `spring.datasource.basic.hikari.maximum-pool-size`| Maximum pool connections for DB 1 | `2` |
 | `spring.datasource.hashing.hikari.maximum-pool-size`| Maximum pool connections for DB 2 | `2` |

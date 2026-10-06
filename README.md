@@ -76,18 +76,13 @@ committed.**
 **Local development needs no `.env` files.** Every setting falls back to the
 local docker value.
 
-**It does need the local-development keys**, which are no longer committed. On
-a fresh clone, restore them once from git history (they are throwaway keys for
-the local mock eSignet, matching `collab-ui/local-dev/register-client.sql`):
-
-```powershell
-git show 45ea857:charts/local-dev/esignet-rp-private-key.pem | Set-Content -Encoding ascii collab-ui\local-dev\esignet-rp-private-key.pem
-Copy-Item collab-ui\local-dev\esignet-rp-private-key.pem deletion-service\src\main\resources\
-git show 45ea857:auth-gateway/src/main/resources/gateway-signing-private.pem | Set-Content -Encoding ascii postman\gateway-signing-private.pem
-```
-
-(`Set-Content -Encoding ascii` matters: PowerShell's `>` writes a byte-order
-mark, which breaks a PEM file.)
+**Keys are never committed.** Each machine generates its own throwaway
+local-development keys: `start-all.ps1` runs
+[`collab-ui/local-dev/local_keys.py`](collab-ui/local-dev/local_keys.py) on
+every start, which creates them on the first run in the git-ignored
+`collab-ui/local-dev/keys/` folder and writes the eSignet client registration
+with their public key. The deletion service reads them from there by default;
+nothing is built into the jar or the Docker image.
 
 The templates are written for QA and production. The settings that matter most
 outside local development (full list and reasons in
@@ -109,6 +104,16 @@ outside local development (full list and reasons in
   `/api/deletion/**`.
 
 ## Run it locally
+
+**Prerequisites:** Windows with PowerShell, Docker Desktop, Java 21 and
+Maven, and Python 3 with these packages:
+
+```powershell
+pip install -r seed\requirements.txt -r admin\requirements.txt cryptography requests
+```
+
+The data stack restores real Collab database dumps, which are **not** in this
+repository; see [docker/README.md](docker/README.md).
 
 All commands are PowerShell from the repo root.
 
@@ -133,7 +138,8 @@ shows the result.
 3. eSignet, the client registration and the test logins:
    ```powershell
    docker compose -f esignet\docker-compose\docker-compose.yml up -d
-   Get-Content collab-ui\local-dev\register-client.sql | docker compose -f esignet\docker-compose\docker-compose.yml exec -T database psql -U postgres -d mosip_esignet
+   python collab-ui\local-dev\local_keys.py      # local keys + filled-in registration SQL
+   Get-Content collab-ui\local-dev\keys\register-client.sql | docker compose -f esignet\docker-compose\docker-compose.yml exec -T database psql -U postgres -d mosip_esignet
    python seed\load_mock_identities.py
    ```
 4. The service: `cd deletion-service; .\run.ps1` (port 8096).

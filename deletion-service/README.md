@@ -19,7 +19,10 @@ Both pass `-Duser.timezone=UTC`, which is required — the machine's default
 ## Configuration
 
 Every setting in `src/main/resources/application.yml` is
-`${ENV_VARIABLE:local default}`. Locally nothing needs setting. For any other
+`${ENV_VARIABLE:local default}`. Locally nothing needs setting: the keys
+default to the ones `collab-ui/local-dev/local_keys.py` makes in
+`collab-ui/local-dev/keys/`, read at startup, so no key is built into the jar
+or image. For any other
 environment copy [`.env.example`](.env.example) to `.env` in this folder (the
 service reads it on start) or pass it to Docker with `--env-file`. `.env` and
 private keys are git-ignored and excluded from the image; mount the keys and

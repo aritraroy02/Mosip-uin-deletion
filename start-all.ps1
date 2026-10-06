@@ -127,7 +127,14 @@ Wait-Url 'http://localhost:8082/v1/mock-identity-system/actuator/health' 40 'moc
 
 # make sure the delete-uin client is registered and the seeded residents exist
 Write-Host '   registering RP client + loading mock identities'
-Get-Content (Join-Path $repo 'collab-ui\local-dev\register-client.sql') |
+# Local-development keys (created on the first run, kept afterwards) and the
+# client registration carrying their public key. The deletion service reads the
+# same keys at startup, so they must exist before step 4.
+python (Join-Path $repo 'collab-ui\local-dev\local_keys.py') | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    throw 'collab-ui\local-dev\local_keys.py failed. Is the cryptography package installed? (pip install cryptography)'
+}
+Get-Content (Join-Path $repo 'collab-ui\local-dev\keys\register-client.sql') |
     docker compose -f $esignetCompose exec -T database psql -U postgres -d mosip_esignet | Out-Null
 # eSignet caches client details in redis for a day, and redis survives restarts,
 # so drop the cached copy or a changed client name/logo would not show up.

@@ -32,9 +32,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 _load_dotenv(os.path.join(HERE, ".env"))
 
 # Private half of the key the deletion service verifies /api/deletion tokens
-# with (its DELETION_API_JWT_PUBLIC_KEY). Git-ignored; see README.
+# with (its DELETION_API_JWT_PUBLIC_KEY). Locally: made by
+# collab-ui/local-dev/local_keys.py (git-ignored).
 KEY = os.environ.get("DELETION_API_JWT_PRIVATE_KEY_PATH",
-                     os.path.join(HERE, "gateway-signing-private.pem"))
+                     os.path.join(HERE, "..", "collab-ui", "local-dev", "keys",
+                                  "deletion-api-jwt-private.pem"))
 ISSUER = os.environ.get("DELETION_API_JWT_ISSUER", "mosip-collab-auth-gateway")
 AUDIENCE = os.environ.get("DELETION_API_JWT_AUDIENCE", "identity-data-deletion-service")
 uin = sys.argv[1] if len(sys.argv) > 1 else "8617031759"

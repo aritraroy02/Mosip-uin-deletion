@@ -26,8 +26,9 @@ python postman\mint_jwt.py 8617031759      # any seeded UIN
 (They need Python with `cryptography`: `pip install cryptography`.)
 
 Both read their keys and URLs from `postman/.env` (template:
-[.env.example](.env.example)); without it they use the local-development keys,
-which are git-ignored — see the main README to restore them on a fresh clone.
+[.env.example](.env.example)); without it they use the local-development keys in
+`collab-ui/local-dev/keys/`, which `start-all.ps1` (or `python
+collab-ui/local-dev/local_keys.py`) creates on the first run.
 
 ## eSignet collection — run 1 → 7 top to bottom
 

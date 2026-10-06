@@ -32,7 +32,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 _load_dotenv(os.path.join(HERE, ".env"))
 
 KEY = os.environ.get("ESIGNET_RP_PRIVATE_KEY_PATH",
-                     os.path.join(HERE, "..", "collab-ui", "local-dev", "esignet-rp-private-key.pem"))
+                     os.path.join(HERE, "..", "collab-ui", "local-dev", "keys",
+                                  "esignet-rp-private-key.pem"))
 CLIENT = os.environ.get("ESIGNET_CLIENT_ID", "mosip-collab-delete-uin-client")
 AUD = os.environ.get("ESIGNET_TOKEN_URL", "http://localhost:8088/v1/esignet/oauth/v2/token")
 

@@ -15,7 +15,7 @@ export MSYS_NO_PATHCONV=1
 cd "$(dirname "$0")"
 
 # Override with the same variables as docker/.env (export them first).
-DUMPDIR="${DUMPS_DIR:-C:/Users/Harsh/Documents/sudo data}"
+DUMPDIR="${DUMPS_DIR:-./dumps}"
 TARBALL="minIO-backup-2026-07-15.tar.gz"
 NETWORK="mosip-collab_default"
 SCRATCH="mosip-minio-restore-scratch"

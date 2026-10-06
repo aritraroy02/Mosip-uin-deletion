@@ -13,9 +13,8 @@ Mosip-uin-deletion/
 │   ├── Dockerfile, .dockerignore   Image; settings and keys supplied at run time
 │   ├── run.ps1 / run-cli.ps1   REST API / interactive CLI launchers
 │   ├── src/main/resources/
-│   │   ├── application.yml          every value is ${ENV_VAR:local default}
-│   │   ├── esignet-rp-private-key.pem   eSignet client key (git-ignored)
-│   │   └── gateway-signing-public.pem   verifies /api/deletion tokens (local)
+│   │   └── application.yml          every value is ${ENV_VAR:local default};
+│   │                                keys are read from disk, none in the jar
 │   └── src/main/java/com/mosip/deletion/
 │       ├── DeletionServiceApplication.java
 │       ├── api/DeleteUinController.java     /v1/delete-uin/start|status|retry (the page)
@@ -50,7 +49,8 @@ Mosip-uin-deletion/
 │   ├── delete-uin/             the delete-UIN page (5501)
 │   │   └── values-qa.example.yaml   QA Helm overrides template
 │   └── local-dev/              render.py / serve.ps1 / values-local.json /
-│                               register-client.sql / local client key (git-ignored)
+│                               register-client.sql (template) / local_keys.py
+│                               keys/  local keys + filled-in SQL (git-ignored)
 │
 ├── esignet/docker-compose/     Local eSignet stack: esignet (8088), oidc-ui (3000),
 │                               mock-identity-system (8082), postgres (5455)

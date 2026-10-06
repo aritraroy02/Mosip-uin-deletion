@@ -75,10 +75,12 @@ app:
     token-url: ${ESIGNET_TOKEN_URL:http://localhost:8088/v1/esignet/oauth/v2/token}
     userinfo-url: ${ESIGNET_USERINFO_URL:http://localhost:8088/v1/esignet/oidc/userinfo}
     client-id: ${ESIGNET_CLIENT_ID:mosip-collab-delete-uin-client}
-    # A Spring resource: classpath:... or file:/path/to/key.pem (forward slashes).
-    # The key file is git-ignored; outside local development always point this
-    # at a key generated for that environment.
-    rp-private-key: ${ESIGNET_RP_PRIVATE_KEY:classpath:esignet-rp-private-key.pem}
+    # A Spring resource: file:/path/to/key.pem (forward slashes) or classpath:...
+    # The default is the local-development key made by
+    # collab-ui/local-dev/local_keys.py, relative to this module's folder (the
+    # service's working directory). No key is built into the jar or image, so
+    # every other environment must set this to its own key.
+    rp-private-key: ${ESIGNET_RP_PRIVATE_KEY:file:../collab-ui/local-dev/keys/esignet-rp-private-key.pem}
     # How long a completed job stays retryable, mirroring the old token window.
     retry-window-seconds: ${RETRY_WINDOW_SECONDS:300}
 
@@ -88,7 +90,9 @@ app:
   # code itself is the proof, and the UIN never leaves this service.
   security:
     jwt:
-      public-key: ${DELETION_API_JWT_PUBLIC_KEY:classpath:gateway-signing-public.pem}
+      # Local default: made by collab-ui/local-dev/local_keys.py. Set your own
+      # everywhere else (no key is built into the jar or image).
+      public-key: ${DELETION_API_JWT_PUBLIC_KEY:file:../collab-ui/local-dev/keys/deletion-api-jwt-public.pem}
       issuer: ${DELETION_API_JWT_ISSUER:mosip-collab-auth-gateway}
       audience: ${DELETION_API_JWT_AUDIENCE:identity-data-deletion-service}
 

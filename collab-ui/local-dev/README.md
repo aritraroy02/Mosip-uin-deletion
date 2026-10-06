@@ -37,7 +37,8 @@ Wait for the `esignet` container to report healthy (its healthcheck polls
 ### 2. Register the relying party
 
 ```powershell
-Get-Content collab-ui\local-dev\register-client.sql | docker compose -f esignet\docker-compose\docker-compose.yml exec -T database psql -U postgres -d mosip_esignet
+python collab-ui\local-dev\local_keys.py
+Get-Content collab-ui\local-dev\keys\register-client.sql | docker compose -f esignet\docker-compose\docker-compose.yml exec -T database psql -U postgres -d mosip_esignet
 ```
 
 This creates the OIDC client `mosip-collab-delete-uin-client`. It is idempotent
@@ -50,9 +51,9 @@ redirect back to: `http://localhost:5501/`.
 
 ### 3. Create a resident to log in as
 
-The OTP login resolves an identity in mock-identity-system. Add one through its
-API (see [`esignet/postman-collection`](../../esignet/postman-collection),
-*User Mgmt → Mock → Create User*), or reuse `1234567890`, which
+The OTP login resolves an identity in mock-identity-system.
+[`seed/load_mock_identities.py`](../../seed/load_mock_identities.py) registers
+the seeded test residents there (`start-all.ps1` runs it), or reuse `1234567890`, which
 [`init.sql`](../../esignet/docker-compose/init.sql) seeds with phone and email
 verified claims.
 
@@ -96,18 +97,21 @@ it from the address bar with `history.replaceState` as soon as it is read.
 | `values-local.json` | Local overrides substituted into the chart placeholders |
 | `render.py` | Does what Helm would do; writes `dist/` (stdlib only, no Helm) |
 | `serve.ps1` | Renders, then serves 5500 and 5501 in their own windows |
-| `register-client.sql` | Registers the OIDC client in `esignet.client_detail` |
-| `esignet-rp-private-key.pem` | RSA private key matching the client's registered JWK |
+| `register-client.sql` | Template that registers the OIDC client in `esignet.client_detail` |
+| `local_keys.py` | Creates the local keys and the filled-in registration SQL in `keys/` |
+| `keys/` | Local keys + `register-client.sql` with their public JWK (git-ignored) |
 | `dist/` | Rendered output — regenerated on every run, do not edit |
 
 ## About the keypair
 
-`register-client.sql` registers the same RSA public JWK the previous portal
-client used, so `esignet-rp-private-key.pem` here is its matching private key.
-The client is registered with `auth_methods: ["private_key_jwt"]`, which means
-the deletion service will authenticate to the token endpoint by signing a JWT
-with that key rather than sending a shared secret. Keeping the existing pair
-means that step is already prepared.
+`local_keys.py` creates, once per machine, an RSA key for the client
+(`keys/esignet-rp-private-key.pem`) and writes `keys/register-client.sql`, the
+template with that key's public JWK filled in. Later runs keep the keys. The
+client is registered with `auth_methods: ["private_key_jwt"]`: the deletion
+service authenticates to the token endpoint by signing a JWT with that key
+rather than sending a shared secret, and reads the key from `keys/` by default.
+The script also makes the key pair for the `/api/deletion` test tokens. These
+keys are for the local mock eSignet only and are never committed.
 
 This is a mock-environment development key that was already committed to this
 repository's history. It is not a production secret, but do not reuse it in one.

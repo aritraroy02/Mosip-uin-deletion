@@ -46,6 +46,11 @@ build/
 # the component at it (see README, "Environment files").
 *private*.pem
 *private-key*.pem
+# Local-development keys and the client registration made from them
+# (collab-ui/local-dev/local_keys.py)
+collab-ui/local-dev/keys/
+# Database dumps for the local data stack (never committed)
+docker/dumps/
 # Helm value files filled in for a real environment
 values-*.yaml
 !values-*.example.yaml

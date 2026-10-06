@@ -1,8 +1,9 @@
 # Handover: MOSIP Collab Self-Service UIN Deletion
 
 **For:** the team taking this repository to production.
-**State:** `main` on 6 October 2026. Tested end to end in the local
-environment only (synthetic data, mock eSignet). **Not yet run against real
+**State:** 6 October 2026, as developed in the repository
+github.com/aritraroy02/Mosip-uin-deletion (branch `main`). Tested end to end in the
+local environment only (synthetic data, mock eSignet). **Not yet run against real
 MOSIP, real eSignet, or production data.**
 
 Read this file top to bottom before deploying. [Section 4](#4-must-resolve-before-production)
@@ -58,7 +59,7 @@ development and test tooling.
 | `deletion-service/` | Spring Boot 3.3 service (Java 21), port 8096. The only backend. Ships as a container image (`Dockerfile`). | **Yes** (container) |
 | `collab-ui/delete-uin/` | Helm chart: the delete-UIN status page (static HTML). | **Yes** (Helm) |
 | `collab-ui/landing-page/` | Helm chart: the Collab landing page carrying the "Delete my UIN" button. | **Yes** (Helm) |
-| `collab-ui/local-dev/` | Renders and serves the two pages locally; local eSignet client registration SQL. | No |
+| `collab-ui/local-dev/` | Renders and serves the two pages locally; generates local keys and the local eSignet client registration. | No |
 | `esignet/docker-compose/` | Local eSignet + **mock** identity system. Production uses the real eSignet. | No |
 | `docker/` | Local copies of the MOSIP databases + MinIO, restored from dumps (not in the repo). | No |
 | `seed/` | Creates and removes synthetic test residents with known UINs. | No (never against production) |
@@ -126,13 +127,13 @@ All of them are **open at handover**, and all are owned by the receiving team.
 |---|---|---|---|
 | 4.1 | Service needs the mock identity database to start; module 5 is mock-only | Open, not started | Code fix, or the tested no-code workaround in 4.1 |
 | 4.2 | `individual_id` from production eSignet must be the UIN (VID sign-in risk) | Open, not verified | Test against production eSignet; code fix if it can be a VID |
-| 4.3 | `/api/deletion/**` trusts a publicly known key by default | Open | Configuration: block at ingress and set your own key |
+| 4.3 | `/api/deletion/**` deletes any UIN for whoever holds the token key | Open | Configuration: block at ingress and set your own key |
 | 4.4 | Console trail writes personal data, including the UIN, to logs | Open | Configuration: `CONSOLE_AUDIT_ENABLED=false` |
 | 4.5 | No production keys or eSignet client yet | Open | Generate and register (5.3, 5.4) |
 | 4.6 | Single replica only; synchronous request; no eviction | Open | Configuration now; shared store later to scale |
 | 4.7 | Chart defaults break the flow | Open | Use the provided value templates |
 | 4.8 | Retry after a partial failure can miss data and report completion | Open, not started | Code fix, or accept with the manual review in 7.3 |
-| 4.9 | Secrets already public in git history | Open | Rotate |
+| 4.9 | Earlier development secrets are public (development repository history) | Open (development team) | Rotate; never reuse |
 
 Items 4.1, 4.2 and 4.8 need code changes or verification against production
 systems. The others are configuration and setup you do during deployment.
@@ -197,11 +198,11 @@ configuration, and **has not been verified.** Two failure modes:
 
 ### 4.3 Do not expose `/api/deletion/**`
 
-**Problem.** The direct API trusts tokens signed by the key in
-`DELETION_API_JWT_PUBLIC_KEY`. Its default is the local-development public key,
-which **is included in the container image**, and the matching private key is
-public in this repository's git history. With the default, anyone who can reach
-`/api/deletion/execute` can delete any UIN.
+**Problem.** The direct API deletes the UIN named in any token signed by the
+private half of the key in `DELETION_API_JWT_PUBLIC_KEY`. It is a powerful
+interface with no eSignet sign-in in front of it. The container image contains
+no key, so the service does not start until you set one; but whoever holds the
+matching private key can delete any UIN through `/api/deletion/execute`.
 
 **What to do — both:**
 
@@ -224,9 +225,10 @@ log only ever contains the masked UIN.
 
 ### 4.5 New keys and a production eSignet client
 
-The local-development keys are public (git history) and must not be used
-anywhere else. Generate new ones and register a new eSignet client: sections
-5.3 and 5.4.
+Local-development keys are generated per machine by
+`collab-ui/local-dev/local_keys.py` and are only for the local mock eSignet.
+Generate production keys and register a production eSignet client: sections 5.3
+and 5.4.
 
 ### 4.6 Run exactly one replica, with a long enough request timeout
 
@@ -261,13 +263,14 @@ missed, and can then report completion (details and the proposed fix in 7.3).
 Either fix it before go-live, or accept it explicitly and put the manual
 `PARTIAL` review from 7.3 into your operating procedures.
 
-### 4.9 Rotate secrets that are already public
+### 4.9 Earlier development secrets are public
 
-Treat these as compromised, whatever you deploy:
-
-- the local-development keys (in history before commit `1e4c481`);
-- two cloud PostgreSQL passwords (Aiven) in commit `259ddfe`, from an older
-  version of the project. If those databases still exist, change the passwords.
+The history of the development repository (github.com/aritraroy02/Mosip-uin-deletion) contains its
+earlier local-development keys and two cloud PostgreSQL passwords from an older
+version of the project. This code uses none of them any more: keys are now
+generated per machine and per environment, and the databases are not part of
+this project. Never reuse any of them. Rotating the two database passwords is
+the development team's action.
 
 ## 5. Production prerequisites
 
@@ -544,6 +547,11 @@ fields remain (`auth-partner-id`, `digital-card-enabled`, `Txn.summary`,
 - Configuration: defaults without `.env`, values from `.env`, environment
   variables overriding `.env`; the 4.1 workaround starts and serves requests.
 - Key generation commands (5.4) and the container image build.
+- Local key generation from a clean state (`local_keys.py`): keys created on
+  the first run and kept afterwards, the client re-registered with the new
+  public key, a full deletion signed with it, and `/api/deletion` accepting
+  tokens from the new pair and rejecting a tampered one. No key is inside the
+  built jar.
 
 **Not tested:**
 
@@ -557,14 +565,18 @@ fields remain (`auth-partner-id`, `digital-card-enabled`, `Txn.summary`,
 
 ## 10. History you may run into
 
+Commit ids below refer to the development repository, github.com/aritraroy02/Mosip-uin-deletion.
+
 - **auth-gateway (removed).** An earlier design put a separate gateway service
   (port 8095) between the page and the deletion service. The deletion service
-  now does that work itself; the gateway was removed from `main` in commit
-  `c008400`. Old documents or branches may still mention it.
-- **The old root Spring Boot app (removed).** The repository root used to hold
-  an earlier registration/deletion UI (`src/`, `com.example.mosip`). It was
-  incomplete after a merge, unused by this flow, and removed in `c008400`. The
-  last complete version is commit `dd084d9`.
+  now does that work itself; the gateway was removed in commit `c008400`. Old
+  documents or branches may still mention it.
+- **The old root Spring Boot app (removed).** The development repository's root
+  used to hold an earlier registration/deletion UI (`src/`, `com.example.mosip`).
+  It was incomplete after a merge, unused by this flow, and removed in
+  `c008400`. The last complete version is commit `dd084d9`.
 - **`charts/` was renamed to `collab-ui/`** in commit `1e4c481`.
-- **Local-development keys** were committed before `1e4c481` and are now
-  git-ignored; the README explains how a fresh local clone restores them.
+- **Keys are no longer committed.** Fixed local-development keys used to be in
+  the repository; now every machine generates its own on the first run
+  (`collab-ui/local-dev/local_keys.py`), and the service reads keys from disk,
+  so none is built into the jar or image.

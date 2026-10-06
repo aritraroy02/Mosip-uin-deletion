@@ -6,6 +6,18 @@ page, authenticates with eSignet (UIN → OTP → consent), and their data is
 permanently deleted across every MOSIP module and the object store. Every
 deletion is audited by hashed UIN only.
 
+> **Status, 6 October 2026: tested end to end locally (synthetic data, mock
+> eSignet). Not yet run against real MOSIP or real eSignet, and not
+> production-ready as is. The production blockers are handed over unresolved
+> and are owned by the receiving team.**
+>
+> **Deploying it? Read [HANDOVER.md](HANDOVER.md) first.** It lists what must
+> be resolved before production (the dependency on the mock identity system,
+> confirming the `individual_id` claim, closing `/api/deletion`, turning off the
+> console trail, keys, replicas), the exact database and bucket permissions,
+> the eSignet client registration, and the deployment and operations steps.
+> This README covers what the system is and how to run it locally.
+
 ## The flow
 
 ```
@@ -29,15 +41,16 @@ seeded UINs that have deletable data.
 
 ## Components
 
-| Directory | What it is | Port |
-|---|---|---|
-| [`deletion-service/`](deletion-service/) | The deletion service: eSignet relying party, cross-module deletion, audit | 8096 |
-| [`collab-ui/`](collab-ui/) | Landing + delete-UIN pages (Helm charts) and the local-dev harness | 5500, 5501 |
-| [`esignet/docker-compose/`](esignet/docker-compose/) | Local eSignet stack: eSignet, oidc-ui, mock-identity-system, Postgres | 8088, 3000, 8082, 5455 |
-| [`docker/`](docker/) | Local MOSIP module DBs + deletion-audit DB + MinIO | 5442-5448, 9000 |
-| [`admin/`](admin/) | Read-only data browser for every DB and bucket | 8090 |
-| [`seed/`](seed/) | Synthetic identities with **known** UINs; loader for mock eSignet | — |
-| [`postman/`](postman/) | eSignet + deletion-service collections and token helpers | — |
+| Directory | What it is | Local port | Production? |
+|---|---|---|---|
+| [`deletion-service/`](deletion-service/) | The deletion service: eSignet relying party, cross-module deletion, audit | 8096 | **Yes** (container image) |
+| [`collab-ui/delete-uin/`](collab-ui/delete-uin/), [`collab-ui/landing-page/`](collab-ui/landing-page/) | The two pages, as Helm charts | 5501, 5500 | **Yes** (Helm) |
+| [`collab-ui/local-dev/`](collab-ui/local-dev/) | Renders and serves the pages locally; local eSignet client registration | — | No |
+| [`esignet/docker-compose/`](esignet/docker-compose/) | Local eSignet stack: eSignet, oidc-ui, mock-identity-system, Postgres | 8088, 3000, 8082, 5455 | No (production uses its real eSignet) |
+| [`docker/`](docker/) | Local MOSIP module DBs + deletion-audit DB + MinIO | 5442-5448, 9000 | No |
+| [`admin/`](admin/) | Read-only data browser for every DB and bucket | 8090 | No (internal tool, never public) |
+| [`seed/`](seed/) | Synthetic identities with **known** UINs; loader for mock eSignet | — | No (never against production) |
+| [`postman/`](postman/) | eSignet + deletion-service collections and token helpers | — | No |
 
 Design decisions are in [decision.md](decision.md); the file map is in
 [structure.md](structure.md).
@@ -76,17 +89,24 @@ git show 45ea857:auth-gateway/src/main/resources/gateway-signing-private.pem | S
 (`Set-Content -Encoding ascii` matters: PowerShell's `>` writes a byte-order
 mark, which breaks a PEM file.)
 
-The templates are written for QA. Two settings there matter most:
+The templates are written for QA and production. The settings that matter most
+outside local development (full list and reasons in
+[HANDOVER.md](HANDOVER.md), sections 4 and 5):
 
-- **Keys.** Generate new key pairs for QA. The local-development keys are in
-  this repository's history and must not be trusted anywhere else:
+- **Keys.** Generate new key pairs per environment (commands in HANDOVER.md
+  5.4). The local-development keys are in this repository's history and must not
+  be trusted anywhere else:
   - the eSignet client key: its private key goes to the deletion service
-    (`ESIGNET_RP_PRIVATE_KEY`), and its public JWK is registered with the QA
-    eSignet client;
+    (`ESIGNET_RP_PRIVATE_KEY`), and its public JWK is registered with that
+    environment's eSignet client;
   - the `/api/deletion` token key: the public key goes to the deletion service
     (`DELETION_API_JWT_PUBLIC_KEY`), and the private key stays with whoever
     mints test tokens (`postman/.env`).
-- **`CONSOLE_SHOW_PLAIN_UIN=false`** anywhere real identities are processed.
+- **`CONSOLE_AUDIT_ENABLED=false`** anywhere real identities are processed. The
+  console trail prints every claim eSignet returns, including the plain UIN;
+  `CONSOLE_SHOW_PLAIN_UIN` alone does not prevent that.
+- **Expose only `/v1/delete-uin/**`** of the deletion service publicly, never
+  `/api/deletion/**`.
 
 ## Run it locally
 
@@ -147,8 +167,11 @@ python load_mock_identities.py       # re-register them in mock eSignet
 - The page flow is authorised by the eSignet authorization code alone: it is
   single-use, redeemed by the service with its own client key, and the UIN
   never leaves the service. CORS allows only the configured page origins.
-- The direct API (`/api/deletion/**`) requires a signed, unexpired token.
-- The audit stores salted SHA-256 hashes, never the plain UIN.
-- Keys and `.env` files are git-ignored. Anything that was committed before
-  (keys, the old cloud database passwords in early history) must be treated as
-  public and rotated.
+- The direct API (`/api/deletion/**`) requires a signed, unexpired token. Its
+  default verification key is the local-development one, whose private half is
+  public: never expose this API, and set your own key (HANDOVER.md 4.3).
+- The audit stores salted SHA-256 hashes, never the plain UIN. The console
+  trail is the exception and must be off outside local development.
+- Keys and `.env` files are git-ignored and kept out of the Docker image.
+  Anything that was committed before (keys, the old cloud database passwords
+  in early history) must be treated as public and rotated.

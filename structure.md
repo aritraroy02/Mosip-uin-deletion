@@ -75,9 +75,10 @@ Mosip-uin-deletion/
 │
 ├── postman/                    Collections + token helpers (mint_*.py)
 ├── start-all.ps1 / stop-all.ps1 / esignet-logs.ps1   Bring everything up / down
+├── HANDOVER.md                 Production readiness: blockers, permissions, deployment, operations
 ├── decision.md                 Design decisions and rationale
 ├── structure.md                This file
-└── README.md                   How to run and configure it
+└── README.md                   What it is, how to run and configure it
 ```
 
 ## How a request flows through the code

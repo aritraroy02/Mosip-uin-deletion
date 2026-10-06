@@ -98,3 +98,15 @@ git-ignored `.env` beside it. The defaults are the local docker values, so
 local development needs no configuration, while QA supplies everything —
 including its own key pairs — without code changes. Private keys and `.env`
 files are never committed and are kept out of the Docker image.
+
+## 11. Production blockers are handed over unresolved
+
+At handover to the production team (6 October 2026), the blockers found while
+preparing it are handed over as they stand rather than fixed first: the
+dependency on the mock identity system, the unverified `individual_id` claim,
+the default key on `/api/deletion`, personal data in the console trail, the
+retry limitation, and the deployment prerequisites. Each is described, with
+its fix or workaround, in [HANDOVER.md](HANDOVER.md) section 4, and resolving
+them is the receiving team's responsibility before go-live. No code was
+changed to address them, so the behaviour described there is the behaviour of
+the handed-over code.

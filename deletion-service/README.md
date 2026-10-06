@@ -71,6 +71,8 @@ run; no data → `NOT_FOUND`.
 The audit table (`mosip_deletion_audit`, `deletion.uin_deletion_audit`, created
 on startup) stores only the **hashed** UIN, per-module status, and time; it
 drives the "already deleted" check. The terminal also prints a readable trail
-of each request (`CONSOLE_AUDIT_ENABLED`); `CONSOLE_SHOW_PLAIN_UIN` must be
-`false` wherever real identities are processed. Design choices are in
-[../decision.md](../decision.md).
+of each request (`CONSOLE_AUDIT_ENABLED`). That trail includes every claim
+eSignet returns, among them the plain UIN, so it must be **off**
+(`CONSOLE_AUDIT_ENABLED=false`) wherever real identities are processed. Design
+choices are in [../decision.md](../decision.md); production readiness is in
+[../HANDOVER.md](../HANDOVER.md).

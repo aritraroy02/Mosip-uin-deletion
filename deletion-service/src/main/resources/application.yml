@@ -124,10 +124,12 @@ app:
     # every table and bucket the request plans to touch, and whether each one
     # actually gave up any data.
     #
-    # show-plain-uin prints the submitted UIN verbatim. This environment runs on
-    # synthetic seed data with known UINs, so that is deliberate and useful. It
-    # is the only place the system writes a plaintext UIN outside memory -- set
-    # it to false anywhere real identities are held.
+    # show-plain-uin prints the submitted UIN verbatim in the header lines. This
+    # environment runs on synthetic seed data with known UINs, so that is
+    # deliberate and useful. Note the trail also prints every claim eSignet
+    # returns, including individual_id (the UIN), whatever show-plain-uin says:
+    # anywhere real identities are held, turn the whole trail off
+    # (CONSOLE_AUDIT_ENABLED=false).
     console-audit:
       enabled: ${CONSOLE_AUDIT_ENABLED:true}
       show-plain-uin: ${CONSOLE_SHOW_PLAIN_UIN:true}
